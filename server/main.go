@@ -6,10 +6,10 @@ import (
 	"proyecto-grupo-5/server/src/database"
 	"proyecto-grupo-5/server/src/handler"
 	"proyecto-grupo-5/server/src/repository"
-	"proyecto-grupo-5/server/src/router"
 	"proyecto-grupo-5/server/src/service"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/cors"
 	"github.com/joho/godotenv"
 )
 
@@ -18,15 +18,10 @@ func main() {
 	var svc service.UserService
 	var h handler.UserHandler
 	var r *chi.Mux
-	var err error
 	var rep repository.UserRepository
 
-	err = godotenv.Load("../.env")
-	if err != nil {
-		println("Error al cargar .env")
-	}
+	_ = godotenv.Load("../.env")
 
-	// Conexion base de datos
 	db = database.InitDB()
 	defer db.Close()
 
@@ -34,10 +29,18 @@ func main() {
 	svc = service.NewUserService(rep)
 	h = handler.NewUserHandler(svc)
 
-	// Router
-	r = router.InitRouter(h)
+	r = chi.NewRouter()
 
-	// Iniciar el servidor
-	println("http://localhost:3000/register")
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
+
+	r.Post("/register", h.Register)
+
+	println("Servidor iniciado en http://localhost:3000")
 	http.ListenAndServe(":3000", r)
 }

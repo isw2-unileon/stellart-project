@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"io"
 	"net/http"
 	"os"
 	"strings"
@@ -22,36 +21,27 @@ func NewUserRepository(database *sql.DB) UserRepository {
 func (user_repository UserRepository) CreateAuthAndProfile(nombre, email, password string) error {
 	var url string
 	var anonKey string
-	var body map[string]interface{}
-	var jsonBody []byte
+	var body []byte
 	var req *http.Request
 	var resp *http.Response
-	var bodyBytes []byte
-	var query string
 	var err error
-
+	var userID string
+	var query string
 	var result struct {
-		User struct {
-			ID string `json:"id"`
-		} `json:"user"`
-		Msg string `json:"msg"`
+		ID   string                 `json:"id"`
+		User map[string]interface{} `json:"user"`
 	}
 
 	url = os.Getenv("SUPABASE_URL") + "/auth/v1/signup"
 	anonKey = os.Getenv("SUPABASE_ANON_KEY")
 
-	body = map[string]interface{}{
+	body, _ = json.Marshal(map[string]interface{}{
 		"email":    strings.TrimSpace(email),
 		"password": password,
 		"data":     map[string]string{"full_name": nombre},
-	}
+	})
 
-	jsonBody, err = json.Marshal(body)
-	if err != nil {
-		return err
-	}
-
-	req, err = http.NewRequest("POST", url, bytes.NewBuffer(jsonBody))
+	req, err = http.NewRequest("POST", url, bytes.NewBuffer(body))
 	if err != nil {
 		return err
 	}
@@ -60,28 +50,33 @@ func (user_repository UserRepository) CreateAuthAndProfile(nombre, email, passwo
 	req.Header.Set("apikey", anonKey)
 	req.Header.Set("Authorization", "Bearer "+anonKey)
 
-	resp, err = (&http.Client{}).Do(req)
+	resp, err = http.DefaultClient.Do(req)
 	if err != nil {
 		return err
 	}
 	defer resp.Body.Close()
 
-	bodyBytes, err = io.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	err = json.Unmarshal(bodyBytes, &result)
-	if err != nil {
-		return err
-	}
-
 	if resp.StatusCode >= 400 {
-		return errors.New("Auth error: " + result.Msg)
+		return errors.New("este correo ya está registrado en el sistema de autenticación")
+	}
+
+	json.NewDecoder(resp.Body).Decode(&result)
+
+	userID = result.ID
+	if userID == "" && result.User != nil {
+		userID, _ = result.User["id"].(string)
+	}
+
+	if userID == "" {
+		return nil
 	}
 
 	query = "INSERT INTO public.profiles (id, nombre, email) VALUES ($1, $2, $3)"
-	_, err = user_repository.database.Exec(query, result.User.ID, nombre, email)
+	_, err = user_repository.database.Exec(query, userID, nombre, email)
+
+	if err != nil && strings.Contains(err.Error(), "23505") {
+		return errors.New("el usuario ya existe en nuestra base de datos")
+	}
 
 	return err
 }
