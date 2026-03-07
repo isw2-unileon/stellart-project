@@ -1,7 +1,7 @@
 package service
 
 import (
-	"proyecto-grupo-5/server/src/repository"
+	"proyecto-grupo-5/backend/src/repository"
 )
 
 type UserService struct {

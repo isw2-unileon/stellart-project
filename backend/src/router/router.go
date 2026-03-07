@@ -2,7 +2,7 @@ package router
 
 import (
 	"net/http"
-	"proyecto-grupo-5/server/src/handler"
+	"proyecto-grupo-5/backend/src/handler"
 
 	"github.com/go-chi/chi/v5"
 )

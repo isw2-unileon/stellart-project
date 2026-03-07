@@ -45,7 +45,7 @@ The app will be available at `http://localhost:5173` (default Vite port).
 
 ```
 stellart-project/
-├── server/          # Go backend (chi router, PostgreSQL)
+├── backend/          # Go backend (chi router, PostgreSQL)
 │   ├── main.go
 │   └── src/
 │       ├── database/

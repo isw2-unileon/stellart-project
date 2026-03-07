@@ -3,10 +3,10 @@ package main
 import (
 	"database/sql"
 	"net/http"
-	"proyecto-grupo-5/server/src/database"
-	"proyecto-grupo-5/server/src/handler"
-	"proyecto-grupo-5/server/src/repository"
-	"proyecto-grupo-5/server/src/service"
+	"proyecto-grupo-5/backend/src/database"
+	"proyecto-grupo-5/backend/src/handler"
+	"proyecto-grupo-5/backend/src/repository"
+	"proyecto-grupo-5/backend/src/service"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"

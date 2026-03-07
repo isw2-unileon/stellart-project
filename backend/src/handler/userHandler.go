@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"proyecto-grupo-5/server/src/service"
+	"proyecto-grupo-5/backend/src/service"
 )
 
 type UserHandler struct {
