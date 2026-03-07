@@ -2,6 +2,9 @@ import aw1 from "../assets/bg-landing-artwork-1.jpeg";
 import aw2 from "../assets/bg-landing-artwork-2.jpeg";
 import aw3 from "../assets/bg-landing-artwork-3.jpeg";
 import aw4 from "../assets/bg-landing-artwork-4.jpeg";
+import aw5 from "../assets/bg-landing-artwork-5.jpeg";
+import aw6 from "../assets/bg-landing-artwork-6.jpeg";
+import aw7 from "../assets/bg-landing-artwork-7.jpeg";
 import bgLeft from "../assets/css-pattern-by-magicpattern.png";
 
 export default function Landing() {
@@ -44,10 +47,10 @@ export default function Landing() {
 }
 
 function ColumnGallery() {
-    const artworks = [aw1, aw2, aw3, aw4, aw1, aw2, aw3, aw4];
+    const artworks = [aw1, aw2, aw6, aw3, aw4, aw5, aw7 ];
 
     return (
-        <aside className="hidden lg:block w-1/3 relative z-0 bg-white shadow-inner brightness-90">
+        <aside className="hidden lg:block w-1/3 relative z-0 bg-white shadow-inner brightness-85">
             <div className="absolute inset-0 flex justify-center items-center pointer-events-none">
                 
                 <div className="grid grid-cols-2 gap-6 w-[200%] transform -rotate-12 translate-x-8 translate-y-12">
