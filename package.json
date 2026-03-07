@@ -1,5 +1,8 @@
 {
   "devDependencies": {
     "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "sonner": "^2.0.7"
   }
 }

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import { getLoggedUser } from "@/service/apiService"
+import { getLoggedUser, logoutUser } from "@/service/apiService"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -25,6 +25,15 @@ export default function AvatarDropdown() {
         checkUser();
     }, []);
 
+    const handleLogout = async () => {
+        try {
+            await logoutUser();
+            window.location.reload(); 
+        } catch (error) {
+            console.error("Error al cerrar sesión:", error);
+        }
+    };
+
     if (isLoading) {
         return <div className="w-10 h-10 rounded-full bg-slate-200 animate-pulse"></div>;
     }
@@ -33,17 +42,18 @@ export default function AvatarDropdown() {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="rounded-full">
-                    <Avatar className="cursor-pointer hover:brightness-80 transition">
+                    <Avatar className="cursor-pointer hover:brightness-80 transition border border-slate-200">
                         {user ? (
                             <>
-                                <AvatarImage src="https://avatars.githubusercontent.com/u/199582136?v=4" alt="Avatar del usuario" />
-                                <AvatarFallback>
-                                    {user.user_metadata?.full_name?.charAt(0).toUpperCase() || "U"}
+                                {user.user_metadata?.avatar_url && (
+                                    <AvatarImage src={user.user_metadata.avatar_url} alt="Avatar" />
+                                )}
+                                <AvatarFallback className="bg-yellow-500 text-black font-black uppercase">
+                                    {user.user_metadata?.full_name?.charAt(0).toUpperCase() || user.email?.charAt(0).toUpperCase()}
                                 </AvatarFallback>
                             </>
                         ) : (
                             <>
-                                <AvatarImage src="https://static.vecteezy.com/system/resources/thumbnails/009/292/244/small/default-avatar-icon-of-social-media-user-vector.jpg" alt="Invitado" />
                                 <AvatarFallback className="bg-slate-100 text-slate-500">👤</AvatarFallback>
                             </>
                         )}
@@ -51,17 +61,22 @@ export default function AvatarDropdown() {
                 </Button>
             </DropdownMenuTrigger>
             
-            <DropdownMenuContent className="w-32">
+            <DropdownMenuContent className="w-40" align="end">
                 {user ? (
                     <>
                         <DropdownMenuGroup>
-                            <DropdownMenuItem>Profile</DropdownMenuItem>
-                            <DropdownMenuItem>Billing</DropdownMenuItem>
-                            <DropdownMenuItem>Settings</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
-                            <DropdownMenuItem className="text-red-600 font-medium">Log out</DropdownMenuItem>
+                            <DropdownMenuItem 
+                                className="text-red-600 font-medium cursor-pointer"
+                                onClick={handleLogout}
+                            >
+                                Log out
+                            </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </>
                 ) : (

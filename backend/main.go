@@ -6,6 +6,7 @@ import (
 	"proyecto-grupo-5/backend/src/database"
 	"proyecto-grupo-5/backend/src/handler"
 	"proyecto-grupo-5/backend/src/repository"
+	"proyecto-grupo-5/backend/src/router"
 	"proyecto-grupo-5/backend/src/service"
 
 	"github.com/go-chi/chi/v5"
@@ -29,7 +30,7 @@ func main() {
 	svc = service.NewUserService(rep)
 	h = handler.NewUserHandler(svc)
 
-	r = chi.NewRouter()
+	r = router.InitRouter(h)
 
 	r.Use(cors.Handler(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:5173"},
@@ -38,8 +39,6 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
-
-	r.Post("/register", h.Register)
 
 	println("Servidor iniciado en http://localhost:3000")
 	http.ListenAndServe(":3000", r)

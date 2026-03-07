@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { registerUser } from '../service/apiService';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -6,6 +8,7 @@ export default function Register() {
         email: '',
         password: ''
     });
+    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({
@@ -17,27 +20,16 @@ export default function Register() {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const response = await fetch('http://127.0.0.1:3000/register', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
-            });
-
-            // Intentamos obtener el texto del error
-            const text = await response.text();
-
-            if (response.ok) {
-                alert("Usuario registrado con éxito. Revisa tu correo.");
-            } else {
-                alert(text.replace("Error: ", "")); 
-            }
+            await registerUser(formData.email, formData.password, formData.name);
+            
+            alert("Usuario registrado con éxito. Revisa tu correo.");
         } catch (error) {
-            alert("No se pudo conectar con el servidor.");
+            alert("Error " + error.message || "Error al registrar usuario");
         }
     };
 
     return (
-        <>
+        <div className="flex flex-col gap-10 py-12"> 
             <RegisterText />
             <div className="w-full"> 
                 <div className="w-full max-w-md mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-100">
@@ -81,7 +73,7 @@ export default function Register() {
                     </p>
                 </div>
             </div>
-        </>
+        </div>
     );
 }
 
