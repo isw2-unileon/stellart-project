@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react"
+import { Link } from "react-router-dom"
 import { getLoggedUser, logoutUser } from "@/service/apiService"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -65,7 +66,9 @@ export default function AvatarDropdown() {
                 {user ? (
                     <>
                         <DropdownMenuGroup>
-                            <DropdownMenuItem className="cursor-pointer">Profile</DropdownMenuItem>
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link to="/profile">Profile</Link>
+                            </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
                         </DropdownMenuGroup>
