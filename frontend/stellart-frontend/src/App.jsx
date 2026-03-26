@@ -3,6 +3,8 @@ import Landing from './pages/Landing';
 import { Layout } from './components/layout/Layout';
 import Register from './pages/Register';
 import Login from './pages/Login';
+import Profile from './pages/Profile';
+import UploadArtwork from './pages/UploadArtwork';
 
 export default function App() {
 	return (
@@ -10,6 +12,8 @@ export default function App() {
 			<Route path="/" element={<Layout> <Landing /> </Layout>} />
 			<Route path="/register" element={<Layout> <Register /> </Layout>} />
 			<Route path="/login" element={<Layout> <Login /> </Layout>} />
+			<Route path="/profile" element={<Layout> <Profile /> </Layout>} />
+			<Route path="/profile/upload" element={<Layout> <UploadArtwork /> </Layout>} />
 		</Routes>
 	)
 }
