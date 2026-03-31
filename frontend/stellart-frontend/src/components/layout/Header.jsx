@@ -51,7 +51,7 @@ function GeneralHeader() {
                 </div>
 
                 <nav className="hidden md:flex items-center gap-8">
-                    <a href="#" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Explore</a>
+                    <a href="/explore" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Explore</a>
                     <a href="#" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Comisions</a>
                     <a href="#" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Artists</a>
                 </nav>
