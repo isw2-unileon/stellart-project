@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { registerUser } from '../service/apiService';
 
 export default function Register() {
@@ -8,7 +7,6 @@ export default function Register() {
         email: '',
         password: ''
     });
-    const navigate = useNavigate();
 
     const handleChange = (e) => {
         setFormData({
