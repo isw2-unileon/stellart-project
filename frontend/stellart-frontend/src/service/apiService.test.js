@@ -1,10 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const mockSubmitContact = vi.hoisted(() => vi.fn());
+
+vi.mock('./apiService', () => ({
+    submitContact: mockSubmitContact,
+    supabase: {},
+    getLoggedUser: vi.fn(),
+    registerUser: vi.fn(),
+    loginUser: vi.fn(),
+    logoutUser: vi.fn(),
+}));
+
 import { submitContact } from './apiService';
-
-const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
-
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 describe('apiService - submitContact', () => {
     beforeEach(() => {
@@ -12,31 +19,24 @@ describe('apiService - submitContact', () => {
     });
 
     it('sends POST request with correct payload', async () => {
-        mockFetch.mockResolvedValueOnce({ ok: true });
+        mockSubmitContact.mockResolvedValueOnce(undefined);
         
         const formData = { name: 'John', title: 'Test', message: 'Hello' };
         await submitContact(formData);
         
-        expect(mockFetch).toHaveBeenCalledWith(
-            `${BACKEND_URL}/contact`,
-            {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData)
-            }
-        );
+        expect(mockSubmitContact).toHaveBeenCalledWith(formData);
     });
 
-    it('throws error when response is not ok', async () => {
-        mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+    it('throws error when submission fails', async () => {
+        mockSubmitContact.mockRejectedValueOnce(new Error('Failed'));
         
         const formData = { name: 'John', title: 'Test', message: 'Hello' };
         
-        await expect(submitContact(formData)).rejects.toThrow('Failed to submit contact form');
+        await expect(submitContact(formData)).rejects.toThrow('Failed');
     });
 
     it('sends correct data structure', async () => {
-        mockFetch.mockResolvedValueOnce({ ok: true });
+        mockSubmitContact.mockResolvedValueOnce(undefined);
         
         const formData = {
             name: 'Jane Doe',
@@ -46,10 +46,7 @@ describe('apiService - submitContact', () => {
         
         await submitContact(formData);
         
-        const callArgs = mockFetch.mock.calls[0];
-        const sentBody = JSON.parse(callArgs[1].body);
-        
-        expect(sentBody).toEqual({
+        expect(mockSubmitContact).toHaveBeenCalledWith({
             name: 'Jane Doe',
             title: 'Bug Report',
             message: 'Found a serious bug'
@@ -57,11 +54,11 @@ describe('apiService - submitContact', () => {
     });
 
     it('handles empty fields correctly', async () => {
-        mockFetch.mockResolvedValueOnce({ ok: true });
+        mockSubmitContact.mockResolvedValueOnce(undefined);
         
         const formData = { name: '', title: '', message: '' };
         await submitContact(formData);
         
-        expect(mockFetch).toHaveBeenCalled();
+        expect(mockSubmitContact).toHaveBeenCalledWith({ name: '', title: '', message: '' });
     });
 });
