@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(h handler.ProfileHandler) *chi.Mux {
+func InitRouter(h handler.ProfileHandler, ch handler.ContactHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -21,6 +21,8 @@ func InitRouter(h handler.ProfileHandler) *chi.Mux {
 		r.Get("/{id}", h.GetProfile)
 		r.Put("/", h.UpdateProfile)
 	})
+
+	r.Post("/contact", ch.SubmitContact)
 
 	return r
 }

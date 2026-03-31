@@ -40,3 +40,14 @@ export const logoutUser = async () => {
     if (error) throw error;
 };
 
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+
+export const submitContact = async ({ name, title, message }) => {
+    const response = await fetch(`${BACKEND_URL}/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, title, message }),
+    });
+    if (!response.ok) throw new Error('Failed to submit contact form');
+};
+
