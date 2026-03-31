@@ -1,23 +1,19 @@
 name: Stellart CI
 
-# El trigger: CUÁNDO se ejecuta el workflow (al hacer push o PR a main)
 on:
   push:
     branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 
-# Le decimos al robot dónde está nuestro código de React
-defaults:
-  run:
-    working-directory: ./frontend/stellart-frontend
-
-# Los jobs: agrupaciones de pasos que corren en una máquina virtual
 jobs:
-  # JOB 1: Linter (Falla rápido si hay errores de sintaxis)
-  lint:
-    name: Code Quality
+  # Frontend Jobs
+  frontend-lint:
+    name: Frontend Lint
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend/stellart-frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,13 +21,15 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ./frontend/stellart-frontend/package-lock.json
-      - run: npm install
+      - run: npm ci
       - run: npm run lint
 
-  # JOB 2: Tests y Build (Corre en paralelo al Job 1)
-  test-and-build:
-    name: Build & Test
+  frontend-test:
+    name: Frontend Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend/stellart-frontend
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -39,6 +37,79 @@ jobs:
           node-version: '20'
           cache: 'npm'
           cache-dependency-path: ./frontend/stellart-frontend/package-lock.json
-      - run: npm install
-      - run: npm run test
+      - run: npm ci
+      - run: npm run test -- --coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: ./frontend/stellart-frontend/coverage/
+          retention-days: 7
+
+  frontend-build:
+    name: Frontend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend/stellart-frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./frontend/stellart-frontend/package-lock.json
+      - run: npm ci
       - run: npm run build
+
+  # Backend Jobs
+  backend-lint:
+    name: Backend Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go.sum
+      - run: go vet ./...
+
+  backend-test:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go.sum
+      - run: go mod download
+      - run: go test -v -coverprofile=coverage.out ./src/handler/...
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: backend-coverage
+          path: ./backend/coverage.out
+          retention-days: 7
+      - name: Display coverage
+        run: go tool cover -func=coverage.out
+
+  backend-build:
+    name: Backend Build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: go.sum
+      - run: go build -o stellart-server .
