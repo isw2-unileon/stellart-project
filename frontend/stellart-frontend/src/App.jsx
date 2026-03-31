@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Profile from './pages/Profile';
 import UploadArtwork from './pages/UploadArtwork';
 import Explore from './pages/Explore';
+import Contact from './pages/Contact';
 
 export default function App() {
 	return (
@@ -16,6 +17,7 @@ export default function App() {
 			<Route path="/profile" element={<Layout> <Profile /> </Layout>} />
 			<Route path="/profile/upload" element={<Layout> <UploadArtwork /> </Layout>} />
 			<Route path="/explore" element={<Layout> <Explore /> </Layout>} />
+			<Route path="/contact" element={<Layout> <Contact /> </Layout>} />
 		</Routes>
 	)
 }

@@ -54,6 +54,7 @@ function GeneralHeader() {
                     <a href="/explore" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Explore</a>
                     <a href="#" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Comisions</a>
                     <a href="#" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Artists</a>
+                    <Link to="/contact" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Support</Link>
                 </nav>
 
                 <div className="flex items-center gap-4">
