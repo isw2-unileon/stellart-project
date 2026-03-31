@@ -23,18 +23,18 @@ export default function Landing() {
 
                 <div className="relative z-10 max-w-2xl">
                     <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 text-slate-900">
-                        Saca la <br />
-                        <span className="text-yellow-500 underline decoration-8 underline-offset-8">estrella</span> <br />
-                        dentro de ti
+                        Bring out the <br />
+                        <span className="text-yellow-500 underline decoration-8 underline-offset-8">star</span> <br />
+                        inside of you
                     </h1>
                     
                     <p className="font-sans text-lg md:text-xl text-slate-500 mb-10 max-w-md leading-relaxed">
-                        Conecta con la comunidad de artistas freelance más vibrante. Comisiona obras únicas o monetiza tu talento.
+                        Connect with the most vibrant community of freelance artists. Commission unique works or monetize your talent.
                     </p>
 
                     <div className="flex gap-4">
                         <button className="bg-black text-white px-8 py-4 rounded-full font-bold hover:bg-yellow-400 hover:text-black transition-colors shadow-lg">
-                            Explorar Galería
+                            Explore gallery.
                         </button>
                     </div>
                 </div>
