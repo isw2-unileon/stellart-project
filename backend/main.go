@@ -32,7 +32,10 @@ func main() {
 	profileSvc := service.NewProfileService(profileRepo)
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
-	r := router.InitRouter(profileHdl)
+	supportEmail := os.Getenv("CONTACT_EMAIL")
+	contactHdl := handler.NewContactHandlerWithEnv(supportEmail)
+
+	r := router.InitRouter(profileHdl, contactHdl)
 
 	log.Printf("Server listening on: http://localhost:%s", port)
 
