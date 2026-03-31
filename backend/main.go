@@ -1,39 +1,42 @@
 package main
 
 import (
-	"database/sql"
+	"log"
 	"net/http"
-	"proyecto-grupo-5/backend/src/database"
-	"proyecto-grupo-5/backend/src/handler"
-	"proyecto-grupo-5/backend/src/repository"
-	"proyecto-grupo-5/backend/src/router"
-	"proyecto-grupo-5/backend/src/service"
-	"proyecto-grupo-5/backend/src/settings"
+	"os"
 
-	"github.com/go-chi/chi/v5"
+	"stellart/backend/src/database/connection"
+	"stellart/backend/src/database/repository/postgres"
+	"stellart/backend/src/handler"
+	"stellart/backend/src/router"
+	"stellart/backend/src/service"
+
 	"github.com/joho/godotenv"
 )
 
 func main() {
-	var db *sql.DB
-	var svc service.UserService
-	var h handler.UserHandler
-	var r *chi.Mux
-	var rep repository.UserRepository
+	if err := godotenv.Load(); err != nil {
+		godotenv.Load("../.env")
+	}
 
-	_ = godotenv.Load("../.env")
+	dbURL := os.Getenv("DATABASE_URL")
+	if dbURL == "" {
+		log.Fatal("Error: DATABASE_URL not set")
+	}
 
-	cfg := settings.LoadConfig()
-
-	db = database.InitDB(cfg.DatabaseURL)
+	port := "3001"
+	db := connection.InitDB(dbURL)
 	defer db.Close()
 
-	rep = repository.NewUserRepository(db)
-	svc = service.NewUserService(rep)
-	h = handler.NewUserHandler(svc)
+	profileRepo := postgres.NewProfileRepository(db)
+	profileSvc := service.NewProfileService(profileRepo)
+	profileHdl := handler.NewProfileHandler(profileSvc)
 
-	r = router.InitRouter(h)
+	r := router.InitRouter(profileHdl)
 
-	println("Server started at http://localhost:3000")
-	http.ListenAndServe(":3000", r)
+	log.Printf("Server listening on: http://localhost:%s", port)
+
+	if err := http.ListenAndServe(":"+port, r); err != nil {
+		log.Fatalf("Fatal: %v", err)
+	}
 }
