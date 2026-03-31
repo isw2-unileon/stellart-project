@@ -1,13 +1,13 @@
 package router
 
 import (
-	"proyecto-grupo-5/backend/src/handler"
+	"stellart/backend/src/handler"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(userHandler handler.UserHandler) *chi.Mux {
+func InitRouter(h handler.ProfileHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -15,8 +15,12 @@ func InitRouter(userHandler handler.UserHandler) *chi.Mux {
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
-		MaxAge:           300,
 	}))
+
+	r.Route("/profiles", func(r chi.Router) {
+		r.Get("/{id}", h.GetProfile)
+		r.Put("/", h.UpdateProfile)
+	})
 
 	return r
 }

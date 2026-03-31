@@ -1,4 +1,4 @@
-module proyecto-grupo-5
+module stellart
 
 go 1.25.0
 
@@ -9,3 +9,5 @@ require (
 )
 
 require github.com/go-chi/cors v1.2.2
+
+require github.com/google/uuid v1.6.0 // indirect
