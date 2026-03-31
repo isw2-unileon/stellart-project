@@ -32,6 +32,7 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 		artwork.ArtistID,
 		pq.Array(artwork.Tags),
 		pq.Array(artwork.Embedding),
+		artwork.Price,
 	).Scan(&artwork.ID, &artwork.CreatedAt)
 
 	return err
@@ -59,6 +60,7 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 			&artwork.Description,
 			&artwork.ImageURL,
 			&artwork.ArtistID,
+			&artwork.Price,
 			pq.Array(&artwork.Tags),
 			&artwork.CreatedAt,
 		)
@@ -85,6 +87,7 @@ func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
 		&artwork.Description,
 		&artwork.ImageURL,
 		&artwork.ArtistID,
+		&artwork.Price,
 		pq.Array(&artwork.Tags),
 		&artwork.CreatedAt,
 	)
@@ -121,6 +124,7 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 			&artwork.Description,
 			&artwork.ImageURL,
 			&artwork.ArtistID,
+			&artwork.Price,
 			pq.Array(&artwork.Tags),
 			&artwork.CreatedAt,
 		)

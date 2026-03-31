@@ -35,7 +35,7 @@ export default function Register() {
                         <input 
                             name="name"
                             type="text" 
-                            placeholder="Nombre completo" 
+                            placeholder="Full name" 
                             value={formData.name}
                             onChange={handleChange}
                             className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white outline-none transition-all text-base" 
@@ -44,7 +44,7 @@ export default function Register() {
                         <input 
                             name="email"
                             type="email" 
-                            placeholder="Correo electrónico" 
+                            placeholder="Email" 
                             value={formData.email}
                             onChange={handleChange}
                             className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white outline-none transition-all text-base" 
@@ -53,7 +53,7 @@ export default function Register() {
                         <input 
                             name="password"
                             type="password" 
-                            placeholder="Contraseña" 
+                            placeholder="Password" 
                             value={formData.password}
                             onChange={handleChange}
                             className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 focus:bg-white outline-none transition-all text-base" 
@@ -63,11 +63,11 @@ export default function Register() {
                             type="submit" 
                             className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors mt-2 text-lg shadow-md"
                         >
-                            Registrarse
+                            Sign in
                         </button>
                     </form>
                     <p className="text-center text-base text-slate-500 mt-8">
-                        ¿Ya tienes cuenta? <a href="/login" className="text-black font-bold hover:underline">Inicia sesión</a>
+                        ¿Already registered? <a href="/login" className="text-black font-bold hover:underline">Log in</a>
                     </p>
                 </div>
             </div>

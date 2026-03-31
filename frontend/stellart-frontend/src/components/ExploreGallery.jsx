@@ -1,0 +1,135 @@
+import { useState } from 'react';
+
+export default function ExploreGallery() {
+    
+    const [selectedArtwork, setSelectedArtwork] = useState(null);
+
+    // ARTWORK GALLERY PLACEHOLDER (TODO: Replace with dynamic data from the backend)
+    const galleryArtworks = [
+        { id: 1, title: "Neon City", artist: "@cyber_artist", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop" },
+        { id: 2, title: "Abstract Mind", artist: "@creative_soul", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070&auto=format&fit=crop" },
+        { id: 3, title: "Forest Guardian", artist: "@nature_art", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" },
+        { id: 4, title: "Space Odyssey", artist: "@star_gazer", img: "https://images.unsplash.com/photo-1462331940025-496dfbfc7564?q=80&w=2059&auto=format&fit=crop" },
+        { id: 5, title: "Digital Samurai", artist: "@blade_runner", img: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=2070&auto=format&fit=crop" },
+        { id: 6, title: "Ocean Whisper", artist: "@blue_waves", img: "https://images.unsplash.com/photo-1580136608260-4ebf15facb4b?q=80&w=2070&auto=format&fit=crop" },
+        { id: 7, title: "Urban Decay", artist: "@street_vision", img: "https://images.unsplash.com/photo-1605721911519-3dfeb3be25e7?q=80&w=2070&auto=format&fit=crop" },
+        { id: 8, title: "Solar Flare", artist: "@astro_painter", img: "https://images.unsplash.com/photo-1614730321146-b6fa6a46bcb4?q=80&w=1974&auto=format&fit=crop" },
+        { id: 9, title: "Lost Temple", artist: "@mythos_art", img: "https://images.unsplash.com/photo-1564399580075-5dfe19c205f3?q=80&w=2070&auto=format&fit=crop" },
+        { id: 10, title: "Crystal Cave", artist: "@gem_creator", img: "https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=2080&auto=format&fit=crop" },
+    ];
+
+    return (
+        <section className="max-w-360 mx-auto px-6 py-24">
+            <div className="flex items-center justify-between mb-12">
+                <h2 className="text-3xl font-black tracking-tight text-slate-900">
+                    Trending Now
+                </h2>
+            </div>
+
+            <div className="flex items-start gap-8 transition-all duration-500 ease-in-out relative">
+                
+                {/* LEFT SIDE: Grid */}
+                <div className={`transition-all duration-500 ease-in-out ${selectedArtwork ? 'w-full lg:w-[65%]' : 'w-full'}`}>
+                    
+                    {/* The Grid dynamically changes columns based on the available space */}
+                    <div className={`grid gap-6 transition-all duration-500 ${selectedArtwork ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-5'}`}>
+                        {galleryArtworks.map((art) => (
+                            <article 
+                                key={art.id} 
+                                onClick={() => setSelectedArtwork(art)}
+                                className={`group cursor-pointer rounded-2xl transition-all duration-300 ${selectedArtwork?.id === art.id ? 'ring-4 ring-yellow-400 ring-offset-2' : 'hover:-translate-y-1'}`}
+                            >
+                                <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-4 shadow-sm group-hover:shadow-md transition-shadow">
+                                    <img 
+                                        src={art.img} 
+                                        alt={art.title} 
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                                    />
+                                </div>
+                                <div className="flex justify-between items-start px-1">
+                                    <div className="flex-1 min-w-0 pr-2">
+                                        <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
+                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1 truncate">{art.artist}</p>
+                                    </div>
+                                    {/* LIKE BUTTON AS PLACEHOLDER (TODO FEATURE) */}
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation(); // Prevents opening the panel when clicking exactly on the heart
+                                            console.log("Liked!");
+                                        }}
+                                        className="text-slate-300 hover:text-red-500 transition-colors shrink-0"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                        </svg>
+                                    </button>
+                                    
+                                </div>
+                                    <div className="px-1 pb-1">
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevents opening the side panel
+                                                console.log("Redirect to checkout!");
+                                            }}
+                                            className="w-full mt-3 py-2.5 bg-yellow-400 text-slate-900 font-bold text-xs uppercase tracking-widest rounded-xl shadow-sm border border-yellow-500 hover:bg-yellow-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 group-hover/btn:-rotate-12 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                                                <path d="M3 6h18"/>
+                                                <path d="M16 10a4 4 0 0 1-8 0"/>
+                                            </svg>
+                                            Add to the cart
+                                        </button>
+                                    </div>
+                            </article>
+                        ))}
+                    </div>
+                </div>
+
+                {/* RIGHT SIDE: The Details Panel */}
+                <aside 
+                    className={`transition-all duration-500 ease-in-out overflow-hidden sticky top-8 bg-slate-50 rounded-3xl border border-slate-200 shadow-xl flex flex-col ${selectedArtwork ? 'w-full lg:w-[35%] opacity-100 p-6' : 'w-0 opacity-0 p-0 border-none'}`}
+                >
+                    {selectedArtwork && (
+                        <>
+                            {/* Close Button */}
+                            <button 
+                                onClick={() => setSelectedArtwork(null)}
+                                className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors shadow-sm"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+
+                            {/* Artwork Large Image */}
+                            <div className="w-full aspect-square rounded-2xl overflow-hidden mb-6 bg-slate-200 mt-2">
+                                <img src={selectedArtwork.img} alt={selectedArtwork.title} className="w-full h-full object-cover" />
+                            </div>
+
+                            {/* Artwork Info */}
+                            <div>
+                                <h2 className="text-2xl font-black tracking-tight text-slate-900">{selectedArtwork.title}</h2>
+                                <p className="text-yellow-600 font-bold uppercase tracking-widest text-sm mt-1">{selectedArtwork.artist}</p>
+                                
+                                <div className="mt-6 flex gap-3">
+                                    <button className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-yellow-400 hover:text-slate-900 transition-colors shadow-md">
+                                        View Full Profile
+                                    </button>
+                                </div>
+
+                                <div className="mt-8 pt-6 border-t border-slate-200">
+                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Details</h4>
+                                    <p className="text-slate-600 text-sm leading-relaxed">
+                                        This is a placeholder description for the artwork. In the future, this data will be pulled from your database, displaying the artist's inspiration, the tools used, and maybe the price if it's open for commissions.
+                                    </p>
+                                </div>
+                            </div>
+                        </>
+                    )}
+                </aside>
+
+            </div>
+        </section>
+    );
+}

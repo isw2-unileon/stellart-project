@@ -23,13 +23,13 @@ export default function Login() {
 
     return (
         <div className="flex flex-col items-center py-12">
-            <h1 className="text-5xl font-black mb-8 tracking-tighter text-[#0f172a]">Iniciar Sesión</h1>
+            <h1 className="text-5xl font-black mb-8 tracking-tighter text-[#0f172a]">Log in</h1>
             <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-sm border border-slate-100">
                 <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                     <input 
                         name="email"
                         type="email" 
-                        placeholder="Correo electrónico" 
+                        placeholder="Email" 
                         onChange={handleChange}
                         className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 outline-none transition-all" 
                         required
@@ -37,13 +37,13 @@ export default function Login() {
                     <input 
                         name="password"
                         type="password" 
-                        placeholder="Contraseña" 
+                        placeholder="Password" 
                         onChange={handleChange}
                         className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 outline-none transition-all" 
                         required
                     />
                     <button type="submit" className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors mt-2 text-lg">
-                        Entrar
+                        Step in
                     </button>
                 </form>
             </div>

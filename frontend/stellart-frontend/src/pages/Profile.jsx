@@ -6,12 +6,12 @@ import SkillBar from "../components/SkillBar";
 import ProfileGallery from "../components/ProfileGallery";
 
 const DEFAULT_SKILLS = [
-    { label: "Dibujo a lápiz", value: 70, color: "bg-yellow-500" },
-    { label: "Pintura digital", value: 55, color: "bg-amber-500" },
-    { label: "Acuarela", value: 40, color: "bg-sky-500" },
-    { label: "Ilustración vectorial", value: 60, color: "bg-emerald-500" },
-    { label: "Concept Art", value: 45, color: "bg-violet-500" },
-    { label: "Pixel Art", value: 30, color: "bg-rose-500" },
+    { label: "Traditional art", value: 0, color: "bg-yellow-500" },
+    { label: "Digital art", value: 0, color: "bg-amber-500" },
+    { label: "Character design", value: 0, color: "bg-sky-500" },
+    { label: "3D art", value: 0, color: "bg-emerald-500" },
+    { label: "Concept Art", value: 0, color: "bg-violet-500" },
+    { label: "Pixel Art", value: 0, color: "bg-rose-500" },
 ];
 
 export default function Profile() {
@@ -108,13 +108,13 @@ export default function Profile() {
                     </div>
                     <div className="flex gap-3 mt-4">
                         <span className="px-4 py-1.5 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-200">
-                            Ilustración
+                            Ilustration
                         </span>
                         <span className="px-4 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200">
                             Concept Art
                         </span>
                         <span className="px-4 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200">
-                            Diseño
+                            Design
                         </span>
                     </div>
                 </div>
@@ -125,7 +125,7 @@ export default function Profile() {
                     
                     <div>
                         <div className="flex items-center gap-3 mb-6">
-                            <h2 className="text-2xl font-black tracking-tight text-slate-900">Galería</h2>
+                            <h2 className="text-2xl font-black tracking-tight text-slate-900">Gallery</h2>
                             <div className="h-1 flex-1 bg-slate-100 rounded-full" />
                         </div>
                         <ProfileGallery />
@@ -136,7 +136,7 @@ export default function Profile() {
                 </div>
                 <div>
                     <div className="flex items-center gap-3 mb-6">
-                        <h2 className="text-2xl font-black tracking-tight text-slate-900">Destrezas</h2>
+                        <h2 className="text-2xl font-black tracking-tight text-slate-900">Skills</h2>
                         <div className="h-1 flex-1 bg-slate-100 rounded-full" />
                     </div>
                     <div className="bg-white rounded-3xl border border-slate-100 shadow-sm p-6 flex flex-col gap-6">
