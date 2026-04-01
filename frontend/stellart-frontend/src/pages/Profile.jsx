@@ -66,35 +66,33 @@ export default function Profile() {
         fetchProfileData();
     }, [navigate]);
 
+    const handleSaveProfile = async () => {
+        try {
+            const profileData = {
+                fullName: displayName,
+                biography: bio,
+                avatarUrl: avatarUrl
+            };
+
+            const skillsData = skills.map(s => ({
+                profile_id: user.id,
+                skill_id: s.skill_id,
+                level: parseInt(s.value)
+            }));
+
+            await updateProfileAndSkills(user.id, profileData, skillsData);
+            console.log("Datos guardados con éxito");
+        } catch (error) {
+            console.error("Error al guardar:", error);
+        }
+    };
+
+    // 2. El useEffect ahora solo se encarga de llamar a la función (Autoguardado)
     useEffect(() => {
         if (!isLoading && user?.id && skills.length > 0) {
-            
-            async function updateSkills() {
-                try {
-                    const profileData = {
-                        fullName: displayName, 
-                        biography: bio,
-                        avatarUrl: avatarUrl
-                    };
-
-                    const skillsData = skills.map(s => ({
-                        profile_id: user.id,
-                        skill_id: s.skill_id,
-                        level: parseInt(s.value)
-                    }));
-
-                    await updateProfileAndSkills(user.id, profileData, skillsData);
-                    
-                    console.log("Profile and skills autosaved successfully");
-                } catch (error) {
-                    console.error("Error autosaving profile data:", error);
-                }
-            }
-
             const timeoutId = setTimeout(() => {
-                updateSkills();
-            }, 1000); // Save after 1 second of inactivity.
-
+                handleSaveProfile();
+            }, 1000);
             return () => clearTimeout(timeoutId);
         }
     }, [bio, skills, isLoading, user?.id, displayName, avatarUrl]);
@@ -211,7 +209,7 @@ export default function Profile() {
                         ))}
                     </div>
                     <Button variant="outline"
-                    onclick={() => updateSkills()}
+                    onclick={handleSaveProfile}
                     className="w-full mt-6 cursor-pointer font-bold bg-yellow-500 text-slate-900 transition-all duration-300 hover:brightness-105 hover:bg-yellow-500 hover:translate-y-[-2px] shadow-md hover:shadow-lg">
                         Save skills
                     </Button>
