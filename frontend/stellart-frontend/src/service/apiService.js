@@ -51,3 +51,27 @@ export const submitContact = async ({ name, title, message }) => {
     if (!response.ok) throw new Error('Failed to submit contact form');
 };
 
+
+
+export const uploadImage = async (file) => {
+  if (!file) throw new Error("No file provided");
+
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { data, error } = await supabase.storage
+    .from('artworks')        
+    .upload(fileName, file);
+
+  if (error) throw error;
+
+  const { data: urlData } = supabase.storage
+    .from('artworks')
+    .getPublicUrl(fileName);
+
+  if (!urlData?.publicUrl) {
+    throw new Error("Could not generate public URL");
+  }
+
+  return urlData.publicUrl;
+};
+

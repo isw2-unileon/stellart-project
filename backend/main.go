@@ -28,17 +28,23 @@ func main() {
 	db := connection.InitDB(dbURL)
 	defer db.Close()
 
+	// Profile
 	profileRepo := postgres.NewProfileRepository(db)
 	profileSvc := service.NewProfileService(profileRepo)
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
+	// Contact
 	supportEmail := os.Getenv("CONTACT_EMAIL")
 	contactHdl := handler.NewContactHandlerWithEnv(supportEmail)
 
-	r := router.InitRouter(profileHdl, contactHdl)
+	// Artwork
+	artworkRepo := postgres.NewArtworkRepository(db)
+	artworkSvc := service.NewArtworkService(artworkRepo)
+	artworkHdl := handler.NewArtworkHandler(artworkSvc)
+
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl)
 
 	log.Printf("Server listening on: http://localhost:%s", port)
-
 	if err := http.ListenAndServe(":"+port, r); err != nil {
 		log.Fatalf("Fatal: %v", err)
 	}
