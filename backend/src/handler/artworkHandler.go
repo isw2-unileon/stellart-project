@@ -23,6 +23,10 @@ func (h *ArtworkHandler) CreateArtwork(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
+	if err := h.artworkService.CreateArtwork(&artwork); err != nil {
+		http.Error(w, "Failed to create artwork: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(artwork)
