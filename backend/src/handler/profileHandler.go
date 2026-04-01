@@ -45,11 +45,15 @@ func (h *ProfileHandler) GetProfileSkills(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
 	var req UpdateProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
+
+	req.Profile.ID = id
 
 	if err := h.profileService.UpdateProfile(&req.Profile, req.Skills); err != nil {
 		http.Error(w, "Update failed", http.StatusInternalServerError)
@@ -57,4 +61,14 @@ func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	w.WriteHeader(http.StatusNoContent)
+}
+
+func (h *ProfileHandler) GetMasterSkills(w http.ResponseWriter, r *http.Request) {
+	skills, err := h.profileService.GetMasterSkills()
+	if err != nil {
+		http.Error(w, "Failed to fetch master skills", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(skills)
 }

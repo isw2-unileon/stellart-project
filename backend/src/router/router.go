@@ -19,8 +19,10 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 
 	// Profiles
 	r.Route("/profiles", func(r chi.Router) {
+		r.Get("/{id}/skills", ph.GetProfileSkills)
 		r.Get("/{id}", ph.GetProfile)
-		r.Put("/", ph.UpdateProfile)
+		r.Put("/{id}", ph.UpdateProfile)
+		r.Get("/master-skills", ph.GetMasterSkills)
 	})
 
 	// Contact

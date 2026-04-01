@@ -24,3 +24,7 @@ func (s *ProfileService) UpdateProfile(p *models.Profile, skills []models.Profil
 func (s *ProfileService) GetProfileSkills(profileID string) ([]models.ProfileSkill, error) {
 	return s.repo.GetSkillsByProfileID(profileID)
 }
+
+func (s *ProfileService) GetMasterSkills() ([]models.MasterSkill, error) {
+	return s.repo.GetMasterSkills()
+}
