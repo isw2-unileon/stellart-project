@@ -30,7 +30,7 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 		artwork.ImageURL,
 		artwork.ArtistID,
 		pq.Array(artwork.Tags),
-		formatVector(artwork.Embedding), // Conversión local para SQL
+		formatVector(artwork.Embedding),
 		artwork.Price,
 	).Scan(&artwork.ID, &artwork.CreatedAt)
 
