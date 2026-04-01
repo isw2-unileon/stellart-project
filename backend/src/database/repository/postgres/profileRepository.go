@@ -72,7 +72,7 @@ func (r *postgresProfileRepo) Update(profile *models.Profile, skills []models.Pr
 	if len(skills) > 0 {
 		querySkills := `
 			INSERT INTO public.profile_skills (profile_id, skill_id, level) 
-			VALUES ($1, $2, $3)`
+			VALUES ($1, $2, $3) Returning id`
 
 		for i, s := range skills {
 			var newID string
@@ -117,5 +117,30 @@ func (r *postgresProfileRepo) GetSkillsByProfileID(profileID string) ([]models.P
 		return nil, err
 	}
 
+	return skills, nil
+}
+
+func (r *postgresProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {
+	query := `SELECT id, name FROM public.master_skills`
+	rows, err := r.db.Query(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	defer rows.Close()
+
+	var skills []models.MasterSkill
+	for rows.Next() {
+		var s models.MasterSkill
+		err := rows.Scan(&s.ID, &s.Name)
+		if err != nil {
+			return nil, err
+		}
+		skills = append(skills, s)
+	}
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
 	return skills, nil
 }

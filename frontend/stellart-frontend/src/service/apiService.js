@@ -73,3 +73,45 @@ export const uploadImage = async (file) => {
   return urlData.publicUrl;
 };
 
+export const getMasterSkills = async() => {
+    const response = await fetch(`${BACKEND_URL}/profiles/master-skills`, {
+        method: 'GET',
+        headers:  { 'Content-Type': 'application/json' },
+    });
+
+    if (!response.ok) throw new Error('Failed to get master skills');
+    return response.json();
+}
+
+
+export const getProfileSkills = async (userId) => {
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}/skills`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    
+    if (!response.ok) throw new Error('Failed to fetch user skills');
+    return response.json();
+};
+
+export const updateProfileAndSkills = async (userId, profileData, skillsData) => {
+    const payload = {
+        profile: {
+            id: userId,
+            full_name: profileData.fullName,
+            biography: profileData.biography,
+            avatar_url: profileData.avatarUrl
+        },
+        skills: skillsData
+    };
+
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+    });
+    
+    if (!response.ok) throw new Error('Failed to update profile and skills');
+    
+    return true; 
+};

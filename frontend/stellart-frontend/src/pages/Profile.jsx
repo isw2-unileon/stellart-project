@@ -4,43 +4,104 @@ import { getLoggedUser } from "../service/apiService";
 import { Link } from "react-router-dom"
 import SkillBar from "../components/SkillBar";
 import ProfileGallery from "../components/ProfileGallery";
+import { Button } from "../components/ui/button";
+import { getMasterSkills, getProfileSkills, updateProfileAndSkills } from "../service/apiService";
 
-const DEFAULT_SKILLS = [
-    { label: "Traditional art", value: 0, color: "bg-yellow-500" },
-    { label: "Digital art", value: 0, color: "bg-amber-500" },
-    { label: "Character design", value: 0, color: "bg-sky-500" },
-    { label: "3D art", value: 0, color: "bg-emerald-500" },
-    { label: "Concept Art", value: 0, color: "bg-violet-500" },
-    { label: "Pixel Art", value: 0, color: "bg-rose-500" },
-];
 
 export default function Profile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
-    const [skills, setSkills] = useState(DEFAULT_SKILLS);
+    const [skills, setSkills] = useState([]);
     const navigate = useNavigate();
     const [bio, setBio] = useState("Biography");
     const maxBioLength = 150;
     const textareaRef = useRef(null);
+
+    const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
+    const avatarUrl = user?.user_metadata?.avatar_url || "";
+
+    useEffect(() => {
+        async function fetchProfileData() {
+            try {
+                const loggedUser = await getLoggedUser();
+                if (!loggedUser) {
+                    navigate("/login");
+                    return;
+                }
+                setUser(loggedUser);
+
+                // Make both parallel requests: Get master skills and get user's saved skills (if any) for better performance.
+                const [masterSkills, userSkills] = await Promise.all([
+                    getMasterSkills(),
+                    getProfileSkills(loggedUser.id).catch(() => []) 
+                ]);
+
+                // Define the colors since the db doesn't save them. They are asigned in order of the master skills obtained from the backend.
+                const colors = [
+                    "bg-yellow-500", "bg-amber-500", "bg-sky-500", 
+                    "bg-emerald-500", "bg-violet-500", "bg-rose-500"
+                ];
+
+                const formattedSkills = masterSkills.map((master, index) => {
+                    // Search if the user has this skill saved. If so, we take its level. If not, we set it to 0 (not selected).
+                    const savedSkill = (userSkills || []).find(s => s.skill_id === master.id);
+                    
+                    return {
+                        skill_id: master.id,
+                        label: master.name,
+                        value: savedSkill ? savedSkill.level : 0, // If the user has this skill, use its level. Otherwise, default to 0.
+                        color: colors[index % colors.length] 
+                    };
+                });
+
+                setSkills(formattedSkills);
+
+            } catch (error) {
+                console.error("Error al cargar los datos del perfil:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        }
+
+        fetchProfileData();
+    }, [navigate]);
+
+    const handleSaveProfile = async () => {
+        try {
+            const profileData = {
+                fullName: displayName,
+                biography: bio,
+                avatarUrl: avatarUrl
+            };
+
+            const skillsData = skills.map(s => ({
+                profile_id: user.id,
+                skill_id: s.skill_id,
+                level: parseInt(s.value)
+            }));
+
+            await updateProfileAndSkills(user.id, profileData, skillsData);
+            console.log("Datos guardados con éxito");
+        } catch (error) {
+            console.error("Error al guardar:", error);
+        }
+    };
+
+    // 2. El useEffect ahora solo se encarga de llamar a la función (Autoguardado)
+    useEffect(() => {
+        if (!isLoading && user?.id && skills.length > 0) {
+            const timeoutId = setTimeout(() => {
+                handleSaveProfile();
+            }, 1000);
+            return () => clearTimeout(timeoutId);
+        }
+    }, [bio, skills, isLoading, user?.id, displayName, avatarUrl]);
 
     const handleBioChange = (e) => {
         setBio(e.target.value);
         e.target.style.height = "auto"; 
         e.target.style.height = `${e.target.scrollHeight}px`; 
     };
-
-    useEffect(() => {
-        async function fetchUser() {
-            const loggedUser = await getLoggedUser();
-            if (!loggedUser) {
-                navigate("/login");
-                return;
-            }
-            setUser(loggedUser);
-            setIsLoading(false);
-        }
-        fetchUser();
-    }, [navigate]);
 
     // Adjust the textarea when the page is loaded and in case the textarea really exists.
     useEffect(() => {
@@ -63,9 +124,6 @@ export default function Profile() {
             </div>
         );
     }
-
-    const displayName = user.user_metadata?.full_name || user.email?.split("@")[0];
-    const avatarUrl = user.user_metadata?.avatar_url;
 
     return (
         <div className="max-w-5xl mx-auto px-6 py-12">
@@ -150,6 +208,11 @@ export default function Profile() {
                             />
                         ))}
                     </div>
+                    <Button variant="outline"
+                    onclick={handleSaveProfile}
+                    className="w-full mt-6 cursor-pointer font-bold bg-yellow-500 text-slate-900 transition-all duration-300 hover:brightness-105 hover:bg-yellow-500 hover:translate-y-[-2px] shadow-md hover:shadow-lg">
+                        Save skills
+                    </Button>
                 </div>
             </div>
         </div>
