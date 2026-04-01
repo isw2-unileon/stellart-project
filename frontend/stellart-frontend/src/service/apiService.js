@@ -51,14 +51,12 @@ export const submitContact = async ({ name, title, message }) => {
     if (!response.ok) throw new Error('Failed to submit contact form');
 };
 
-
-
 export const uploadImage = async (file) => {
   if (!file) throw new Error("No file provided");
 
   const fileName = `${Date.now()}_${file.name}`;
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('artworks')        
     .upload(fileName, file);
 
