@@ -1,21 +1,24 @@
-import { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { getLoggedUser } from "../service/apiService";
-import { Link } from "react-router-dom"
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { toast } from "sonner";
 import SkillBar from "../components/SkillBar";
 import ProfileGallery from "../components/ProfileGallery";
 import { Button } from "../components/ui/button";
-import { getMasterSkills, getProfileSkills, updateProfileAndSkills } from "../service/apiService";
-
+import { 
+    getLoggedUser, 
+    getMasterSkills, 
+    getProfileSkills, 
+    updateProfileAndSkills 
+} from "../service/apiService";
 
 export default function Profile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [skills, setSkills] = useState([]);
-    const navigate = useNavigate();
     const [bio, setBio] = useState("Biography");
-    const maxBioLength = 150;
+    const navigate = useNavigate();
     const textareaRef = useRef(null);
+    const maxBioLength = 150;
 
     const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
     const avatarUrl = user?.user_metadata?.avatar_url || "";
@@ -30,43 +33,38 @@ export default function Profile() {
                 }
                 setUser(loggedUser);
 
-                // Make both parallel requests: Get master skills and get user's saved skills (if any) for better performance.
                 const [masterSkills, userSkills] = await Promise.all([
                     getMasterSkills(),
                     getProfileSkills(loggedUser.id).catch(() => []) 
                 ]);
 
-                // Define the colors since the db doesn't save them. They are asigned in order of the master skills obtained from the backend.
                 const colors = [
                     "bg-yellow-500", "bg-amber-500", "bg-sky-500", 
                     "bg-emerald-500", "bg-violet-500", "bg-rose-500"
                 ];
 
                 const formattedSkills = masterSkills.map((master, index) => {
-                    // Search if the user has this skill saved. If so, we take its level. If not, we set it to 0 (not selected).
                     const savedSkill = (userSkills || []).find(s => s.skill_id === master.id);
-                    
                     return {
                         skill_id: master.id,
                         label: master.name,
-                        value: savedSkill ? savedSkill.level : 0, // If the user has this skill, use its level. Otherwise, default to 0.
+                        value: savedSkill ? savedSkill.level : 0,
                         color: colors[index % colors.length] 
                     };
                 });
 
                 setSkills(formattedSkills);
-
             } catch (error) {
-                console.error("Error al cargar los datos del perfil:", error);
+                toast.error("Error loading profile data");
             } finally {
                 setIsLoading(false);
             }
         }
-
         fetchProfileData();
     }, [navigate]);
 
-    const handleSaveProfile = async () => {
+    const handleSaveProfile = useCallback(async () => {
+        if (!user?.id) return;
         try {
             const profileData = {
                 fullName: displayName,
@@ -81,21 +79,20 @@ export default function Profile() {
             }));
 
             await updateProfileAndSkills(user.id, profileData, skillsData);
-            console.log("Datos guardados con éxito");
+            toast.success("Profile updated");
         } catch (error) {
-            console.error("Error al guardar:", error);
+            toast.error("Save failed", { description: error.message });
         }
-    };
+    }, [user?.id, displayName, bio, avatarUrl, skills]);
 
-    // 2. El useEffect ahora solo se encarga de llamar a la función (Autoguardado)
     useEffect(() => {
         if (!isLoading && user?.id && skills.length > 0) {
             const timeoutId = setTimeout(() => {
                 handleSaveProfile();
-            }, 1000);
+            }, 2000);
             return () => clearTimeout(timeoutId);
         }
-    }, [bio, skills, isLoading, user?.id, displayName, avatarUrl]);
+    }, [handleSaveProfile, isLoading, user?.id, skills.length]);
 
     const handleBioChange = (e) => {
         setBio(e.target.value);
@@ -103,7 +100,6 @@ export default function Profile() {
         e.target.style.height = `${e.target.scrollHeight}px`; 
     };
 
-    // Adjust the textarea when the page is loaded and in case the textarea really exists.
     useEffect(() => {
         if (!isLoading && textareaRef.current) {
             textareaRef.current.style.height = "auto";
@@ -180,7 +176,6 @@ export default function Profile() {
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
                 <div className="lg:col-span-2 flex flex-col gap-8">
-                    
                     <div>
                         <div className="flex items-center gap-3 mb-6">
                             <h2 className="text-2xl font-black tracking-tight text-slate-900">Gallery</h2>
@@ -188,9 +183,7 @@ export default function Profile() {
                         </div>
                         <ProfileGallery />
                     </div>
-
                     <UploadArtworkLink />
-                    
                 </div>
                 <div>
                     <div className="flex items-center gap-3 mb-6">
@@ -208,9 +201,11 @@ export default function Profile() {
                             />
                         ))}
                     </div>
-                    <Button variant="outline"
-                    onclick={handleSaveProfile}
-                    className="w-full mt-6 cursor-pointer font-bold bg-yellow-500 text-slate-900 transition-all duration-300 hover:brightness-105 hover:bg-yellow-500 hover:translate-y-[-2px] shadow-md hover:shadow-lg">
+                    <Button 
+                        variant="outline"
+                        onClick={handleSaveProfile}
+                        className="w-full mt-6 cursor-pointer font-bold bg-yellow-500 text-slate-900 transition-all duration-300 hover:brightness-105 hover:bg-yellow-500 hover:translate-y-[-2px] shadow-md hover:shadow-lg"
+                    >
                         Save skills
                     </Button>
                 </div>
@@ -231,7 +226,6 @@ function UploadArtworkLink() {
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
                     </svg>
                 </div>
-                
                 <div>
                     <h3 className="text-lg font-bold text-slate-700 group-hover:text-slate-900 transition-colors">
                         Upload your new artwork!

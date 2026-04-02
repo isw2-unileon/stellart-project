@@ -17,7 +17,7 @@ export default function Login() {
             await loginUser(formData.email, formData.password);
             navigate("/");
             window.location.reload();
-        } catch (error) {
+        } catch (err) {
             toast.error("Error:", {
                 description: err.message
             });
