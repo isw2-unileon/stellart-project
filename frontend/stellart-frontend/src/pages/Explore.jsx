@@ -89,7 +89,7 @@ export default function Explore() {
             } else {
                 toast.info('No artworks match your search');
             }
-        } catch (error) {
+        } catch {
             toast.error('Error connecting to the search server');
         } finally {
             setIsLoading(false);
