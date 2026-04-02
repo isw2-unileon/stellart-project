@@ -88,8 +88,8 @@ export default function Profile() {
             const url = await uploadAvatar(file);
             setAvatar(url);
             toast.success("Avatar updated");
-        } catch (error) {
-            console.error("Avatar upload error: ", error);
+        } catch {
+            console.error("Avatar upload error.");
             toast.error("Failed to upload avatar");
         } finally {
             setIsUploadingAvatar(false);
