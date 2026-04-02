@@ -30,6 +30,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 
 	// Artworks
 	r.Route("/artworks", func(r chi.Router) {
+		r.Get("/search", ah.SearchArtworks)
 		r.Post("/", ah.CreateArtwork)
 		r.Get("/{id}", ah.GetArtwork)
 		r.Get("/artist/{artistId}", ah.GetArtworksByArtist)
