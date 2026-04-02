@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { uploadImage, getLoggedUser } from '../../service/apiService';
+import { toast } from 'sonner';
 
 export default function UploadInfo({ file }) {
+    const navigate = useNavigate();
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
     const [onSale, setOnSale] = useState(false);
@@ -25,16 +28,12 @@ export default function UploadInfo({ file }) {
         e.preventDefault();
         
         if (!file) {
-            alert("Please select an image first.");
+            toast.error("Please select an image first");
             return;
         }
-        if (!userId) {
-            alert("You must be logged in to publish artwork.");
-            return;
-        }
-
+   
         if (onSale && (!price || parseFloat(price) <= 0)) {
-            alert("Please enter a valid price greater than 0.");
+            toast.error("Please enter a valid price greater than 0");
             return;
         }
 
@@ -51,7 +50,8 @@ export default function UploadInfo({ file }) {
                 price: onSale ? parseFloat(price) : null 
             };
             
-            const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks`, {
+            const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+            const res = await fetch(`${BACKEND_URL}/artworks`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(payload),
@@ -61,18 +61,13 @@ export default function UploadInfo({ file }) {
                 const errorText = await res.text();
                 throw new Error(errorText || "Failed to save artwork details");
             }
-
-            alert("Artwork published successfully!");
-            
-            setTitle("");
-            setDescription("");
-            setTags([]);
-            setOnSale(false);
-            setPrice("");
+            toast.success("Artwork successfully published");
+            navigate('/explore'); 
 
         } catch (err) {
-            console.error("Submission error:", err);
-            alert("Error: " + err.message);
+            toast.error("Error:", {
+                description: err.message
+            });
         } finally {
             setLoading(false);
         }
@@ -82,7 +77,6 @@ export default function UploadInfo({ file }) {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault(); 
             const newTag = tagInput.trim();
-            // Evitar tags vacíos o duplicados
             if (newTag && !tags.includes(newTag)) {
                 setTags([...tags, newTag]);
             }
@@ -164,7 +158,7 @@ export default function UploadInfo({ file }) {
                 </label>
 
                 {onSale && (
-                    <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-200/70 antialiased transform transition-all duration-300 ease-out origin-top scale-y-100 opacity-100">
+                    <div className="flex flex-col gap-2 mt-2 pt-4 border-t border-slate-200/70">
                         <label className="text-sm font-bold text-slate-700">
                             Set Price (USD) <span className="text-red-400">*</span>
                         </label>

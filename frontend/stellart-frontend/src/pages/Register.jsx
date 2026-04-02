@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { registerUser } from '../service/apiService';
+import { toast } from 'sonner';
 
 export default function Register() {
     const [formData, setFormData] = useState({
@@ -20,9 +21,9 @@ export default function Register() {
         try {
             await registerUser(formData.email, formData.password, formData.name);
             
-            alert("Usuario registrado con éxito. Revisa tu correo.");
+            toast.success("Successfully registered! Please verify your email.");
         } catch (error) {
-            alert("Error " + error.message || "Error al registrar usuario");
+            alert("Error " + error.message || "Error at resgister user");
         }
     };
 
