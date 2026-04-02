@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import SkillBar from "../components/SkillBar";
-import ProfileGallery from "../components/ProfileGallery";
-import { Button } from "../components/ui/button";
 import { 
     getLoggedUser, 
     getMasterSkills, 
     getProfileSkills, 
     updateProfileAndSkills 
 } from "../service/apiService";
+import SkillBar from "../components/SkillBar";
+import ProfileGallery from "../components/ProfileGallery";
+import { Button } from "../components/ui/button";
 
 export default function Profile() {
     const [user, setUser] = useState(null);
@@ -55,6 +55,7 @@ export default function Profile() {
 
                 setSkills(formattedSkills);
             } catch (error) {
+                console.error("Fetch error:", error);
                 toast.error("Error loading profile data");
             } finally {
                 setIsLoading(false);
