@@ -20,8 +20,8 @@ func NewArtworkRepository(db *sql.DB) uis.ArtworkInterface {
 
 func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 	query := `
-        INSERT INTO public.artworks (title, description, image_url, artist_id, tags, embedding, price)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        INSERT INTO public.artworks (title, description, image_url, artist_id, tags, embedding, price, likes_count, product_type)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING id, created_at`
 
 	err := p.db.QueryRow(query,
@@ -32,6 +32,8 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 		pq.Array(artwork.Tags),
 		formatVector(artwork.Embedding),
 		artwork.Price,
+		artwork.LikesCount,
+		artwork.ProductType,
 	).Scan(&artwork.ID, &artwork.CreatedAt)
 
 	return err
@@ -92,9 +94,21 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 }
 
 func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
-	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price FROM public.artworks WHERE id = $1`
+	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price, likes_count, product_type 
+              FROM public.artworks WHERE id = $1`
 	var artwork models.Artwork
-	err := p.db.QueryRow(query, id).Scan(&artwork.ID, &artwork.Title, &artwork.Description, &artwork.ImageURL, &artwork.ArtistID, pq.Array(&artwork.Tags), &artwork.CreatedAt, &artwork.Price)
+	err := p.db.QueryRow(query, id).Scan(
+		&artwork.ID,
+		&artwork.Title,
+		&artwork.Description,
+		&artwork.ImageURL,
+		&artwork.ArtistID,
+		pq.Array(&artwork.Tags),
+		&artwork.CreatedAt,
+		&artwork.Price,
+		&artwork.LikesCount,
+		&artwork.ProductType,
+	)
 	if err != nil {
 		return nil
 	}

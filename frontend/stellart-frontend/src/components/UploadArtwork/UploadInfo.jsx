@@ -13,6 +13,7 @@ export default function UploadInfo({ file }) {
     const [tagInput, setTagInput] = useState(""); 
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState(null);
+    const [productType, setProductType] = useState("");
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -47,7 +48,9 @@ export default function UploadInfo({ file }) {
                 tags, 
                 image_url: imageUrl, 
                 artist_id: userId,
-                price: onSale ? parseFloat(price) : null 
+                price: onSale ? parseFloat(price) : null,
+                product_type: productType,
+                likes_count: 0
             };
             
             const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
@@ -106,6 +109,8 @@ export default function UploadInfo({ file }) {
                 />
             </div>
 
+            
+
             <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-slate-700">Description</label>
                 <textarea
@@ -114,6 +119,19 @@ export default function UploadInfo({ file }) {
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tell the story behind this piece..."
                     className={`${inputClasses} resize-none`}
+                />
+            </div>
+
+            <div className="flex flex-col gap-2">
+                <label className="text-sm font-bold text-slate-700">
+                    Product Type
+                </label>
+                <input
+                    type="text"
+                    value={productType}
+                    onChange={(e) => setProductType(e.target.value)}
+                    placeholder="e.g. Digital Illustration, 3D Render, Oil Painting..."
+                    className={inputClasses}
                 />
             </div>
 
