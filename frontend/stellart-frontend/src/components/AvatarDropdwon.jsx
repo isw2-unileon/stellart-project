@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { getLoggedUser, logoutUser } from "@/service/apiService"
+import { getLoggedUser, getProfile, logoutUser } from "@/service/apiService"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -20,6 +20,15 @@ export default function AvatarDropdown() {
     useEffect(() => {
         async function checkUser() {
             const loggedUser = await getLoggedUser();
+            if (loggedUser) {
+                const profile = await getProfile(loggedUser.id);
+                if (profile?.avatar_url) {
+                    loggedUser.user_metadata = {
+                        ...loggedUser.user_metadata,
+                        avatar_url: profile.avatar_url,
+                    };
+                }
+            }
             setUser(loggedUser);
             setIsLoading(false);
         }
