@@ -52,3 +52,13 @@ func (s *ArtworkService) CreateArtwork(artwork *models.Artwork) error {
 
 	return s.repo.Create(artwork)
 }
+
+func (s *ArtworkService) SearchArtworks(query string) ([]models.Artwork, error) {
+
+	embedding, err := utils.GenerateTextEmbedding(query)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.repo.SearchSimilar(embedding, 10)
+}
