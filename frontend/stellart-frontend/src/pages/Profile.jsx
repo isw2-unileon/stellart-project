@@ -3,9 +3,11 @@ import { useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
 import { 
     getLoggedUser, 
+    getProfile,
     getMasterSkills, 
     getProfileSkills, 
-    updateProfileAndSkills 
+    updateProfileAndSkills,
+    uploadAvatar 
 } from "../service/apiService";
 import SkillBar from "../components/SkillBar";
 import ProfileGallery from "../components/ProfileGallery";
@@ -15,13 +17,17 @@ export default function Profile() {
     const [user, setUser] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
     const [skills, setSkills] = useState([]);
-    const [bio, setBio] = useState("Biography");
+    const [bio, setBio] = useState("");
     const navigate = useNavigate();
     const textareaRef = useRef(null);
     const maxBioLength = 150;
 
+    // --- Avatar states ---
+    const [avatar, setAvatar] = useState(null);
+    const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+    const  fileInputRef = useRef(null);
+
     const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-    const avatarUrl = user?.user_metadata?.avatar_url || "";
 
     useEffect(() => {
         async function fetchProfileData() {
@@ -33,10 +39,18 @@ export default function Profile() {
                 }
                 setUser(loggedUser);
 
-                const [masterSkills, userSkills] = await Promise.all([
+                const [profile, masterSkills, userSkills] = await Promise.all([
+                    getProfile(loggedUser.id),
                     getMasterSkills(),
                     getProfileSkills(loggedUser.id).catch(() => []) 
                 ]);
+
+                if (profile) {
+                    setAvatar(profile.avatar_url || null);
+                    setBio(profile.biography || "");
+                } else {
+                    setAvatar(loggedUser.user_metadata?.avatar_url || null);
+                }
 
                 const colors = [
                     "bg-yellow-500", "bg-amber-500", "bg-sky-500", 
@@ -54,8 +68,8 @@ export default function Profile() {
                 });
 
                 setSkills(formattedSkills);
-            } catch (error) {
-                console.error("Fetch error:", error);
+            } catch {
+                console.error("Fetch error.");
                 toast.error("Error loading profile data");
             } finally {
                 setIsLoading(false);
@@ -64,13 +78,31 @@ export default function Profile() {
         fetchProfileData();
     }, [navigate]);
 
+    // ----- Avatar upload handler -----
+    const handleAvatarUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        try {
+            setIsUploadingAvatar(true);
+            const url = await uploadAvatar(file);
+            setAvatar(url);
+            toast.success("Avatar updated");
+            } catch {
+                console.error("Avatar upload error.");
+                toast.error("Failed to upload avatar");
+            } finally {
+                setIsUploadingAvatar(false);
+            }
+    }
+
     const handleSaveProfile = useCallback(async () => {
         if (!user?.id) return;
         try {
             const profileData = {
                 fullName: displayName,
                 biography: bio,
-                avatarUrl: avatarUrl
+                avatarUrl: avatar
             };
 
             const skillsData = skills.map(s => ({
@@ -80,20 +112,25 @@ export default function Profile() {
             }));
 
             await updateProfileAndSkills(user.id, profileData, skillsData);
-            toast.success("Profile updated");
-        } catch (error) {
-            toast.error("Save failed", { description: error.message });
+        } catch {
+            toast.error("Save failed");
         }
-    }, [user?.id, displayName, bio, avatarUrl, skills]);
+    }, [user?.id, displayName, bio, avatar, skills]);
+
+    const [initialLoadDone, setInitialLoadDone] = useState(false);
 
     useEffect(() => {
         if (!isLoading && user?.id && skills.length > 0) {
+            if (!initialLoadDone) {
+                setInitialLoadDone(true);
+                return;
+            }
             const timeoutId = setTimeout(() => {
                 handleSaveProfile();
             }, 2000);
             return () => clearTimeout(timeoutId);
         }
-    }, [handleSaveProfile, isLoading, user?.id, skills.length]);
+    }, [handleSaveProfile, isLoading, user?.id, skills.length, initialLoadDone]);
 
     const handleBioChange = (e) => {
         setBio(e.target.value);
@@ -126,16 +163,33 @@ export default function Profile() {
         <div className="max-w-5xl mx-auto px-6 py-12">
             <section className="flex flex-col md:flex-row items-center md:items-start gap-8 mb-14">
                 <div className="relative shrink-0">
-                    <div className="w-36 h-36 rounded-full bg-slate-100 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center">
-                        {avatarUrl ? (
-                            <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
+                    <div className="w-36 h-36 rounded-full bg-slate-100 border-4 border-white shadow-lg overflow-hidden flex items-center justify-center relative">
+                        {isUploadingAvatar ? (
+                            // Spinner de carga mientras sube la foto
+                            <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+                                <div className="w-8 h-8 rounded-full border-4 border-slate-200 border-t-yellow-500 animate-spin" />
+                            </div>
+                        ) : null}
+
+                        {avatar ? (
+                            <img src={avatar} alt="Avatar" className="w-full h-full object-cover group-hover:opacity-80 transition-opacity" />
                         ) : (
                             <span className="text-5xl font-black text-yellow-500 uppercase select-none">
                                 {displayName?.charAt(0)}
                             </span>
                         )}
                     </div>
-                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow">
+                    <div className="absolute -bottom-1 -right-1 w-8 h-8 bg-yellow-400 rounded-full border-2 border-white flex items-center justify-center shadow cursor-pointer"
+                        onClick={() => fileInputRef.current.click()}
+                    >
+                        <input
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            ref={fileInputRef}
+                            onChange={handleAvatarUpload}
+                        />
+
                         <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Z" />
                         </svg>
@@ -161,6 +215,14 @@ export default function Profile() {
                             {bio.length} / {maxBioLength}
                         </div>
                     </div>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={handleSaveProfile}
+                        className="mt-1 cursor-pointer text-xs font-semibold text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 px-3 py-1 h-auto"
+                    >
+                        Save bio
+                    </Button>
                     <div className="flex gap-3 mt-4">
                         <span className="px-4 py-1.5 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-200">
                             Ilustration
@@ -207,7 +269,7 @@ export default function Profile() {
                         onClick={handleSaveProfile}
                         className="w-full mt-6 cursor-pointer font-bold bg-yellow-500 text-slate-900 transition-all duration-300 hover:brightness-105 hover:bg-yellow-500 hover:translate-y-[-2px] shadow-md hover:shadow-lg"
                     >
-                        Save skills
+                        Save profile
                     </Button>
                 </div>
             </div>

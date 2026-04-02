@@ -73,6 +73,38 @@ export const uploadImage = async (file) => {
   return urlData.publicUrl;
 };
 
+export const uploadAvatar = async (file) => {
+  if (!file) throw new Error("No file provided");
+
+  const fileName = `${Date.now()}_${file.name}`;
+
+  const { error } = await supabase.storage
+    .from('profile_avatars')
+    .upload(fileName, file);
+
+  if (error) throw error;
+
+  const { data: urlData } = supabase.storage
+    .from('profile_avatars')
+    .getPublicUrl(fileName);
+
+  if (!urlData?.publicUrl) {
+    throw new Error("Could not generate public URL");
+  }
+
+  return urlData.publicUrl;
+};
+
+export const getProfile = async (userId) => {
+  const response = await fetch(`${BACKEND_URL}/profiles/${userId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  });
+
+  if (!response.ok) return null;
+  return response.json();
+};
+
 export const getMasterSkills = async() => {
     const response = await fetch(`${BACKEND_URL}/profiles/master-skills`, {
         method: 'GET',
