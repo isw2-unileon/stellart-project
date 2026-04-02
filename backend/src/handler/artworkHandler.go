@@ -80,3 +80,20 @@ func (h *ArtworkHandler) SearchSimilar(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(artworks)
 }
+
+func (h *ArtworkHandler) SearchArtworks(w http.ResponseWriter, r *http.Request) {
+	query := r.URL.Query().Get("q")
+	if query == "" {
+		http.Error(w, "The search parameter 'q' is required.", http.StatusBadRequest)
+		return
+	}
+
+	artworks, err := h.artworkService.SearchArtworks(query)
+	if err != nil {
+		http.Error(w, "Error searching for works", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(artworks)
+}
