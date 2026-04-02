@@ -118,7 +118,8 @@ export const updateProfileAndSkills = async (userId, profileData, skillsData) =>
 
 export const searchArtworks = async (query) => {
     try {
-        const response = await fetch(`http://localhost:3000/api/artworks/search?q=${encodeURIComponent(query)}`);
+        
+        const response = await fetch(`${BACKEND_URL}/artworks/search?q=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
             throw new Error('Failed to fetch search results');

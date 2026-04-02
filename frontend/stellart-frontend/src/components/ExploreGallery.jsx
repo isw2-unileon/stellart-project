@@ -1,11 +1,11 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 
-export default function ExploreGallery() {
+export default function ExploreGallery({ artworks = [] }) {
     
     const [selectedArtwork, setSelectedArtwork] = useState(null);
 
-    // ARTWORK GALLERY PLACEHOLDER (TODO: Replace with dynamic data from the backend)
-    const galleryArtworks = [
+    // PLACEHOLDERS
+    const placeholderArtworks = [
         { id: 1, title: "Neon City", artist: "@cyber_artist", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop" },
         { id: 2, title: "Abstract Mind", artist: "@creative_soul", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070&auto=format&fit=crop" },
         { id: 3, title: "Forest Guardian", artist: "@nature_art", img: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2564&auto=format&fit=crop" },
@@ -18,11 +18,22 @@ export default function ExploreGallery() {
         { id: 10, title: "Crystal Cave", artist: "@gem_creator", img: "https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=2080&auto=format&fit=crop" },
     ];
 
+    // MAP BACKEND DATA
+    const displayArtworks = artworks && artworks.length > 0 
+        ? artworks.map((art, index) => ({
+            id: art.id || `art-${index}`,
+            title: art.title || "Untitled Artwork",
+            artist: art.artist_id || "Unknown Artist",
+            img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop", 
+            description: art.description || "No description provided for this artwork."
+        })) 
+        : placeholderArtworks;
+
     return (
         <section className="max-w-360 mx-auto px-6 py-24">
             <div className="flex items-center justify-between mb-12">
                 <h2 className="text-3xl font-black tracking-tight text-slate-900">
-                    Trending Now
+                    {artworks && artworks.length > 0 ? 'Search Results' : 'Trending Now'}
                 </h2>
             </div>
 
@@ -31,9 +42,8 @@ export default function ExploreGallery() {
                 {/* LEFT SIDE: Grid */}
                 <div className={`transition-all duration-500 ease-in-out ${selectedArtwork ? 'w-full lg:w-[65%]' : 'w-full'}`}>
                     
-                    {/* The Grid dynamically changes columns based on the available space */}
                     <div className={`grid gap-6 transition-all duration-500 ${selectedArtwork ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-5'}`}>
-                        {galleryArtworks.map((art) => (
+                        {displayArtworks.map((art) => (
                             <article 
                                 key={art.id} 
                                 onClick={() => setSelectedArtwork(art)}
@@ -49,50 +59,36 @@ export default function ExploreGallery() {
                                 <div className="flex justify-between items-start px-1">
                                     <div className="flex-1 min-w-0 pr-2">
                                         <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
-                                        <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1 truncate">{art.artist}</p>
+                                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">{art.artist}</p>
                                     </div>
-                                    {/* LIKE BUTTON AS PLACEHOLDER (TODO FEATURE) */}
                                     <button 
-                                        onClick={(e) => {
-                                            e.stopPropagation(); // Prevents opening the panel when clicking exactly on the heart
-                                            console.log("Liked!");
-                                        }}
+                                        onClick={(e) => { e.stopPropagation(); }}
                                         className="text-slate-300 hover:text-red-500 transition-colors shrink-0"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                                             <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
                                         </svg>
                                     </button>
-                                    
                                 </div>
-                                    <div className="px-1 pb-1">
-                                        <button 
-                                            onClick={(e) => {
-                                                e.stopPropagation(); // Prevents opening the side panel
-                                                console.log("Redirect to checkout!");
-                                            }}
-                                            className="w-full mt-3 py-2.5 bg-yellow-400 text-slate-900 font-bold text-xs uppercase tracking-widest rounded-xl shadow-sm border border-yellow-500 hover:bg-yellow-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 group/btn"
-                                        >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 group-hover/btn:-rotate-12 transition-transform" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                                                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
-                                                <path d="M3 6h18"/>
-                                                <path d="M16 10a4 4 0 0 1-8 0"/>
-                                            </svg>
-                                            Add to the cart
-                                        </button>
-                                    </div>
+                                <div className="px-1 pb-1">
+                                    <button 
+                                        onClick={(e) => { e.stopPropagation(); }}
+                                        className="w-full mt-3 py-2.5 bg-yellow-400 text-slate-900 font-bold text-xs uppercase tracking-widest rounded-xl shadow-sm border border-yellow-500 hover:bg-yellow-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 group/btn"
+                                    >
+                                        Add to cart
+                                    </button>
+                                </div>
                             </article>
                         ))}
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: The Details Panel */}
+                {/* RIGHT SIDE: Details Panel */}
                 <aside 
                     className={`transition-all duration-500 ease-in-out overflow-hidden sticky top-8 bg-slate-50 rounded-3xl border border-slate-200 shadow-xl flex flex-col ${selectedArtwork ? 'w-full lg:w-[35%] opacity-100 p-6' : 'w-0 opacity-0 p-0 border-none'}`}
                 >
                     {selectedArtwork && (
                         <>
-                            {/* Close Button */}
                             <button 
                                 onClick={() => setSelectedArtwork(null)}
                                 className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors shadow-sm"
@@ -102,26 +98,18 @@ export default function ExploreGallery() {
                                 </svg>
                             </button>
 
-                            {/* Artwork Large Image */}
                             <div className="w-full aspect-square rounded-2xl overflow-hidden mb-6 bg-slate-200 mt-2">
                                 <img src={selectedArtwork.img} alt={selectedArtwork.title} className="w-full h-full object-cover" />
                             </div>
 
-                            {/* Artwork Info */}
                             <div>
                                 <h2 className="text-2xl font-black tracking-tight text-slate-900">{selectedArtwork.title}</h2>
-                                <p className="text-yellow-600 font-bold uppercase tracking-widest text-sm mt-1">{selectedArtwork.artist}</p>
+                                <p className="text-yellow-600 font-bold uppercase tracking-widest text-sm mt-1">Artist ID: {selectedArtwork.artist.substring(0,8)}...</p>
                                 
-                                <div className="mt-6 flex gap-3">
-                                    <button className="flex-1 bg-slate-900 text-white font-bold py-3 rounded-xl hover:bg-yellow-400 hover:text-slate-900 transition-colors shadow-md">
-                                        View Full Profile
-                                    </button>
-                                </div>
-
                                 <div className="mt-8 pt-6 border-t border-slate-200">
                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Details</h4>
                                     <p className="text-slate-600 text-sm leading-relaxed">
-                                        This is a placeholder description for the artwork. In the future, this data will be pulled from your database, displaying the artist's inspiration, the tools used, and maybe the price if it's open for commissions.
+                                        {selectedArtwork.description}
                                     </p>
                                 </div>
                             </div>
