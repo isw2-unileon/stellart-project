@@ -1,9 +1,14 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from 'gsap';
 import ExploreGallery from '@/components/ExploreGallery';
+import { searchArtworks } from '../service/apiService';
+import { toast } from 'sonner';
 
 export default function Explore() {
     const rollingRef = useRef(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [artworks, setArtworks] = useState([]);
+    const [isLoading, setIsLoading] = useState(false);
 
     // PLACEHOLDER
     const placeholderArtworks = [
@@ -52,14 +57,73 @@ export default function Explore() {
         };
     }, []);
 
+    const handleSearch = async (e) => {
+        e.preventDefault();
+        
+        if (!searchQuery.trim()) {
+            toast.error('Please enter a search term');
+            return;
+        }
+
+        setIsLoading(true);
+        try {
+            const results = await searchArtworks(searchQuery);
+            setArtworks(results || []);
+            
+            if (results && results.length > 0) {
+                toast.success('Artworks found successfully');
+            } else {
+                toast.info('No artworks match your search');
+            }
+        } catch (error) {
+            toast.error('Error connecting to the search server');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
     // Text for the rolling banner (repeated to ensure it fills the space)
     const bannerText = "BEST RATED ARTWORKS FROM THE WEEK • ".repeat(15);
 
     return (
         <div className="bg-white min-h-screen">
             <div className="max-w-7xl mx-auto px-6 py-12">
-                <h1 className="text-3xl font-black tracking-tight text-gray-900 mb-2">Explore Artworks</h1>
-                <p className="text-gray-500 font-medium">Discover amazing artworks from talented artists around the world.</p>
+                {/* Header and Search section on the same line */}
+                <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 mb-8">
+                    <div>
+                        <h1 className="text-3xl font-black tracking-tight text-gray-900 mb-2">Explore Artworks</h1>
+                        <p className="text-gray-500 font-medium text-sm md:text-base">Discover amazing artworks from talented artists around the world.</p>
+                    </div>
+
+                    <form 
+                        onSubmit={handleSearch} 
+                        className="w-full lg:max-w-md flex items-center bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-1.5"
+                    >
+                        <div className="pl-3 pr-2">
+                            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.719Z" />
+                                </svg>
+                            </div>
+                        </div>
+                        
+                        <input
+                            type="text"
+                            placeholder="Search artworks..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="flex-grow px-2 py-2 outline-none text-slate-700 bg-transparent text-base placeholder:text-slate-400"
+                        />
+                        
+                        <button 
+                            type="submit" 
+                            disabled={isLoading}
+                            className="bg-black hover:bg-slate-800 text-white px-6 py-2 rounded-full font-bold text-sm transition-colors disabled:bg-slate-400"
+                        >
+                            {isLoading ? '...' : 'Search'}
+                        </button>
+                    </form>
+                </div>
             </div>
 
             <div className="w-full bg-yellow-400 py-3 overflow-hidden flex items-center border-y border-yellow-500 shadow-sm">
@@ -102,7 +166,7 @@ export default function Explore() {
                     {bannerText}
                 </div>
             </div>
-            <ExploreGallery />
+            <ExploreGallery artworks={artworks} />
         </div>
     );
 }

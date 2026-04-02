@@ -115,3 +115,19 @@ export const updateProfileAndSkills = async (userId, profileData, skillsData) =>
     
     return true; 
 };
+
+export const searchArtworks = async (query) => {
+    try {
+        const response = await fetch(`http://localhost:3000/api/artworks/search?q=${encodeURIComponent(query)}`);
+        
+        if (!response.ok) {
+            throw new Error('Failed to fetch search results');
+        }
+        
+        const data = await response.json();
+        return data;
+    } catch (error) {
+        console.error('Error searching artworks:', error);
+        throw error;
+    }
+};
