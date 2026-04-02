@@ -68,8 +68,8 @@ export default function Profile() {
                 });
 
                 setSkills(formattedSkills);
-            } catch (error) {
-                console.error("Fetch error:", error);
+            } catch {
+                console.error("Fetch error.");
                 toast.error("Error loading profile data");
             } finally {
                 setIsLoading(false);
@@ -88,12 +88,12 @@ export default function Profile() {
             const url = await uploadAvatar(file);
             setAvatar(url);
             toast.success("Avatar updated");
-        } catch {
-            console.error("Avatar upload error.");
-            toast.error("Failed to upload avatar");
-        } finally {
-            setIsUploadingAvatar(false);
-        }
+            } catch {
+                console.error("Avatar upload error.");
+                toast.error("Failed to upload avatar");
+            } finally {
+                setIsUploadingAvatar(false);
+            }
     }
 
     const handleSaveProfile = useCallback(async () => {
@@ -112,8 +112,8 @@ export default function Profile() {
             }));
 
             await updateProfileAndSkills(user.id, profileData, skillsData);
-        } catch (error) {
-            toast.error("Save failed", { description: error.message });
+        } catch {
+            toast.error("Save failed");
         }
     }, [user?.id, displayName, bio, avatar, skills]);
 
