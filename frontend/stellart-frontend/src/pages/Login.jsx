@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { loginUser } from '../service/apiService';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
 
 export default function Login() {
     const [formData, setFormData] = useState({ email: '', password: '' });
@@ -16,8 +17,10 @@ export default function Login() {
             await loginUser(formData.email, formData.password);
             navigate("/");
             window.location.reload();
-        } catch (error) {
-            alert("Error: " + error.message);
+        } catch (err) {
+            toast.error("Error:", {
+                description: err.message
+            });
         }
     };
 

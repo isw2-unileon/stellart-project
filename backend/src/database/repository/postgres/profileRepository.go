@@ -90,7 +90,6 @@ func (r *postgresProfileRepo) Update(profile *models.Profile, skills []models.Pr
 }
 
 func (r *postgresProfileRepo) GetSkillsByProfileID(profileID string) ([]models.ProfileSkill, error) {
-	// Usamos un JOIN para obtener el nombre de la skill desde master_skills
 	query := `
 		SELECT ps.id, ps.profile_id, ps.skill_id, ms.name, ps.level
 		FROM public.profile_skills ps
