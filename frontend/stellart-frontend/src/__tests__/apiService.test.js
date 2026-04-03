@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const mockSubmitContact = vi.hoisted(() => vi.fn());
 
-vi.mock('./apiService', () => ({
+vi.mock('../service/apiService', () => ({
     submitContact: mockSubmitContact,
     supabase: {},
     getLoggedUser: vi.fn(),
@@ -11,7 +11,7 @@ vi.mock('./apiService', () => ({
     logoutUser: vi.fn(),
 }));
 
-import { submitContact } from './apiService';
+import { submitContact } from '../service/apiService';
 
 describe('apiService - submitContact', () => {
     beforeEach(() => {
