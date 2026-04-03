@@ -83,6 +83,12 @@ export default function Profile() {
         const file = e.target.files[0];
         if (!file) return;
 
+        const maxSize = 5 * 1024 * 1024; // 5MB for avatars
+        if (file.size > maxSize) {
+            toast.error("Avatar must be less than 5MB");
+            return;
+        }
+
         try {
             setIsUploadingAvatar(true);
             const url = await uploadAvatar(file);

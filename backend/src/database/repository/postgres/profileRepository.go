@@ -20,14 +20,14 @@ func NewProfileRepository(db *sql.DB) uis.ProfileRepository {
 
 func (r *postgresProfileRepo) GetByID(id string) (*models.Profile, error) {
 	query := `
-        SELECT id, full_name, email, avatar_url, biography, updated_at, created_at
+        SELECT id, full_name, email, avatar_url, biography, open_commissions, updated_at, created_at
         FROM public.profiles
         WHERE id = $1`
 
 	var profile models.Profile
 	err := r.db.QueryRow(query, id).Scan(
 		&profile.ID, &profile.FullName, &profile.Email,
-		&profile.AvatarURL, &profile.Biography,
+		&profile.AvatarURL, &profile.Biography, &profile.OpenCommissions,
 		&profile.UpdatedAt, &profile.CreatedAt,
 	)
 
@@ -49,14 +49,15 @@ func (r *postgresProfileRepo) Update(profile *models.Profile, skills []models.Pr
 
 	queryProfile := `
 		UPDATE public.profiles 
-		SET full_name = $1, avatar_url = $2, biography = $3, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $4
+		SET full_name = $1, avatar_url = $2, biography = $3, open_commissions = $4, updated_at = CURRENT_TIMESTAMP
+		WHERE id = $5
 		RETURNING updated_at`
 
 	err = tx.QueryRow(queryProfile,
 		profile.FullName,
 		profile.AvatarURL,
 		profile.Biography,
+		profile.OpenCommissions,
 		profile.ID,
 	).Scan(&profile.UpdatedAt)
 
@@ -142,4 +143,38 @@ func (r *postgresProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {
 		return nil, err
 	}
 	return skills, nil
+}
+
+func (r *postgresProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, error) {
+	query := `
+		SELECT id, full_name, email, avatar_url, biography, open_commissions, updated_at, created_at
+		FROM public.profiles
+		WHERE open_commissions = true`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var profiles []models.Profile
+	for rows.Next() {
+		var p models.Profile
+		err := rows.Scan(&p.ID, &p.FullName, &p.Email, &p.AvatarURL, &p.Biography, &p.OpenCommissions, &p.UpdatedAt, &p.CreatedAt)
+		if err != nil {
+			return nil, err
+		}
+		profiles = append(profiles, p)
+	}
+
+	if err = rows.Err(); err != nil {
+		return nil, err
+	}
+	return profiles, nil
+}
+
+func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error {
+	query := `UPDATE public.profiles SET open_commissions = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	_, err := r.db.Exec(query, open, id)
+	return err
 }

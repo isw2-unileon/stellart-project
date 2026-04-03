@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { toast } from 'sonner';
 
 export default function ImageUpload({ onFileSelect }) {
     const [preview, setPreview] = useState(null);
@@ -9,8 +10,13 @@ export default function ImageUpload({ onFileSelect }) {
     };
 
     const handleFileChange = (e) => {
-       const file = e.target.files[0];
+        const file = e.target.files[0];
         if (file) {
+            const maxSize = 100 * 1024 * 1024; // 100MB
+            if (file.size > maxSize) {
+                toast.error("File size must be less than 100MB");
+                return;
+            }
             onFileSelect(file); 
             setPreview(URL.createObjectURL(file)); 
         }
@@ -44,7 +50,7 @@ export default function ImageUpload({ onFileSelect }) {
                         <span className="font-bold text-lg text-slate-700">Browse files</span>
                         <span className="text-sm font-normal text-slate-500">
                             Drag and drop your artwork here <br/>
-                            <span className="text-xs text-slate-400 mt-1 block">PNG, JPG or WEBP (Max. 10MB)</span>
+                            <span className="text-xs text-slate-400 mt-1 block">PNG, JPG or WEBP (Max. 100MB)</span>
                         </span>
                     </div>
                 )}

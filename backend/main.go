@@ -42,7 +42,20 @@ func main() {
 	artworkSvc := service.NewArtworkService(artworkRepo)
 	artworkHdl := handler.NewArtworkHandler(artworkSvc)
 
-	r := router.InitRouter(profileHdl, contactHdl, artworkHdl)
+	// Commission
+	commissionRepo := postgres.NewCommissionRepository(db)
+	commissionSvc := service.NewCommissionService(commissionRepo)
+	commissionHdl := handler.NewCommissionHandler(commissionSvc)
+
+	// Chat WebSocket
+	chatHub := handler.NewChatHub()
+	go chatHub.Run()
+	chatHdl := handler.NewChatHandler(chatHub, commissionSvc)
+
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl)
+
+	// Mount WebSocket handler
+	http.HandleFunc("/ws/chat", chatHdl.HandleWebSocket)
 
 	log.Printf("Server listening on: http://localhost:%s", port)
 	if err := http.ListenAndServe(":"+port, r); err != nil {
