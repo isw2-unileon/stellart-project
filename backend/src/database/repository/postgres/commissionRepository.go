@@ -167,6 +167,52 @@ func (r *postgresCommissionRepo) UpdateAdvancePayment(payment *models.AdvancePay
 	return err
 }
 
+func (r *postgresCommissionRepo) CreateRemainingPayment(payment *models.RemainingPayment) error {
+	query := `
+		INSERT INTO public.remaining_payments (id, commission_id, amount, status, payment_intent)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING created_at`
+
+	return r.db.QueryRow(query,
+		payment.ID,
+		payment.CommissionID,
+		payment.Amount,
+		payment.Status,
+		payment.PaymentIntent,
+	).Scan(&payment.CreatedAt)
+}
+
+func (r *postgresCommissionRepo) GetRemainingPaymentByCommissionID(commissionID string) (*models.RemainingPayment, error) {
+	query := `
+		SELECT id, commission_id, amount, status, payment_intent, created_at, paid_at
+		FROM public.remaining_payments
+		WHERE commission_id = $1`
+
+	var p models.RemainingPayment
+	err := r.db.QueryRow(query, commissionID).Scan(
+		&p.ID, &p.CommissionID, &p.Amount, &p.Status,
+		&p.PaymentIntent, &p.CreatedAt, &p.PaidAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &p, nil
+}
+
+func (r *postgresCommissionRepo) UpdateRemainingPayment(payment *models.RemainingPayment) error {
+	query := `
+		UPDATE public.remaining_payments
+		SET status = $1, paid_at = $2
+		WHERE id = $3`
+
+	_, err := r.db.Exec(query, payment.Status, payment.PaidAt, payment.ID)
+	return err
+}
+
 func (r *postgresCommissionRepo) CreateWorkUpload(upload *models.WorkUpload) error {
 	query := `
 		INSERT INTO public.work_uploads (id, commission_id, image_url, watermarked, is_final, notes)

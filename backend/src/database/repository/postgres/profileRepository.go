@@ -172,3 +172,9 @@ func (r *postgresProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, err
 	}
 	return profiles, nil
 }
+
+func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error {
+	query := `UPDATE public.profiles SET open_commissions = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
+	_, err := r.db.Exec(query, open, id)
+	return err
+}

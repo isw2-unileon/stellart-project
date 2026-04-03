@@ -13,6 +13,10 @@ type CommissionRepository interface {
 	GetAdvancePaymentByCommissionID(commissionID string) (*models.AdvancePayment, error)
 	UpdateAdvancePayment(payment *models.AdvancePayment) error
 
+	CreateRemainingPayment(payment *models.RemainingPayment) error
+	GetRemainingPaymentByCommissionID(commissionID string) (*models.RemainingPayment, error)
+	UpdateRemainingPayment(payment *models.RemainingPayment) error
+
 	CreateWorkUpload(upload *models.WorkUpload) error
 	GetWorkUploadsByCommissionID(commissionID string) ([]models.WorkUpload, error)
 

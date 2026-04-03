@@ -56,6 +56,16 @@ type AdvancePayment struct {
 	PaidAt        *time.Time    `json:"paid_at"`
 }
 
+type RemainingPayment struct {
+	ID            string        `json:"id"`
+	CommissionID  string        `json:"commission_id"`
+	Amount        float64       `json:"amount"`
+	Status        PaymentStatus `json:"status"`
+	PaymentIntent string        `json:"payment_intent"`
+	CreatedAt     time.Time     `json:"created_at"`
+	PaidAt        *time.Time    `json:"paid_at"`
+}
+
 type WorkUpload struct {
 	ID           string    `json:"id"`
 	CommissionID string    `json:"commission_id"`
