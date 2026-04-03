@@ -8,6 +8,11 @@ import Profile from './pages/Profile';
 import UploadArtwork from './pages/UploadArtwork';
 import Explore from './pages/Explore';
 import Contact from './pages/Contact';
+import OpenCommissions from './pages/OpenCommissions';
+import FindArtists from './pages/FindArtists';
+import StartCommission from './pages/StartCommission';
+import Commissions from './pages/Commissions';
+import CommissionDetail from './pages/CommissionDetail';
 
 export default function App() {
     return (
@@ -33,6 +38,11 @@ export default function App() {
                 <Route path="/profile/upload" element={<Layout> <UploadArtwork /> </Layout>} />
                 <Route path="/explore" element={<Layout> <Explore /> </Layout>} />
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
+                <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />
+                <Route path="/commissions/settings" element={<Layout> <OpenCommissions /> </Layout>} />
+                <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
+                <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
+                <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
             </Routes>
         </>
     )
