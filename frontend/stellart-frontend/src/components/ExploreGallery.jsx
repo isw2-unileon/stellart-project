@@ -1,10 +1,12 @@
 import React, { useState } from 'react';
+import { toast } from 'sonner';
+import PaymentModal from './PaymentModal';
 
 export default function ExploreGallery({ artworks = [] }) {
     
     const [selectedArtwork, setSelectedArtwork] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
 
-    // PLACEHOLDERS
     const placeholderArtworks = [
         { id: 1, title: "Neon City", artist: "@cyber_artist", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop" },
         { id: 2, title: "Abstract Mind", artist: "@creative_soul", img: "https://images.unsplash.com/photo-1541701494587-cb58502866ab?q=80&w=2070&auto=format&fit=crop" },
@@ -18,16 +20,22 @@ export default function ExploreGallery({ artworks = [] }) {
         { id: 10, title: "Crystal Cave", artist: "@gem_creator", img: "https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=2080&auto=format&fit=crop" },
     ];
 
-    // MAP BACKEND DATA
     const displayArtworks = artworks && artworks.length > 0 
         ? artworks.map((art, index) => ({
             id: art.id || `art-${index}`,
             title: art.title || "Untitled Artwork",
             artist: art.artist_id || "Unknown Artist",
             img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop", 
-            description: art.description || "No description provided for this artwork."
+            description: art.description || "No description provided for this artwork.",
+            price: art.price || null,
+            on_sale: art.on_sale || art.price != null
         })) 
         : placeholderArtworks;
+
+    const handlePaymentSuccess = () => {
+        toast.success('Purchase completed!');
+        setSelectedArtwork(null);
+    };
 
     return (
         <section className="max-w-360 mx-auto px-6 py-24">
@@ -39,7 +47,6 @@ export default function ExploreGallery({ artworks = [] }) {
 
             <div className="flex items-start gap-8 transition-all duration-500 ease-in-out relative">
                 
-                {/* LEFT SIDE: Grid */}
                 <div className={`transition-all duration-500 ease-in-out ${selectedArtwork ? 'w-full lg:w-[65%]' : 'w-full'}`}>
                     
                     <div className={`grid gap-6 transition-all duration-500 ${selectedArtwork ? 'grid-cols-2 md:grid-cols-3' : 'grid-cols-2 md:grid-cols-4 lg:grid-cols-5'}`}>
@@ -60,6 +67,9 @@ export default function ExploreGallery({ artworks = [] }) {
                                     <div className="flex-1 min-w-0 pr-2">
                                         <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
                                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">{art.artist}</p>
+                                        {art.price && (
+                                            <p className="text-yellow-600 font-bold text-sm mt-1">${art.price.toFixed(2)}</p>
+                                        )}
                                     </div>
                                     <button 
                                         onClick={(e) => { e.stopPropagation(); }}
@@ -83,7 +93,6 @@ export default function ExploreGallery({ artworks = [] }) {
                     </div>
                 </div>
 
-                {/* RIGHT SIDE: Details Panel */}
                 <aside 
                     className={`transition-all duration-500 ease-in-out overflow-hidden sticky top-8 bg-slate-50 rounded-3xl border border-slate-200 shadow-xl flex flex-col ${selectedArtwork ? 'w-full lg:w-[35%] opacity-100 p-6' : 'w-0 opacity-0 p-0 border-none'}`}
                 >
@@ -106,18 +115,39 @@ export default function ExploreGallery({ artworks = [] }) {
                                 <h2 className="text-2xl font-black tracking-tight text-slate-900">{selectedArtwork.title}</h2>
                                 <p className="text-yellow-600 font-bold uppercase tracking-widest text-sm mt-1">Artist ID: {selectedArtwork.artist.substring(0,8)}...</p>
                                 
+                                {selectedArtwork.price && (
+                                    <p className="text-slate-900 font-bold text-xl mt-2">${selectedArtwork.price.toFixed(2)}</p>
+                                )}
+                                
                                 <div className="mt-8 pt-6 border-t border-slate-200">
                                     <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Details</h4>
                                     <p className="text-slate-600 text-sm leading-relaxed">
                                         {selectedArtwork.description}
                                     </p>
                                 </div>
+
+                                {selectedArtwork.on_sale && selectedArtwork.price && (
+                                    <button 
+                                        onClick={() => setShowPaymentModal(true)}
+                                        className="w-full mt-6 py-3 bg-yellow-400 text-slate-900 font-bold text-sm uppercase tracking-widest rounded-xl shadow-sm border border-yellow-500 hover:bg-yellow-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2"
+                                    >
+                                        Purchase Now
+                                    </button>
+                                )}
                             </div>
                         </>
                     )}
                 </aside>
 
             </div>
+
+            <PaymentModal 
+                isOpen={showPaymentModal}
+                onClose={() => setShowPaymentModal(false)}
+                item={selectedArtwork}
+                amount={selectedArtwork?.price || 99}
+                onSuccess={handlePaymentSuccess}
+            />
         </section>
     );
 }
