@@ -72,3 +72,13 @@ func (h *ProfileHandler) GetMasterSkills(w http.ResponseWriter, r *http.Request)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(skills)
 }
+
+func (h *ProfileHandler) GetOpenCommissionProfiles(w http.ResponseWriter, r *http.Request) {
+	profiles, err := h.profileService.GetOpenCommissionProfiles()
+	if err != nil {
+		http.Error(w, "Failed to fetch artists", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(profiles)
+}
