@@ -64,7 +64,7 @@ export default function StartCommission() {
         setShowPaymentModal(true);
     };
 
-    const handlePaymentSuccess = async (paymentInfo) => {
+    const handlePaymentSuccess = async () => {
         setIsSubmitting(true);
         try {
             const commissionData = {
@@ -86,7 +86,7 @@ export default function StartCommission() {
             await createAdvancePayment(paymentData);
             await markPaymentPaid(commissionData.commission_id);
             
-            const commission = await createCommission(commissionData);
+            await createCommission(commissionData);
             
             setShowPaymentModal(false);
             toast.success("Commission requested! Payment successful.");
@@ -244,7 +244,7 @@ export default function StartCommission() {
                 amount={advanceAmount}
                 paymentType="advance"
                 onSuccess={handlePaymentSuccess}
-                onFailure={(error) => toast.error('Payment failed')}
+                onFailure={() => toast.error('Payment failed')}
             />
         </div>
     );

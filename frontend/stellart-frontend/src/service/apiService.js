@@ -99,7 +99,7 @@ export const uploadImage = async (file) => {
 
   const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
 
-  const { data, error } = await supabase.storage
+  const { error } = await supabase.storage
     .from('artworks')        
     .upload(fileName, file);
 

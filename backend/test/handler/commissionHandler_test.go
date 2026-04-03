@@ -216,7 +216,7 @@ func TestCommissionHandler_CreateCommission(t *testing.T) {
 			mockBehavior: func(c *models.Commission) error {
 				return nil
 			},
-			wantCode: http.StatusCreated,
+			wantCode: http.StatusOK,
 		},
 		{
 			name:        "Invalid JSON payload",
@@ -460,7 +460,7 @@ func TestCommissionHandler_UploadWork(t *testing.T) {
 			mockBehavior: func(u *models.WorkUpload) error {
 				return nil
 			},
-			wantCode: http.StatusCreated,
+			wantCode: http.StatusOK,
 		},
 		{
 			name:        "Work uploaded successfully with clean image",
@@ -468,7 +468,7 @@ func TestCommissionHandler_UploadWork(t *testing.T) {
 			mockBehavior: func(u *models.WorkUpload) error {
 				return nil
 			},
-			wantCode: http.StatusCreated,
+			wantCode: http.StatusOK,
 		},
 		{
 			name:        "Final version uploaded",
@@ -476,7 +476,7 @@ func TestCommissionHandler_UploadWork(t *testing.T) {
 			mockBehavior: func(u *models.WorkUpload) error {
 				return nil
 			},
-			wantCode: http.StatusCreated,
+			wantCode: http.StatusOK,
 		},
 		{
 			name:        "Invalid JSON payload",

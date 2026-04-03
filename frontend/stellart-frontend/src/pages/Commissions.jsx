@@ -32,8 +32,7 @@ export default function Commissions() {
                 setBuyerCommissions(buyerComms || []);
                 setArtistCommissions(artistComms || []);
                 setOpenCommissions(profile?.open_commissions || false);
-            } catch (error) {
-                console.error("Error:", error);
+        } catch {
                 toast.error("Error loading commissions");
             } finally {
                 setIsLoading(false);
@@ -48,7 +47,7 @@ export default function Commissions() {
             await updateOpenCommissions(user.id, newValue);
             setOpenCommissions(newValue);
             toast.success(newValue ? "Commissions are now OPEN" : "Commissions are now CLOSED");
-        } catch (error) {
+        } catch {
             toast.error("Failed to update");
         }
     };
@@ -143,7 +142,7 @@ export default function Commissions() {
     );
 }
 
-function CommissionCard({ commission, role }) {
+function CommissionCard({ commission }) {
     const statusColors = {
         pending: "bg-slate-100 text-slate-600",
         accepted: "bg-blue-50 text-blue-600",

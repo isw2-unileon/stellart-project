@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"stellart/backend/src/database/models"
@@ -137,6 +138,10 @@ func (h *CommissionHandler) SubmitForReview(w http.ResponseWriter, r *http.Reque
 func (h *CommissionHandler) ApproveWork(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	if err := h.commissionService.ApproveWork(id); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.Error(w, "Commission not found", http.StatusNotFound)
+			return
+		}
 		http.Error(w, "Failed to approve work", http.StatusInternalServerError)
 		return
 	}

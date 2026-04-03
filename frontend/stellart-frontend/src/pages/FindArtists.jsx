@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getArtistsWithOpenCommissions, getProfile } from "../service/apiService";
+import { getLoggedUser, getArtistsWithOpenCommissions } from "../service/apiService";
 
 export default function FindArtists() {
     const [artists, setArtists] = useState([]);

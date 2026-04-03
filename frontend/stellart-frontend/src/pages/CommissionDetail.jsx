@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getRefund, createRefund, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
+import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
 import { Button } from "../components/ui/button";
 import PaymentModal from "../components/PaymentModal";
 
@@ -66,8 +66,7 @@ export default function CommissionDetail() {
                 setRemainingPayment(remPay);
 
                 await markMessagesRead(id, loggedUser.id);
-            } catch (error) {
-                console.error("Error:", error);
+        } catch {
                 toast.error("Error loading commission");
             } finally {
                 setIsLoading(false);
@@ -94,7 +93,7 @@ export default function CommissionDetail() {
             await sendMessage(msg);
             setMessages([...messages, { ...msg, created_at: new Date().toISOString() }]);
             setNewMessage("");
-        } catch (error) {
+        } catch {
             toast.error("Failed to send message");
         }
     };
@@ -143,9 +142,8 @@ export default function CommissionDetail() {
             
             const updated = await getCommission(id);
             setCommission(updated);
-        } catch (error) {
-            console.error("Upload error:", error);
-            toast.error(error.message || "Failed to upload work");
+        } catch (e) {
+            toast.error(e.message || "Failed to upload work");
         } finally {
             setIsUploading(false);
         }
@@ -209,11 +207,6 @@ export default function CommissionDetail() {
         setShowPaymentModal(true);
     };
 
-    const handlePayRemaining = () => {
-        setPaymentAction('remaining');
-        setShowPaymentModal(true);
-    };
-
     const handleFinalUpload = async () => {
         if (!finalUploadFile) {
             toast.error("Please select an image");
@@ -243,9 +236,8 @@ export default function CommissionDetail() {
             
             const updated = await getCommission(id);
             setCommission(updated);
-        } catch (error) {
-            console.error("Upload error:", error);
-            toast.error(error.message || "Failed to upload final version");
+        } catch (e) {
+            toast.error(e.message || "Failed to upload final version");
         } finally {
             setIsUploading(false);
         }
@@ -275,13 +267,12 @@ export default function CommissionDetail() {
             link.click();
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
-        } catch (error) {
-            console.error("Download error:", error);
+        } catch {
             window.open(imageUrl, '_blank');
         }
     };
 
-    const handlePaymentSuccess = async (paymentInfo) => {
+    const handlePaymentSuccess = async () => {
         try {
             if (paymentAction === 'create' || paymentAction === 'advance') {
                 if (!payment) {
@@ -323,7 +314,7 @@ export default function CommissionDetail() {
             const remPay = await getRemainingPayment(id).catch(() => null);
             setPayment(pay);
             setRemainingPayment(remPay);
-        } catch (error) {
+        } catch {
             toast.error("Failed to process payment");
         }
         setShowPaymentModal(false);
@@ -337,7 +328,7 @@ export default function CommissionDetail() {
             
             const pay = await getAdvancePayment(id).catch(() => null);
             setPayment(pay);
-        } catch (error) {
+        } catch {
             toast.error("Failed to release payment");
         }
     };
@@ -370,7 +361,7 @@ export default function CommissionDetail() {
             
             const revs = await getRevisions(id).catch(() => []);
             setRevisions(revs || []);
-        } catch (error) {
+        } catch {
             toast.error("Failed to request revision");
         }
     };
@@ -383,7 +374,7 @@ export default function CommissionDetail() {
             setCommission(updated);
             
             toast.success("Commission accepted!");
-        } catch (error) {
+        } catch {
             toast.error("Failed to accept");
         }
     };
@@ -393,7 +384,7 @@ export default function CommissionDetail() {
             await startCommission(id);
             setCommission({ ...commission, status: "in_progress" });
             toast.success("Commission started!");
-        } catch (error) {
+        } catch {
             toast.error("Failed to start");
         }
     };
@@ -403,7 +394,7 @@ export default function CommissionDetail() {
             await submitForReview(id);
             setCommission({ ...commission, status: "review" });
             toast.success("Submitted for review!");
-        } catch (error) {
+        } catch {
             toast.error("Failed to submit");
         }
     };
@@ -425,7 +416,7 @@ export default function CommissionDetail() {
             await approveWork(id);
             setCommission({ ...commission, status: "completed" });
             toast.success("Work approved! Final version now available.");
-        } catch (error) {
+        } catch {
             toast.error("Failed to approve");
         }
     };
@@ -443,7 +434,6 @@ export default function CommissionDetail() {
     const advanceAmount = commission?.price * 0.5;
     const isAdvancePaid = payment?.status === "paid";
     const isRemainingPaid = remainingPayment?.status === "paid";
-    const isFullyPaid = isAdvancePaid && isRemainingPaid;
     const hasUploadedWork = workUploads.length > 0;
     const isApproved = commission?.status === "completed";
     const lastRevision = revisions[0];
@@ -677,7 +667,7 @@ export default function CommissionDetail() {
                             <p className="text-slate-500 text-sm">No work uploaded yet.</p>
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
-                                {workUploads.map((upload, index) => (
+                                {workUploads.map((upload) => (
                                     <div key={upload.id}>
                                         {/* Image Card */}
                                         <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
@@ -870,7 +860,7 @@ export default function CommissionDetail() {
                 amount={advanceAmount}
                 paymentType={paymentAction === 'remaining' || paymentAction === 'remaining_approve' ? 'remaining' : 'advance'}
                 onSuccess={handlePaymentSuccess}
-                onFailure={(error) => toast.error('Payment failed')}
+                onFailure={() => toast.error('Payment failed')}
             />
         </div>
     );

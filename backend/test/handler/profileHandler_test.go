@@ -15,26 +15,42 @@ import (
 )
 
 type mockProfileRepo struct {
-	mockGetByID              func(id string) (*models.Profile, error)
-	mockGetMasterSkills      func() ([]models.MasterSkill, error)
-	mockGetSkillsByProfileID func(profileID string) ([]models.ProfileSkill, error)
-	mockUpdate               func(profile *models.Profile, skills []models.ProfileSkill) error
+	mockGetByID                   func(id string) (*models.Profile, error)
+	mockGetOpenCommissionProfiles func() ([]models.Profile, error)
+	mockUpdate                    func(profile *models.Profile, skills []models.ProfileSkill) error
+	mockUpdateOpenCommissions     func(id string, open bool) error
+	mockGetSkillsByProfileID      func(profileID string) ([]models.ProfileSkill, error)
+	mockGetMasterSkills           func() ([]models.MasterSkill, error)
 }
 
 func (m *mockProfileRepo) GetByID(id string) (*models.Profile, error) {
 	return m.mockGetByID(id)
 }
 
-func (m *mockProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {
-	return m.mockGetMasterSkills()
+func (m *mockProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, error) {
+	if m.mockGetOpenCommissionProfiles != nil {
+		return m.mockGetOpenCommissionProfiles()
+	}
+	return nil, nil
+}
+
+func (m *mockProfileRepo) Update(profile *models.Profile, skills []models.ProfileSkill) error {
+	return m.mockUpdate(profile, skills)
+}
+
+func (m *mockProfileRepo) UpdateOpenCommissions(id string, open bool) error {
+	if m.mockUpdateOpenCommissions != nil {
+		return m.mockUpdateOpenCommissions(id, open)
+	}
+	return nil
 }
 
 func (m *mockProfileRepo) GetSkillsByProfileID(profileID string) ([]models.ProfileSkill, error) {
 	return m.mockGetSkillsByProfileID(profileID)
 }
 
-func (m *mockProfileRepo) Update(profile *models.Profile, skills []models.ProfileSkill) error {
-	return m.mockUpdate(profile, skills)
+func (m *mockProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {
+	return m.mockGetMasterSkills()
 }
 
 func TestProfileHandler_GetProfile(t *testing.T) {

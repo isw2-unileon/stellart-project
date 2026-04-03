@@ -2,7 +2,6 @@ import { describe, it, expect, vi } from 'vitest';
 import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import App from '../App';
-import * as apiService from '../service/apiService';
 
 vi.mock('../service/apiService', () => ({
     getLoggedUser: vi.fn().mockResolvedValue(null),
