@@ -71,13 +71,13 @@ function GeneralHeader() {
                                 to="/login" 
                                 className="text-xs font-bold uppercase tracking-widest px-4 py-2 text-slate-600 hover:text-black transition-colors"
                             >
-                                Iniciar sesión
+                                Log in
                             </Link>
                             <Link 
                                 to="/register" 
                                 className="text-xs font-bold uppercase tracking-widest px-5 py-2.5 bg-black text-white rounded-lg hover:bg-slate-800 transition-all"
                             >
-                                Registrarse
+                                Register
                             </Link>
                         </div>
                     )}

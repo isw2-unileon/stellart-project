@@ -29,7 +29,20 @@ export default function Register() {
 
     return (
         <div className="flex flex-col gap-10 py-12"> 
-            <RegisterText />
+            
+            <div className="flex flex-col items-center text-center">
+                <div className="inline-block mb-2">
+                    <h1 className="text-5xl md:text-6xl font-black text-[#0f172a] tracking-tighter">
+                        Register
+                    </h1>
+                    <div className="w-full h-1.5 bg-yellow-500 rounded-full mt-2"></div>
+                </div>
+                
+                <p className="text-xl md:text-2xl font-bold text-slate-500 mb-2">
+                    Bring out the <span className="text-yellow-500">star</span> inside of you 
+                </p>
+            </div>
+      
             <div className="w-full"> 
                 <div className="w-full max-w-md mx-auto bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-slate-100">
                     <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
@@ -64,7 +77,7 @@ export default function Register() {
                             type="submit" 
                             className="w-full bg-black text-white font-bold py-4 rounded-xl hover:bg-slate-800 transition-colors mt-2 text-lg shadow-md"
                         >
-                            Sign in
+                            Sign up
                         </button>
                     </form>
                     <p className="text-center text-base text-slate-500 mt-8">
@@ -72,23 +85,6 @@ export default function Register() {
                     </p>
                 </div>
             </div>
-        </div>
-    );
-}
-
-function RegisterText() {
-    return (
-        <div className="flex flex-col items-center text-center">
-            <div className="inline-block mb-2">
-                <h1 className="text-5xl md:text-6xl font-black text-[#0f172a] tracking-tighter">
-                    Registrarse
-                </h1>
-                <div className="w-full h-1.5 bg-yellow-500 rounded-full mt-2"></div>
-            </div>
-            
-            <p className="text-xl md:text-2xl font-bold text-slate-500 mb-2">
-                Saca la <span className="text-yellow-500">estrella</span> dentro de ti
-            </p>
         </div>
     );
 }
