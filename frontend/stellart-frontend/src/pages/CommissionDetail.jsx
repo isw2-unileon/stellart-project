@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, getRefund, createRefund } from "../service/apiService";
+import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getRefund, createRefund, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
 import { Button } from "../components/ui/button";
+import PaymentModal from "../components/PaymentModal";
 
 export default function CommissionDetail() {
     const { id } = useParams();
@@ -12,8 +13,18 @@ export default function CommissionDetail() {
     const [buyer, setBuyer] = useState(null);
     const [workUploads, setWorkUploads] = useState([]);
     const [messages, setMessages] = useState([]);
+    const [payment, setPayment] = useState(null);
+    const [remainingPayment, setRemainingPayment] = useState(null);
+    const [revisions, setRevisions] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [newMessage, setNewMessage] = useState("");
+    const [isUploading, setIsUploading] = useState(false);
+    const [uploadFile, setUploadFile] = useState(null);
+    const [uploadNotes, setUploadNotes] = useState("");
+    const [revisionNotes, setRevisionNotes] = useState("");
+    const [selectedImage, setSelectedImage] = useState(null);
+    const [showPaymentModal, setShowPaymentModal] = useState(false);
+    const [paymentAction, setPaymentAction] = useState(null);
     const messagesEndRef = useRef(null);
     const navigate = useNavigate();
 
@@ -35,17 +46,23 @@ export default function CommissionDetail() {
                 }
                 setCommission(comm);
 
-                const [artistProfile, buyerProfile, uploads, msgs] = await Promise.all([
+                const [artistProfile, buyerProfile, uploads, msgs, pay, revs, remPay] = await Promise.all([
                     getProfile(comm.artist_id).catch(() => null),
                     getProfile(comm.buyer_id).catch(() => null),
                     getWorkUploads(id).catch(() => []),
-                    getMessages(id).catch(() => [])
+                    getMessages(id).catch(() => []),
+                    getAdvancePayment(id).catch(() => null),
+                    getRevisions(id).catch(() => []),
+                    getRemainingPayment(id).catch(() => null)
                 ]);
 
                 setArtist(artistProfile);
                 setBuyer(buyerProfile);
                 setWorkUploads(uploads || []);
                 setMessages(msgs || []);
+                setPayment(pay);
+                setRevisions(revs || []);
+                setRemainingPayment(remPay);
 
                 await markMessagesRead(id, loggedUser.id);
             } catch (error) {
@@ -81,10 +98,206 @@ export default function CommissionDetail() {
         }
     };
 
+    const handleFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            setUploadFile(file);
+        }
+    };
+
+    const handleUploadWork = async () => {
+        if (!uploadFile) {
+            toast.error("Please select an image");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const watermarkedUrl = await createWatermarkedImage(uploadFile);
+            
+            const uploadData = {
+                upload_id: `upload_${Date.now()}`,
+                commission_id: id,
+                image_url: watermarkedUrl,
+                watermarked: true,
+                is_final: false,
+                notes: uploadNotes
+            };
+
+            await uploadWork(uploadData);
+            
+            const uploads = await getWorkUploads(id).catch(() => []);
+            setWorkUploads(uploads || []);
+            
+            setUploadFile(null);
+            setUploadNotes("");
+            toast.success("Preview uploaded! Buyer needs to approve for final version.");
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error(error.message || "Failed to upload work");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const createWatermarkedImage = async (file) => {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            const url = URL.createObjectURL(file);
+            
+            img.onload = () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0);
+                
+                const fontSize = Math.max(img.width / 10, 40);
+                ctx.font = `bold ${fontSize}px Arial`;
+                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.save();
+                ctx.translate(img.width / 2, img.height / 2);
+                ctx.rotate(-Math.PI / 4);
+                ctx.fillText('PREVIEW', 0, 0);
+                ctx.fillText('PREVIEW', 0, fontSize * 1.5);
+                ctx.fillText('PREVIEW', 0, -fontSize * 1.5);
+                ctx.restore();
+                
+                canvas.toBlob(async (blob) => {
+                    URL.revokeObjectURL(url);
+                    try {
+                        const watermarkedFile = new File([blob], file.name, { type: 'image/jpeg' });
+                        const imageUrl = await uploadImage(watermarkedFile);
+                        resolve(imageUrl);
+                    } catch (err) {
+                        reject(err);
+                    }
+                }, 'image/jpeg', 0.9);
+            };
+            
+            img.onerror = () => {
+                URL.revokeObjectURL(url);
+                reject(new Error('Failed to load image'));
+            };
+            
+            img.src = url;
+        });
+    };
+
+    const handleCreatePayment = () => {
+        setPaymentAction('create');
+        setShowPaymentModal(true);
+    };
+
+    const handlePayAdvance = () => {
+        setPaymentAction('advance');
+        setShowPaymentModal(true);
+    };
+
+    const handlePayRemaining = () => {
+        setPaymentAction('remaining');
+        setShowPaymentModal(true);
+    };
+
+    const handlePaymentSuccess = async (paymentInfo) => {
+        try {
+            if (paymentAction === 'create' || paymentAction === 'advance') {
+                if (!payment) {
+                    const advanceAmount = commission.price * 0.5;
+                    const paymentData = {
+                        payment_id: `pay_${Date.now()}`,
+                        commission_id: id,
+                        amount: advanceAmount,
+                        payment_intent: `pi_${Date.now()}`
+                    };
+                    await createAdvancePayment(paymentData);
+                }
+                await markPaymentPaid(id);
+                toast.success("Advance payment successful!");
+            } else if (paymentAction === 'remaining') {
+                if (!remainingPayment) {
+                    const remainingAmount = commission.price * 0.5;
+                    const paymentData = {
+                        payment_id: `rem_${Date.now()}`,
+                        commission_id: id,
+                        amount: remainingAmount,
+                        payment_intent: `pi_${Date.now()}`
+                    };
+                    await createRemainingPayment(paymentData);
+                }
+                await markRemainingPaymentPaid(id);
+                toast.success("Remaining payment successful!");
+            }
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
+            const pay = await getAdvancePayment(id).catch(() => null);
+            const remPay = await getRemainingPayment(id).catch(() => null);
+            setPayment(pay);
+            setRemainingPayment(remPay);
+        } catch (error) {
+            toast.error("Failed to process payment");
+        }
+        setShowPaymentModal(false);
+        setPaymentAction(null);
+    };
+
+    const handleReleasePayment = async () => {
+        try {
+            await releasePayment(id);
+            toast.success("Payment released to artist!");
+            
+            const pay = await getAdvancePayment(id).catch(() => null);
+            setPayment(pay);
+        } catch (error) {
+            toast.error("Failed to release payment");
+        }
+    };
+
+    const handleRequestRevision = async () => {
+        if (!revisionNotes.trim()) {
+            toast.error("Please add revision notes");
+            return;
+        }
+
+        const lastUpload = workUploads[0];
+        if (!lastUpload) {
+            toast.error("No work to request revision for");
+            return;
+        }
+
+        try {
+            const revisionData = {
+                revision_id: `rev_${Date.now()}`,
+                commission_id: id,
+                work_upload_id: lastUpload.id,
+                request_notes: revisionNotes
+            };
+            await requestRevision(revisionData);
+            toast.success("Revision requested!");
+            setRevisionNotes("");
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
+            
+            const revs = await getRevisions(id).catch(() => []);
+            setRevisions(revs || []);
+        } catch (error) {
+            toast.error("Failed to request revision");
+        }
+    };
+
     const handleAccept = async () => {
         try {
             await acceptCommission(id);
-            setCommission({ ...commission, status: "accepted" });
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
+            
             toast.success("Commission accepted!");
         } catch (error) {
             toast.error("Failed to accept");
@@ -115,7 +328,7 @@ export default function CommissionDetail() {
         try {
             await approveWork(id);
             setCommission({ ...commission, status: "completed" });
-            toast.success("Work approved!");
+            toast.success("Work approved! Final version now available.");
         } catch (error) {
             toast.error("Failed to approve");
         }
@@ -131,9 +344,34 @@ export default function CommissionDetail() {
 
     const isBuyer = user?.id === commission?.buyer_id;
     const isArtist = user?.id === commission?.artist_id;
+    const advanceAmount = commission?.price * 0.5;
+    const isAdvancePaid = payment?.status === "paid";
+    const isRemainingPaid = remainingPayment?.status === "paid";
+    const isFullyPaid = isAdvancePaid && isRemainingPaid;
+    const hasUploadedWork = workUploads.length > 0;
+    const isApproved = commission?.status === "completed";
+    const lastRevision = revisions[0];
 
     return (
         <div className="max-w-6xl mx-auto px-6 py-12">
+            {/* Full Screen Image Modal */}
+            {selectedImage && (
+                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
+                    <button className="absolute top-4 right-4 text-white p-2" onClick={() => setSelectedImage(null)}>
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    {/* Watermark overlay for preview images */}
+                    {!isApproved && (
+                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <span className="text-white/20 text-9xl font-black rotate-45">PREVIEW</span>
+                        </div>
+                    )}
+                    <img src={selectedImage} alt="Full view" className="max-w-full max-h-full object-contain" />
+                </div>
+            )}
+
             <Link to="/commissions" className="text-slate-500 hover:text-slate-700 text-sm mb-4 inline-block">
                 ← Back to commissions
             </Link>
@@ -142,69 +380,277 @@ export default function CommissionDetail() {
                 <div className="lg:col-span-2 space-y-6">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <div className="flex items-center justify-between mb-4">
-                            <h1 className="text-2xl font-black text-slate-900">{commission.title}</h1>
+                            <div className="flex items-center gap-4">
+                                {isArtist ? (
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
+                                        {buyer?.avatar_url ? (
+                                            <img src={buyer.avatar_url} alt="Buyer" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
+                                                {buyer?.full_name?.charAt(0) || "?"}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
+                                        {artist?.avatar_url ? (
+                                            <img src={artist.avatar_url} alt="Artist" className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
+                                                {artist?.full_name?.charAt(0) || "?"}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                                <div>
+                                    <h1 className="text-xl font-black text-slate-900">{commission.title}</h1>
+                                    <p className="text-sm text-slate-500">
+                                        {isArtist ? `From: ${buyer?.full_name || 'Buyer'}` : `Artist: ${artist?.full_name || 'Artist'}`}
+                                    </p>
+                                </div>
+                            </div>
                             <StatusBadge status={commission.status} />
                         </div>
                         <p className="text-slate-600 mb-4">{commission.description}</p>
                         <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                             <div>
-                                <p className="text-sm text-slate-500">Budget</p>
+                                <p className="text-sm text-slate-500">Total Budget</p>
                                 <p className="text-xl font-bold text-slate-900">${commission.price}</p>
                             </div>
-                            <div className="text-right">
-                                <p className="text-sm text-slate-500">{isBuyer ? "Artist" : "Buyer"}</p>
-                                <p className="font-bold text-slate-900">
-                                    {isBuyer ? artist?.full_name : buyer?.full_name}
-                                </p>
-                            </div>
+                            {commission.deadline && (
+                                <div className="text-right">
+                                    <p className="text-sm text-slate-500">Deadline</p>
+                                    <p className="font-bold text-slate-900">
+                                        {new Date(commission.deadline).toLocaleDateString()}
+                                    </p>
+                                </div>
+                            )}
                         </div>
 
-                        <div className="mt-6 flex gap-3">
-                            {commission.status === "pending" && isArtist && (
+                        <div className="mt-6 flex flex-wrap gap-3">
+                            {/* Buyer: Waiting for artist to accept */}
+                            {commission.status === "pending" && isBuyer && payment && payment.status === "paid" && (
+                                <span className="text-blue-600 font-medium">Waiting for artist to accept...</span>
+                            )}
+                            
+                            {/* Artist: Accept when paid */}
+                            {commission.status === "pending" && isArtist && payment && payment.status === "paid" && (
                                 <Button onClick={handleAccept}>Accept Commission</Button>
                             )}
+                            
+                            {/* Artist: Start when accepted */}
                             {commission.status === "accepted" && isArtist && (
                                 <Button onClick={handleStart}>Start Work</Button>
                             )}
+                            
+                            {/* Artist: Submit for review */}
                             {commission.status === "in_progress" && isArtist && (
-                                <Button onClick={handleSubmitForReview}>Submit for Review</Button>
+                                <Button onClick={handleSubmitForReview} disabled={!hasUploadedWork}>
+                                    Submit for Review {!hasUploadedWork && "(Upload preview first)"}
+                                </Button>
                             )}
+                            
+                            {/* Buyer: Review or Revision */}
                             {(commission.status === "review" || commission.status === "revised") && isBuyer && (
-                                <Button onClick={handleApprove}>Approve Work</Button>
+                                <>
+                                    <Button onClick={handleApprove}>
+                                        Approve Work
+                                    </Button>
+                                    <Button variant="outline" onClick={handleRequestRevision} disabled={!revisionNotes.trim()}>
+                                        Request Revision
+                                    </Button>
+                                </>
+                            )}
+                            
+                            {commission.status === "completed" && (
+                                <span className="text-green-600 font-bold">✓ Commission Complete!</span>
                             )}
                         </div>
                     </div>
 
+                    {/* Payment Section */}
+                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                        <h2 className="text-lg font-bold text-slate-900 mb-4">Payment</h2>
+                        
+                        <div className="space-y-3">
+                            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-xl">
+                                <div>
+                                    <p className="font-bold text-slate-900">Advance (50%)</p>
+                                    <p className="text-sm text-slate-500">${advanceAmount}</p>
+                                </div>
+                                <PaymentStatusBadge status={payment?.status} />
+                            </div>
+
+                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+                                <div>
+                                    <p className="font-bold text-slate-900">Remaining (50%)</p>
+                                    <p className="text-sm text-slate-500">${advanceAmount}</p>
+                                </div>
+                                {isRemainingPaid ? (
+                                    <span className="text-green-600 font-bold text-sm">Paid</span>
+                                ) : (
+                                    <span className="text-slate-400 text-sm">Pending</span>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-4 flex flex-wrap gap-2">
+                            {commission.status === "pending" && isBuyer && payment && payment.status !== "paid" && (
+                                <Button onClick={handleCreatePayment} size="sm">
+                                    Pay Advance (${advanceAmount})
+                                </Button>
+                            )}
+                            
+                            {(commission.status === "accepted" || commission.status === "in_progress") && isBuyer && payment && payment.status !== "paid" && (
+                                <Button onClick={handlePayAdvance} size="sm">
+                                    Pay Advance (${advanceAmount})
+                                </Button>
+                            )}
+                            
+                            {(commission.status === "review" || commission.status === "revised") && isBuyer && !isRemainingPaid && (
+                                <Button onClick={handlePayRemaining} size="sm">
+                                    Pay Remaining (${advanceAmount})
+                                </Button>
+                            )}
+                            
+                            {isArtist && payment?.status === "paid" && remainingPayment?.status === "paid" && (
+                                <Button onClick={handleReleasePayment} size="sm">
+                                    Release Payment
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Work Upload Section */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Work Uploads</h2>
+                        
+                        {/* Revision Notes from Buyer */}
+                        {(commission.status === "revised" || commission.status === "review") && lastRevision && (
+                            <div className="mb-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
+                                <p className="font-bold text-orange-800">Revision Requested:</p>
+                                <p className="text-sm text-orange-700 mt-1">{lastRevision.request_notes}</p>
+                            </div>
+                        )}
+
+                        {/* Upload for Artist */}
+                        {isArtist && (commission.status === "accepted" || commission.status === "in_progress" || commission.status === "revised") && (
+                            <div className="mb-6 p-4 bg-slate-50 rounded-xl">
+                                <p className="text-sm font-medium text-slate-700 mb-3">Upload a preview (will be watermarked)</p>
+                                <label className="block cursor-pointer">
+                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-yellow-500 hover:bg-yellow-50 transition-colors">
+                                        {uploadFile ? (
+                                            <div className="flex flex-col items-center">
+                                                <svg className="w-10 h-10 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                                <p className="text-sm font-medium text-slate-700">{uploadFile.name}</p>
+                                                <p className="text-xs text-slate-500 mt-1">Click to change</p>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <svg className="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                </svg>
+                                                <p className="text-sm font-medium text-slate-700">Click to upload</p>
+                                                <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        onChange={handleFileChange}
+                                        className="hidden"
+                                    />
+                                </label>
+
+                                <textarea
+                                    value={uploadNotes}
+                                    onChange={(e) => setUploadNotes(e.target.value)}
+                                    placeholder="Notes about this preview..."
+                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm mt-3"
+                                    rows={2}
+                                />
+                                <Button 
+                                    onClick={handleUploadWork} 
+                                    disabled={!uploadFile || isUploading}
+                                    className="w-full mt-3"
+                                >
+                                    {isUploading ? "Uploading..." : "Upload Preview"}
+                                </Button>
+                            </div>
+                        )}
+
+                        {/* Show Uploads */}
                         {workUploads.length === 0 ? (
                             <p className="text-slate-500 text-sm">No work uploaded yet.</p>
                         ) : (
                             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                                 {workUploads.map((upload) => (
-                                    <div key={upload.id} className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden">
+                                    <div key={upload.id} className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
                                         <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
-                                        {upload.watermarked && (
+                                        
+                                        {/* Always show watermark unless approved */}
+                                        {!isApproved && (
                                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                <span className="text-white/30 text-4xl font-black rotate-45">PREVIEW</span>
+                                                <span className="text-white/40 text-4xl font-black rotate-45">PREVIEW</span>
                                             </div>
                                         )}
-                                        {upload.is_final && (
-                                            <span className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                                                Final
-                                            </span>
+                                        
+                                        {/* Status badge */}
+                                        <div className="absolute top-2 right-2">
+                                            {isApproved ? (
+                                                <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+                                                    Final
+                                                </span>
+                                            ) : (
+                                                <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
+                                                    Preview
+                                                </span>
+                                            )}
+                                        </div>
+                                        
+                                        {/* Hover overlay */}
+                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <span className="text-white font-medium">Click to view</span>
+                                        </div>
+                                        
+                                        {/* Notes */}
+                                        {upload.notes && (
+                                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-2">
+                                                <p className="text-xs text-white line-clamp-2">{upload.notes}</p>
+                                            </div>
                                         )}
                                     </div>
                                 ))}
                             </div>
                         )}
+                        
+                        {isApproved && (
+                            <p className="text-green-600 text-sm mt-3 font-medium">✓ Final version approved - You can view and download in full resolution</p>
+                        )}
                     </div>
+
+                    {/* Revision Notes Section */}
+                    {isBuyer && (commission.status === "review" || commission.status === "revised") && (
+                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
+                            <h2 className="text-lg font-bold text-slate-900 mb-4">Request Revision</h2>
+                            <textarea
+                                value={revisionNotes}
+                                onChange={(e) => setRevisionNotes(e.target.value)}
+                                placeholder="Describe what changes you want..."
+                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-yellow-500 outline-none"
+                                rows={3}
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-6">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Chat</h2>
-                        <div className="h-64 overflow-y-auto space-y-3 mb-4">
+                        <div className="h-80 overflow-y-auto space-y-3 mb-4">
                             {messages.map((msg) => (
                                 <div
                                     key={msg.id || msg.message_id}
@@ -239,6 +685,18 @@ export default function CommissionDetail() {
                     </div>
                 </div>
             </div>
+
+            <PaymentModal 
+                isOpen={showPaymentModal} 
+                onClose={() => {
+                    setShowPaymentModal(false);
+                    setPaymentAction(null);
+                }}
+                amount={advanceAmount}
+                paymentType={paymentAction === 'remaining' ? 'remaining' : 'advance'}
+                onSuccess={handlePaymentSuccess}
+                onFailure={(error) => toast.error('Payment failed')}
+            />
         </div>
     );
 }
@@ -269,6 +727,26 @@ function StatusBadge({ status }) {
     return (
         <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[status] || statusColors.pending}`}>
             {statusLabels[status] || "Pending"}
+        </span>
+    );
+}
+
+function PaymentStatusBadge({ status }) {
+    if (!status) {
+        return <span className="text-orange-500 text-sm font-bold">Required</span>;
+    }
+    
+    const styles = {
+        pending: "bg-orange-100 text-orange-600",
+        paid: "bg-green-50 text-green-600",
+        released: "bg-blue-50 text-blue-600",
+        refunded: "bg-red-50 text-red-600",
+        failed: "bg-red-50 text-red-600"
+    };
+
+    return (
+        <span className={`px-2 py-1 rounded-full text-xs font-bold ${styles[status] || styles.pending}`}>
+            {status.toUpperCase()}
         </span>
     );
 }

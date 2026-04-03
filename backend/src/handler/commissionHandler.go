@@ -214,6 +214,53 @@ func (h *CommissionHandler) ReleasePayment(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *CommissionHandler) CreateRemainingPayment(w http.ResponseWriter, r *http.Request) {
+	var req CreatePaymentRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	payment := &models.RemainingPayment{
+		ID:            req.PaymentID,
+		CommissionID:  req.CommissionID,
+		Amount:        req.Amount,
+		PaymentIntent: req.PaymentIntent,
+	}
+
+	if err := h.commissionService.CreateRemainingPayment(payment); err != nil {
+		http.Error(w, "Failed to create remaining payment", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(payment)
+}
+
+func (h *CommissionHandler) GetRemainingPayment(w http.ResponseWriter, r *http.Request) {
+	commissionID := chi.URLParam(r, "commissionId")
+	payment, err := h.commissionService.GetRemainingPayment(commissionID)
+	if err != nil {
+		http.Error(w, "Failed to fetch remaining payment", http.StatusInternalServerError)
+		return
+	}
+	if payment == nil {
+		http.Error(w, "Payment not found", http.StatusNotFound)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(payment)
+}
+
+func (h *CommissionHandler) MarkRemainingPaymentPaid(w http.ResponseWriter, r *http.Request) {
+	commissionID := chi.URLParam(r, "commissionId")
+	if err := h.commissionService.MarkRemainingPaymentPaid(commissionID); err != nil {
+		http.Error(w, "Failed to mark remaining payment as paid", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type UploadWorkRequest struct {
 	UploadID     string `json:"upload_id"`
 	CommissionID string `json:"commission_id"`

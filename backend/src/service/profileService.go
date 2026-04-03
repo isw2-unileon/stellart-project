@@ -32,3 +32,7 @@ func (s *ProfileService) GetMasterSkills() ([]models.MasterSkill, error) {
 func (s *ProfileService) GetOpenCommissionProfiles() ([]models.Profile, error) {
 	return s.repo.GetOpenCommissionProfiles()
 }
+
+func (s *ProfileService) UpdateOpenCommissions(id string, open bool) error {
+	return s.repo.UpdateOpenCommissions(id, open)
+}

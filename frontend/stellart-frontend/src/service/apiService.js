@@ -54,13 +54,16 @@ export const submitContact = async ({ name, title, message }) => {
 export const uploadImage = async (file) => {
   if (!file) throw new Error("No file provided");
 
-  const fileName = `${Date.now()}_${file.name}`;
+  const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '_')}`;
 
-  const { error } = await supabase.storage
+  const { data, error } = await supabase.storage
     .from('artworks')        
     .upload(fileName, file);
 
-  if (error) throw error;
+  if (error) {
+    console.error("Supabase upload error:", error);
+    throw new Error(error.message);
+  }
 
   const { data: urlData } = supabase.storage
     .from('artworks')
@@ -272,6 +275,32 @@ export const releasePayment = async (commissionId) => {
     if (!response.ok) throw new Error('Failed to release payment');
 };
 
+export const createRemainingPayment = async (paymentData) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/remaining-payments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(paymentData),
+    });
+    if (!response.ok) throw new Error('Failed to create remaining payment');
+    return response.json();
+};
+
+export const getRemainingPayment = async (commissionId) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/${commissionId}/remaining-payment`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) return null;
+    return response.json();
+};
+
+export const markRemainingPaymentPaid = async (commissionId) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/${commissionId}/remaining-payment/mark-paid`, {
+        method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to mark remaining payment as paid');
+};
+
 // Work Uploads
 export const uploadWork = async (uploadData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/work-uploads`, {
@@ -391,18 +420,10 @@ export const getArtistsWithOpenCommissions = async () => {
 };
 
 export const updateOpenCommissions = async (userId, openCommissions) => {
-    const payload = {
-        profile: {
-            id: userId,
-            open_commissions: openCommissions
-        },
-        skills: []
-    };
-
-    const response = await fetch(`${BACKEND_URL}/profiles/${userId}`, {
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}/open-commissions`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        body: JSON.stringify({ open_commissions: openCommissions }),
     });
     
     if (!response.ok) throw new Error('Failed to update open commissions');

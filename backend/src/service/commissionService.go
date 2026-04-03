@@ -83,6 +83,16 @@ func (s *CommissionService) ApproveWork(commissionID string) error {
 		return errors.New("commission not found")
 	}
 
+	uploads, err := s.commissionRepo.GetWorkUploadsByCommissionID(commissionID)
+	if err != nil {
+		return err
+	}
+
+	for i := range uploads {
+		uploads[i].IsFinal = true
+		s.commissionRepo.UpdateWorkUpload(&uploads[i])
+	}
+
 	commission.Status = models.CommissionStatusCompleted
 	return s.commissionRepo.Update(commission)
 }
@@ -111,8 +121,17 @@ func (s *CommissionService) MarkPaymentPaid(commissionID string) error {
 	return s.commissionRepo.UpdateAdvancePayment(payment)
 }
 
-func (s *CommissionService) ReleasePayment(commissionID string) error {
-	payment, err := s.commissionRepo.GetAdvancePaymentByCommissionID(commissionID)
+func (s *CommissionService) CreateRemainingPayment(payment *models.RemainingPayment) error {
+	payment.Status = models.PaymentStatusPending
+	return s.commissionRepo.CreateRemainingPayment(payment)
+}
+
+func (s *CommissionService) GetRemainingPayment(commissionID string) (*models.RemainingPayment, error) {
+	return s.commissionRepo.GetRemainingPaymentByCommissionID(commissionID)
+}
+
+func (s *CommissionService) MarkRemainingPaymentPaid(commissionID string) error {
+	payment, err := s.commissionRepo.GetRemainingPaymentByCommissionID(commissionID)
 	if err != nil {
 		return err
 	}
@@ -120,8 +139,39 @@ func (s *CommissionService) ReleasePayment(commissionID string) error {
 		return errors.New("payment not found")
 	}
 
-	payment.Status = models.PaymentStatusReleased
-	return s.commissionRepo.UpdateAdvancePayment(payment)
+	now := time.Now()
+	payment.Status = models.PaymentStatusPaid
+	payment.PaidAt = &now
+	return s.commissionRepo.UpdateRemainingPayment(payment)
+}
+
+func (s *CommissionService) ReleasePayment(commissionID string) error {
+	advancePayment, err := s.commissionRepo.GetAdvancePaymentByCommissionID(commissionID)
+	if err != nil {
+		return err
+	}
+	if advancePayment == nil {
+		return errors.New("advance payment not found")
+	}
+
+	now := time.Now()
+	advancePayment.Status = models.PaymentStatusReleased
+	advancePayment.PaidAt = &now
+	if err := s.commissionRepo.UpdateAdvancePayment(advancePayment); err != nil {
+		return err
+	}
+
+	remainingPayment, err := s.commissionRepo.GetRemainingPaymentByCommissionID(commissionID)
+	if err != nil {
+		return err
+	}
+	if remainingPayment != nil {
+		remainingPayment.Status = models.PaymentStatusReleased
+		remainingPayment.PaidAt = &now
+		return s.commissionRepo.UpdateRemainingPayment(remainingPayment)
+	}
+
+	return nil
 }
 
 func (s *CommissionService) CreateWorkUpload(upload *models.WorkUpload) error {

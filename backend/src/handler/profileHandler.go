@@ -82,3 +82,22 @@ func (h *ProfileHandler) GetOpenCommissionProfiles(w http.ResponseWriter, r *htt
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(profiles)
 }
+
+func (h *ProfileHandler) UpdateOpenCommissions(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	var req struct {
+		OpenCommissions bool `json:"open_commissions"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.profileService.UpdateOpenCommissions(id, req.OpenCommissions); err != nil {
+		http.Error(w, "Update failed", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+}

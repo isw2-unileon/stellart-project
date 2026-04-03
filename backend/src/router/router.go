@@ -22,6 +22,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Get("/open-commissions", ph.GetOpenCommissionProfiles)
 		r.Get("/{id}/skills", ph.GetProfileSkills)
 		r.Get("/{id}", ph.GetProfile)
+		r.Put("/{id}/open-commissions", ph.UpdateOpenCommissions)
 		r.Put("/{id}", ph.UpdateProfile)
 		r.Get("/master-skills", ph.GetMasterSkills)
 	})
@@ -55,6 +56,11 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Get("/{commissionId}/payment", comh.GetAdvancePayment)
 		r.Post("/{commissionId}/payment/mark-paid", comh.MarkPaymentPaid)
 		r.Post("/{commissionId}/payment/release", comh.ReleasePayment)
+
+		// Remaining Payments
+		r.Post("/remaining-payments", comh.CreateRemainingPayment)
+		r.Get("/{commissionId}/remaining-payment", comh.GetRemainingPayment)
+		r.Post("/{commissionId}/remaining-payment/mark-paid", comh.MarkRemainingPaymentPaid)
 
 		// Work Uploads
 		r.Post("/work-uploads", comh.UploadWork)
