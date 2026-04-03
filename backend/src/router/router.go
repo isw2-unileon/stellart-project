@@ -58,6 +58,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", comh.GetCommission)
 			r.Post("/accept", comh.AcceptCommission)
+			r.Post("/deny", comh.DenyCommission)
 			r.Post("/start", comh.StartCommission)
 			r.Post("/submit-review", comh.SubmitForReview)
 			r.Post("/approve", comh.ApproveWork)

@@ -833,6 +833,111 @@ func TestCommissionHandler_ApproveWork(t *testing.T) {
 	}
 }
 
+func TestCommissionHandler_DenyCommission(t *testing.T) {
+	tests := []struct {
+		name         string
+		commissionID string
+		commMock     func(id string) (*models.Commission, error)
+		paymentMock  func(cid string) (*models.AdvancePayment, error)
+		updateComm   func(c *models.Commission) error
+		createRefund func(r *models.Refund) error
+		updateRefund func(r *models.Refund) error
+		wantCode     int
+	}{
+		{
+			name:         "Commission denied successfully with refund",
+			commissionID: "comm-123",
+			commMock: func(id string) (*models.Commission, error) {
+				return &models.Commission{ID: id, Status: models.CommissionStatusPending}, nil
+			},
+			paymentMock: func(cid string) (*models.AdvancePayment, error) {
+				return &models.AdvancePayment{ID: "pay-123", CommissionID: cid, Amount: 50, Status: models.PaymentStatusPaid}, nil
+			},
+			updateComm: func(c *models.Commission) error {
+				return nil
+			},
+			createRefund: func(r *models.Refund) error {
+				return nil
+			},
+			updateRefund: func(r *models.Refund) error {
+				return nil
+			},
+			wantCode: http.StatusNoContent,
+		},
+		{
+			name:         "Commission denied successfully without payment",
+			commissionID: "comm-123",
+			commMock: func(id string) (*models.Commission, error) {
+				return &models.Commission{ID: id, Status: models.CommissionStatusPending}, nil
+			},
+			paymentMock: func(cid string) (*models.AdvancePayment, error) {
+				return nil, nil
+			},
+			updateComm: func(c *models.Commission) error {
+				return nil
+			},
+			wantCode: http.StatusNoContent,
+		},
+		{
+			name:         "Commission not found",
+			commissionID: "comm-123",
+			commMock: func(id string) (*models.Commission, error) {
+				return nil, nil
+			},
+			wantCode: http.StatusNotFound,
+		},
+		{
+			name:         "Database error on get commission",
+			commissionID: "comm-123",
+			commMock: func(id string) (*models.Commission, error) {
+				return nil, errors.New("database error")
+			},
+			wantCode: http.StatusInternalServerError,
+		},
+		{
+			name:         "Database error on update commission",
+			commissionID: "comm-123",
+			commMock: func(id string) (*models.Commission, error) {
+				return &models.Commission{ID: id, Status: models.CommissionStatusPending}, nil
+			},
+			paymentMock: func(cid string) (*models.AdvancePayment, error) {
+				return nil, nil
+			},
+			updateComm: func(c *models.Commission) error {
+				return errors.New("database error")
+			},
+			wantCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockCommissionRepo{
+				mockGetByID:                tt.commMock,
+				mockGetAdvancePaymentByCID: tt.paymentMock,
+				mockUpdate:                 tt.updateComm,
+				mockCreateRefund:           tt.createRefund,
+				mockUpdateRefund:           tt.updateRefund,
+			}
+
+			commissionService := service.NewCommissionService(mockRepo)
+			h := handler.NewCommissionHandler(commissionService)
+
+			r := chi.NewRouter()
+			r.Post("/{id}/deny", h.DenyCommission)
+
+			req := httptest.NewRequest(http.MethodPost, "/comm-123/deny", nil)
+			w := httptest.NewRecorder()
+
+			r.ServeHTTP(w, req)
+
+			if w.Code != tt.wantCode {
+				t.Errorf("DenyCommission() code = %v, want %v", w.Code, tt.wantCode)
+			}
+		})
+	}
+}
+
 func BenchmarkCommissionHandler_CreateCommission(b *testing.B) {
 	mockRepo := &mockCommissionRepo{
 		mockCreate: func(c *models.Commission) error {

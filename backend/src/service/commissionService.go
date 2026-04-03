@@ -329,6 +329,44 @@ func (s *CommissionService) CancelCommission(id string) error {
 	return s.commissionRepo.Update(commission)
 }
 
+func (s *CommissionService) DenyCommission(id string) error {
+	commission, err := s.commissionRepo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if commission == nil {
+		return errors.New("commission not found")
+	}
+
+	commission.Status = models.CommissionStatusCancelled
+	if err := s.commissionRepo.Update(commission); err != nil {
+		return err
+	}
+
+	payment, err := s.commissionRepo.GetAdvancePaymentByCommissionID(id)
+	if err != nil {
+		return err
+	}
+	if payment != nil && payment.Status == models.PaymentStatusPaid {
+		refund := &models.Refund{
+			ID:           "refund_" + id,
+			CommissionID: id,
+			Amount:       payment.Amount,
+			Reason:       "Commission denied by artist",
+			Status:       models.PaymentStatusPending,
+		}
+		if err := s.commissionRepo.CreateRefund(refund); err != nil {
+			return err
+		}
+		refund.Status = models.PaymentStatusRefunded
+		if err := s.commissionRepo.UpdateRefund(refund); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (s *CommissionService) SendMessage(message *models.ChatMessage) error {
 	return s.commissionRepo.CreateChatMessage(message)
 }

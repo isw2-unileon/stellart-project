@@ -157,6 +157,19 @@ func (h *CommissionHandler) CancelCommission(w http.ResponseWriter, r *http.Requ
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (h *CommissionHandler) DenyCommission(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if err := h.commissionService.DenyCommission(id); err != nil {
+		if strings.Contains(err.Error(), "not found") {
+			http.Error(w, "Commission not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Failed to deny commission", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 type CreatePaymentRequest struct {
 	PaymentID     string  `json:"payment_id"`
 	CommissionID  string  `json:"commission_id"`

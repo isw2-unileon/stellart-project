@@ -256,6 +256,13 @@ export const acceptCommission = async (id) => {
     if (!response.ok) throw new Error('Failed to accept commission');
 };
 
+export const denyCommission = async (id) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/${id}/deny`, {
+        method: 'POST',
+    });
+    if (!response.ok) throw new Error('Failed to deny commission');
+};
+
 export const startCommission = async (id) => {
     const response = await fetch(`${BACKEND_URL}/commissions/${id}/start`, {
         method: 'POST',

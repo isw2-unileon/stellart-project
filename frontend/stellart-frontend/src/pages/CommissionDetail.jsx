@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
+import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, denyCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
 import { Button } from "../components/ui/button";
 import PaymentModal from "../components/PaymentModal";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function CommissionDetail() {
     const { id } = useParams();
@@ -26,6 +27,7 @@ export default function CommissionDetail() {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentAction, setPaymentAction] = useState(null);
     const [finalUploadFile, setFinalUploadFile] = useState(null);
+    const [showDenyDialog, setShowDenyDialog] = useState(false);
     const messagesEndRef = useRef(null);
     const navigate = useNavigate();
 
@@ -379,6 +381,23 @@ export default function CommissionDetail() {
         }
     };
 
+    const handleDeny = async () => {
+        setShowDenyDialog(true);
+    };
+
+    const handleConfirmDeny = async () => {
+        try {
+            await denyCommission(id);
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
+            
+            toast.success("Commission denied. Advance payment will be refunded.");
+        } catch {
+            toast.error("Failed to deny commission");
+        }
+    };
+
     const handleStart = async () => {
         try {
             await startCommission(id);
@@ -521,7 +540,10 @@ export default function CommissionDetail() {
                             
                             {/* Artist: Accept when paid */}
                             {commission.status === "pending" && isArtist && payment && payment.status === "paid" && (
-                                <Button onClick={handleAccept}>Accept Commission</Button>
+                                <>
+                                    <Button onClick={handleAccept}>Accept Commission</Button>
+                                    <Button onClick={handleDeny} variant="destructive">Deny & Refund</Button>
+                                </>
                             )}
                             
                             {/* Artist: Start when accepted */}
@@ -861,6 +883,16 @@ export default function CommissionDetail() {
                 paymentType={paymentAction === 'remaining' || paymentAction === 'remaining_approve' ? 'remaining' : 'advance'}
                 onSuccess={handlePaymentSuccess}
                 onFailure={() => toast.error('Payment failed')}
+            />
+
+            <ConfirmDialog
+                open={showDenyDialog}
+                onOpenChange={setShowDenyDialog}
+                title="Deny Commission"
+                description="Are you sure you want to deny this commission? The advance payment will be refunded to the buyer."
+                confirmText="Deny & Refund"
+                cancelText="Cancel"
+                onConfirm={handleConfirmDeny}
             />
         </div>
     );
