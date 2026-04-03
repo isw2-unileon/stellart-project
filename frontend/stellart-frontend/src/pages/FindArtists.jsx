@@ -18,6 +18,7 @@ export default function FindArtists() {
                 }
 
                 const artistList = await getArtistsWithOpenCommissions();
+                artistList?.forEach((a, i) => console.log(`Artist ${i}:`, JSON.stringify(a)));
                 setArtists(artistList || []);
             } catch (error) {
                 console.error("Error:", error);
@@ -71,21 +72,24 @@ function ArtistCard({ artist }) {
         navigate(`/commission/start/${artist.id}`);
     };
 
+    const displayName = artist.full_name || artist.email?.split('@')[0] || "Artist";
+    const initial = displayName.charAt(0).toUpperCase();
+
     return (
         <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
             <div className="p-6">
                 <div className="flex items-center gap-4 mb-4">
                     <div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
                         {artist.avatar_url ? (
-                            <img src={artist.avatar_url} alt={artist.full_name} className="w-full h-full object-cover" />
+                            <img src={artist.avatar_url} alt={displayName} className="w-full h-full object-cover" />
                         ) : (
                             <span className="text-2xl font-black text-yellow-500 uppercase">
-                                {artist.full_name?.charAt(0) || "?"}
+                                {initial}
                             </span>
                         )}
                     </div>
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">{artist.full_name}</h3>
+                        <h3 className="text-lg font-bold text-slate-900">{displayName}</h3>
                         <span className="px-2 py-0.5 bg-yellow-50 text-yellow-600 text-xs font-bold rounded-full">
                             Open for commissions
                         </span>

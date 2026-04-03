@@ -23,6 +23,26 @@ export const registerUser = async (email, password, fullName) => {
     });
 
     if (error) throw error;
+    
+    if (data?.user) {
+        try {
+            await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    profile: {
+                        id: data.user.id,
+                        full_name: fullName,
+                        avatar_url: null
+                    },
+                    skills: []
+                }),
+            });
+        } catch (e) {
+            console.error("Profile creation error:", e);
+        }
+    }
+    
     return data;
 };
 
@@ -32,6 +52,29 @@ export const loginUser = async (email, password) => {
         password,
     });
     if (error) throw error;
+    
+    if (data?.user) {
+        const fullName = data.user.user_metadata?.full_name;
+        if (fullName) {
+            try {
+                await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        profile: {
+                            id: data.user.id,
+                            full_name: fullName,
+                            avatar_url: data.user.user_metadata?.avatar_url || null
+                        },
+                        skills: []
+                    }),
+                });
+            } catch (e) {
+                console.error("Profile sync error:", e);
+            }
+        }
+    }
+    
     return data;
 };
 
