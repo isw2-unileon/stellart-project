@@ -258,6 +258,16 @@ func (r *postgresCommissionRepo) GetWorkUploadsByCommissionID(commissionID strin
 	return uploads, nil
 }
 
+func (r *postgresCommissionRepo) UpdateWorkUpload(upload *models.WorkUpload) error {
+	query := `
+		UPDATE public.work_uploads
+		SET is_final = $1
+		WHERE id = $2`
+
+	_, err := r.db.Exec(query, upload.IsFinal, upload.ID)
+	return err
+}
+
 func (r *postgresCommissionRepo) CreateRevision(revision *models.CommissionRevision) error {
 	query := `
 		INSERT INTO public.commission_revisions (id, commission_id, work_upload_id, request_notes, status)
