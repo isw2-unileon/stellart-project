@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"time"
 
@@ -159,11 +160,16 @@ type CreatePaymentRequest struct {
 }
 
 func (h *CommissionHandler) CreateAdvancePayment(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[DEBUG] CreateAdvancePayment called - Method: %s, Path: %s", r.Method, r.URL.Path)
+
 	var req CreatePaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("[ERROR] CreateAdvancePayment - Invalid payload: %v", err)
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("[DEBUG] CreateAdvancePayment - Request: %+v", req)
 
 	payment := &models.AdvancePayment{
 		ID:            req.PaymentID,
@@ -173,16 +179,19 @@ func (h *CommissionHandler) CreateAdvancePayment(w http.ResponseWriter, r *http.
 	}
 
 	if err := h.commissionService.CreateAdvancePayment(payment); err != nil {
-		http.Error(w, "Failed to create payment", http.StatusInternalServerError)
+		log.Printf("[ERROR] CreateAdvancePayment - Service error: %v", err)
+		http.Error(w, "Failed to create payment: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[DEBUG] CreateAdvancePayment - Success, payment ID: %s", payment.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payment)
 }
 
 func (h *CommissionHandler) GetAdvancePayment(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	payment, err := h.commissionService.GetAdvancePayment(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch payment", http.StatusInternalServerError)
@@ -197,7 +206,7 @@ func (h *CommissionHandler) GetAdvancePayment(w http.ResponseWriter, r *http.Req
 }
 
 func (h *CommissionHandler) MarkPaymentPaid(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	if err := h.commissionService.MarkPaymentPaid(commissionID); err != nil {
 		http.Error(w, "Failed to mark payment as paid", http.StatusInternalServerError)
 		return
@@ -206,7 +215,7 @@ func (h *CommissionHandler) MarkPaymentPaid(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *CommissionHandler) ReleasePayment(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	if err := h.commissionService.ReleasePayment(commissionID); err != nil {
 		http.Error(w, "Failed to release payment", http.StatusInternalServerError)
 		return
@@ -215,11 +224,16 @@ func (h *CommissionHandler) ReleasePayment(w http.ResponseWriter, r *http.Reques
 }
 
 func (h *CommissionHandler) CreateRemainingPayment(w http.ResponseWriter, r *http.Request) {
+	log.Printf("[DEBUG] CreateRemainingPayment called - Method: %s, Path: %s", r.Method, r.URL.Path)
+
 	var req CreatePaymentRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		log.Printf("[ERROR] CreateRemainingPayment - Invalid payload: %v", err)
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
+
+	log.Printf("[DEBUG] CreateRemainingPayment - Request: %+v", req)
 
 	payment := &models.RemainingPayment{
 		ID:            req.PaymentID,
@@ -229,16 +243,19 @@ func (h *CommissionHandler) CreateRemainingPayment(w http.ResponseWriter, r *htt
 	}
 
 	if err := h.commissionService.CreateRemainingPayment(payment); err != nil {
-		http.Error(w, "Failed to create remaining payment", http.StatusInternalServerError)
+		log.Printf("[ERROR] CreateRemainingPayment - Service error: %v", err)
+		http.Error(w, "Failed to create remaining payment: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
+
+	log.Printf("[DEBUG] CreateRemainingPayment - Success, payment ID: %s", payment.ID)
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(payment)
 }
 
 func (h *CommissionHandler) GetRemainingPayment(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	payment, err := h.commissionService.GetRemainingPayment(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch remaining payment", http.StatusInternalServerError)
@@ -253,7 +270,7 @@ func (h *CommissionHandler) GetRemainingPayment(w http.ResponseWriter, r *http.R
 }
 
 func (h *CommissionHandler) MarkRemainingPaymentPaid(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	if err := h.commissionService.MarkRemainingPaymentPaid(commissionID); err != nil {
 		http.Error(w, "Failed to mark remaining payment as paid", http.StatusInternalServerError)
 		return
@@ -262,12 +279,13 @@ func (h *CommissionHandler) MarkRemainingPaymentPaid(w http.ResponseWriter, r *h
 }
 
 type UploadWorkRequest struct {
-	UploadID     string `json:"upload_id"`
-	CommissionID string `json:"commission_id"`
-	ImageURL     string `json:"image_url"`
-	Watermarked  bool   `json:"watermarked"`
-	IsFinal      bool   `json:"is_final"`
-	Notes        string `json:"notes"`
+	UploadID      string `json:"upload_id"`
+	CommissionID  string `json:"commission_id"`
+	ImageURL      string `json:"image_url"`
+	CleanImageURL string `json:"clean_image_url"`
+	Watermarked   bool   `json:"watermarked"`
+	IsFinal       bool   `json:"is_final"`
+	Notes         string `json:"notes"`
 }
 
 func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
@@ -278,12 +296,13 @@ func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upload := &models.WorkUpload{
-		ID:           req.UploadID,
-		CommissionID: req.CommissionID,
-		ImageURL:     req.ImageURL,
-		Watermarked:  req.Watermarked,
-		IsFinal:      req.IsFinal,
-		Notes:        req.Notes,
+		ID:            req.UploadID,
+		CommissionID:  req.CommissionID,
+		ImageURL:      req.ImageURL,
+		CleanImageURL: req.CleanImageURL,
+		Watermarked:   req.Watermarked,
+		IsFinal:       req.IsFinal,
+		Notes:         req.Notes,
 	}
 
 	if err := h.commissionService.CreateWorkUpload(upload); err != nil {
@@ -296,7 +315,7 @@ func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CommissionHandler) GetWorkUploads(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	uploads, err := h.commissionService.GetWorkUploads(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch uploads", http.StatusInternalServerError)
@@ -337,7 +356,7 @@ func (h *CommissionHandler) RequestRevision(w http.ResponseWriter, r *http.Reque
 }
 
 func (h *CommissionHandler) GetRevisions(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	revisions, err := h.commissionService.GetRevisions(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch revisions", http.StatusInternalServerError)
@@ -360,6 +379,25 @@ func (h *CommissionHandler) RejectRevision(w http.ResponseWriter, r *http.Reques
 	revisionID := chi.URLParam(r, "revisionId")
 	if err := h.commissionService.RejectRevision(revisionID); err != nil {
 		http.Error(w, "Failed to reject revision", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
+type RespondToRevisionRequest struct {
+	RevisionID    string `json:"revision_id"`
+	ResponseNotes string `json:"response_notes"`
+}
+
+func (h *CommissionHandler) RespondToRevision(w http.ResponseWriter, r *http.Request) {
+	var req RespondToRevisionRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+
+	if err := h.commissionService.RespondToRevision(req.RevisionID, req.ResponseNotes); err != nil {
+		http.Error(w, "Failed to respond to revision", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
@@ -396,7 +434,7 @@ func (h *CommissionHandler) CreateRefund(w http.ResponseWriter, r *http.Request)
 }
 
 func (h *CommissionHandler) GetRefund(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	refund, err := h.commissionService.GetRefund(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch refund", http.StatusInternalServerError)
@@ -411,7 +449,7 @@ func (h *CommissionHandler) GetRefund(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *CommissionHandler) ProcessRefund(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	if err := h.commissionService.ProcessRefund(commissionID); err != nil {
 		http.Error(w, "Failed to process refund", http.StatusInternalServerError)
 		return
@@ -450,7 +488,7 @@ func (h *CommissionHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *CommissionHandler) GetMessages(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	messages, err := h.commissionService.GetMessages(commissionID)
 	if err != nil {
 		http.Error(w, "Failed to fetch messages", http.StatusInternalServerError)
@@ -461,7 +499,7 @@ func (h *CommissionHandler) GetMessages(w http.ResponseWriter, r *http.Request) 
 }
 
 func (h *CommissionHandler) MarkMessagesRead(w http.ResponseWriter, r *http.Request) {
-	commissionID := chi.URLParam(r, "commissionId")
+	commissionID := chi.URLParam(r, "id")
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
 		http.Error(w, "user_id required", http.StatusBadRequest)

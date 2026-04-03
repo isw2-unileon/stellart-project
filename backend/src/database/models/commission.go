@@ -67,23 +67,25 @@ type RemainingPayment struct {
 }
 
 type WorkUpload struct {
-	ID           string    `json:"id"`
-	CommissionID string    `json:"commission_id"`
-	ImageURL     string    `json:"image_url"`
-	Watermarked  bool      `json:"watermarked"`
-	IsFinal      bool      `json:"is_final"`
-	Notes        string    `json:"notes"`
-	CreatedAt    time.Time `json:"created_at"`
+	ID            string    `json:"id"`
+	CommissionID  string    `json:"commission_id"`
+	ImageURL      string    `json:"image_url"`
+	CleanImageURL string    `json:"clean_image_url"`
+	Watermarked   bool      `json:"watermarked"`
+	IsFinal       bool      `json:"is_final"`
+	Notes         string    `json:"notes"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 type CommissionRevision struct {
-	ID           string         `json:"id"`
-	CommissionID string         `json:"commission_id"`
-	WorkUploadID string         `json:"work_upload_id"`
-	RequestNotes string         `json:"request_notes"`
-	Status       RevisionStatus `json:"status"`
-	CreatedAt    time.Time      `json:"created_at"`
-	ResolvedAt   *time.Time     `json:"resolved_at"`
+	ID            string         `json:"id"`
+	CommissionID  string         `json:"commission_id"`
+	WorkUploadID  string         `json:"work_upload_id"`
+	RequestNotes  string         `json:"request_notes"`
+	ResponseNotes string         `json:"response_notes"`
+	Status        RevisionStatus `json:"status"`
+	CreatedAt     time.Time      `json:"created_at"`
+	ResolvedAt    *time.Time     `json:"resolved_at"`
 }
 
 type Refund struct {

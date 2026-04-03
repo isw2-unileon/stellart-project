@@ -77,16 +77,16 @@ export default function StartCommission() {
                 deadline: formData.deadline
             };
 
-            const commission = await createCommission(commissionData);
-            
             const paymentData = {
                 payment_id: `pay_${Date.now()}`,
-                commission_id: commission.id || commissionData.commission_id,
+                commission_id: commissionData.commission_id,
                 amount: advanceAmount,
                 payment_intent: `pi_${Date.now()}`
             };
             await createAdvancePayment(paymentData);
-            await markPaymentPaid(commission.id || commissionData.commission_id);
+            await markPaymentPaid(commissionData.commission_id);
+            
+            const commission = await createCommission(commissionData);
             
             setShowPaymentModal(false);
             toast.success("Commission requested! Payment successful.");

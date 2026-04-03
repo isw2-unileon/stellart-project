@@ -25,6 +25,7 @@ export default function CommissionDetail() {
     const [selectedImage, setSelectedImage] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [paymentAction, setPaymentAction] = useState(null);
+    const [finalUploadFile, setFinalUploadFile] = useState(null);
     const messagesEndRef = useRef(null);
     const navigate = useNavigate();
 
@@ -101,6 +102,11 @@ export default function CommissionDetail() {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
+            const maxSize = 100 * 1024 * 1024; // 100MB
+            if (file.size > maxSize) {
+                toast.error("File size must be less than 100MB");
+                return;
+            }
             setUploadFile(file);
         }
     };
@@ -114,11 +120,13 @@ export default function CommissionDetail() {
         setIsUploading(true);
         try {
             const watermarkedUrl = await createWatermarkedImage(uploadFile);
+            const cleanUrl = await uploadImage(uploadFile);
             
             const uploadData = {
                 upload_id: `upload_${Date.now()}`,
                 commission_id: id,
                 image_url: watermarkedUrl,
+                clean_image_url: cleanUrl,
                 watermarked: true,
                 is_final: false,
                 notes: uploadNotes
@@ -132,6 +140,9 @@ export default function CommissionDetail() {
             setUploadFile(null);
             setUploadNotes("");
             toast.success("Preview uploaded! Buyer needs to approve for final version.");
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
         } catch (error) {
             console.error("Upload error:", error);
             toast.error(error.message || "Failed to upload work");
@@ -203,6 +214,73 @@ export default function CommissionDetail() {
         setShowPaymentModal(true);
     };
 
+    const handleFinalUpload = async () => {
+        if (!finalUploadFile) {
+            toast.error("Please select an image");
+            return;
+        }
+
+        setIsUploading(true);
+        try {
+            const imageUrl = await uploadImage(finalUploadFile);
+            
+            const uploadData = {
+                upload_id: `final_${Date.now()}`,
+                commission_id: id,
+                image_url: imageUrl,
+                watermarked: false,
+                is_final: true,
+                notes: "Final version"
+            };
+
+            await uploadWork(uploadData);
+            
+            const uploads = await getWorkUploads(id).catch(() => []);
+            setWorkUploads(uploads || []);
+            
+            setFinalUploadFile(null);
+            toast.success("Final version uploaded!");
+            
+            const updated = await getCommission(id);
+            setCommission(updated);
+        } catch (error) {
+            console.error("Upload error:", error);
+            toast.error(error.message || "Failed to upload final version");
+        } finally {
+            setIsUploading(false);
+        }
+    };
+
+    const handleFinalFileChange = (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const maxSize = 100 * 1024 * 1024;
+            if (file.size > maxSize) {
+                toast.error("File size must be less than 100MB");
+                return;
+            }
+            setFinalUploadFile(file);
+        }
+    };
+
+    const handleDownload = async (imageUrl, filename) => {
+        try {
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error("Download error:", error);
+            window.open(imageUrl, '_blank');
+        }
+    };
+
     const handlePaymentSuccess = async (paymentInfo) => {
         try {
             if (paymentAction === 'create' || paymentAction === 'advance') {
@@ -218,7 +296,7 @@ export default function CommissionDetail() {
                 }
                 await markPaymentPaid(id);
                 toast.success("Advance payment successful!");
-            } else if (paymentAction === 'remaining') {
+            } else if (paymentAction === 'remaining' || paymentAction === 'remaining_approve') {
                 if (!remainingPayment) {
                     const remainingAmount = commission.price * 0.5;
                     const paymentData = {
@@ -231,6 +309,12 @@ export default function CommissionDetail() {
                 }
                 await markRemainingPaymentPaid(id);
                 toast.success("Remaining payment successful!");
+                
+                if (paymentAction === 'remaining_approve') {
+                    await approveWork(id);
+                    setCommission({ ...commission, status: "completed" });
+                    toast.success("Work approved! Final version now available.");
+                }
             }
             
             const updated = await getCommission(id);
@@ -325,6 +409,18 @@ export default function CommissionDetail() {
     };
 
     const handleApprove = async () => {
+        if (!isAdvancePaid && isBuyer) {
+            setPaymentAction('advance');
+            setShowPaymentModal(true);
+            return;
+        }
+
+        if (!isRemainingPaid && isBuyer) {
+            setPaymentAction('remaining_approve');
+            setShowPaymentModal(true);
+            return;
+        }
+
         try {
             await approveWork(id);
             setCommission({ ...commission, status: "completed" });
@@ -454,7 +550,7 @@ export default function CommissionDetail() {
                             {(commission.status === "review" || commission.status === "revised") && isBuyer && (
                                 <>
                                     <Button onClick={handleApprove}>
-                                        Approve Work
+                                        {!isAdvancePaid ? `Pay Advance ($${advanceAmount})` : !isRemainingPaid ? `Approve & Pay Remaining ($${advanceAmount})` : "Approve Work"}
                                     </Button>
                                     <Button variant="outline" onClick={handleRequestRevision} disabled={!revisionNotes.trim()}>
                                         Request Revision
@@ -507,12 +603,6 @@ export default function CommissionDetail() {
                                 </Button>
                             )}
                             
-                            {(commission.status === "review" || commission.status === "revised") && isBuyer && !isRemainingPaid && (
-                                <Button onClick={handlePayRemaining} size="sm">
-                                    Pay Remaining (${advanceAmount})
-                                </Button>
-                            )}
-                            
                             {isArtist && payment?.status === "paid" && remainingPayment?.status === "paid" && (
                                 <Button onClick={handleReleasePayment} size="sm">
                                     Release Payment
@@ -553,7 +643,7 @@ export default function CommissionDetail() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                                                 </svg>
                                                 <p className="text-sm font-medium text-slate-700">Click to upload</p>
-                                                <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 10MB</p>
+                                                <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 100MB</p>
                                             </div>
                                         )}
                                     </div>
@@ -586,40 +676,85 @@ export default function CommissionDetail() {
                         {workUploads.length === 0 ? (
                             <p className="text-slate-500 text-sm">No work uploaded yet.</p>
                         ) : (
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                                {workUploads.map((upload) => (
-                                    <div key={upload.id} className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
-                                        <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
-                                        
-                                        {/* Always show watermark unless approved */}
-                                        {!isApproved && (
-                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                <span className="text-white/40 text-4xl font-black rotate-45">PREVIEW</span>
-                                            </div>
-                                        )}
-                                        
-                                        {/* Status badge */}
-                                        <div className="absolute top-2 right-2">
-                                            {isApproved ? (
-                                                <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
-                                                    Final
-                                                </span>
-                                            ) : (
-                                                <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
-                                                    Preview
-                                                </span>
+                            <div className="grid grid-cols-2 gap-4">
+                                {workUploads.map((upload, index) => (
+                                    <div key={upload.id}>
+                                        {/* Image Card */}
+                                        <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
+                                            <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
+                                            
+                                            {/* Show watermark on preview images only */}
+                                            {!upload.is_final && !upload.watermarked && (
+                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                    <span className="text-white/40 text-4xl font-black rotate-45">PREVIEW</span>
+                                                </div>
                                             )}
+                                            
+                                            {/* Status badge */}
+                                            <div className="absolute top-2 right-2">
+                                                {upload.is_final ? (
+                                                    <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
+                                                        Final
+                                                    </span>
+                                                ) : (
+                                                    <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
+                                                        Preview
+                                                    </span>
+                                                )}
+                                            </div>
+                                            
+                                            {/* Hover overlay */}
+                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                {upload.is_final ? (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            const url = upload.clean_image_url || upload.image_url;
+                                                            handleDownload(url, `commission-${id}-final.jpg`);
+                                                        }}
+                                                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        Download Full
+                                                    </button>
+                                                ) : upload.clean_image_url ? (
+                                                    <button 
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDownload(upload.clean_image_url, `commission-${id}-preview.jpg`);
+                                                        }}
+                                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
+                                                    >
+                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                                                        </svg>
+                                                        Download
+                                                    </button>
+                                                ) : isApproved ? (
+                                                    <span className="text-yellow-500 font-medium">Waiting for final version</span>
+                                                ) : (
+                                                    <span className="text-white font-medium">Click to view</span>
+                                                )}
+                                            </div>
                                         </div>
                                         
-                                        {/* Hover overlay */}
-                                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                            <span className="text-white font-medium">Click to view</span>
-                                        </div>
-                                        
-                                        {/* Notes */}
+                                        {/* Artist's Message - Separate Card */}
                                         {upload.notes && (
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/70 p-2">
-                                                <p className="text-xs text-white line-clamp-2">{upload.notes}</p>
+                                            <div className="mt-3 p-4 bg-gradient-to-r from-slate-50 to-yellow-50 rounded-xl border border-slate-200">
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
+                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || "A"}</span>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || "Artist"}</p>
+                                                        <p className="text-sm text-slate-700 mt-1">{upload.notes}</p>
+                                                        <p className="text-xs text-slate-400 mt-1">
+                                                            {new Date(upload.created_at).toLocaleDateString()} at {new Date(upload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                        </p>
+                                                    </div>
+                                                </div>
                                             </div>
                                         )}
                                     </div>
@@ -628,7 +763,47 @@ export default function CommissionDetail() {
                         )}
                         
                         {isApproved && (
-                            <p className="text-green-600 text-sm mt-3 font-medium">✓ Final version approved - You can view and download in full resolution</p>
+                            <>
+                                <p className="text-green-600 text-sm mt-3 font-medium">✓ Final version approved - You can view and download in full resolution</p>
+                                
+                                {isArtist && (
+                                    <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
+                                        <p className="text-sm font-medium text-green-800 mb-3">Upload Final Version (without watermark)</p>
+                                        <label className="block cursor-pointer">
+                                            <div className="border-2 border-dashed border-green-300 rounded-xl p-4 text-center hover:border-green-500 hover:bg-green-100 transition-colors">
+                                                {finalUploadFile ? (
+                                                    <div className="flex flex-col items-center">
+                                                        <svg className="w-8 h-8 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                                        </svg>
+                                                        <p className="text-sm font-medium text-slate-700">{finalUploadFile.name}</p>
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col items-center">
+                                                        <svg className="w-8 h-8 text-green-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                                                        </svg>
+                                                        <p className="text-sm font-medium text-slate-700">Click to upload clean final</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <input
+                                                type="file"
+                                                accept="image/*"
+                                                onChange={handleFinalFileChange}
+                                                className="hidden"
+                                            />
+                                        </label>
+                                        <Button 
+                                            onClick={handleFinalUpload} 
+                                            disabled={!finalUploadFile || isUploading}
+                                            className="w-full mt-3 bg-green-600 hover:bg-green-700"
+                                        >
+                                            {isUploading ? "Uploading..." : "Upload Final Version"}
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
                         )}
                     </div>
 
@@ -693,7 +868,7 @@ export default function CommissionDetail() {
                     setPaymentAction(null);
                 }}
                 amount={advanceAmount}
-                paymentType={paymentAction === 'remaining' ? 'remaining' : 'advance'}
+                paymentType={paymentAction === 'remaining' || paymentAction === 'remaining_approve' ? 'remaining' : 'advance'}
                 onSuccess={handlePaymentSuccess}
                 onFailure={(error) => toast.error('Payment failed')}
             />

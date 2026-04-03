@@ -3,6 +3,7 @@ package postgres
 import (
 	"database/sql"
 	"errors"
+	"log"
 	"time"
 
 	"stellart/backend/src/database/models"
@@ -122,18 +123,28 @@ func (r *postgresCommissionRepo) Update(commission *models.Commission) error {
 }
 
 func (r *postgresCommissionRepo) CreateAdvancePayment(payment *models.AdvancePayment) error {
+	log.Printf("[DEBUG] Repo.CreateAdvancePayment - Inserting payment: %+v", payment)
+
 	query := `
 		INSERT INTO public.advance_payments (id, commission_id, amount, status, payment_intent)
 		VALUES ($1, $2, $3, $4, $5)
 		RETURNING created_at`
 
-	return r.db.QueryRow(query,
+	err := r.db.QueryRow(query,
 		payment.ID,
 		payment.CommissionID,
 		payment.Amount,
 		payment.Status,
 		payment.PaymentIntent,
 	).Scan(&payment.CreatedAt)
+
+	if err != nil {
+		log.Printf("[ERROR] Repo.CreateAdvancePayment - DB error: %v", err)
+		return err
+	}
+
+	log.Printf("[DEBUG] Repo.CreateAdvancePayment - Success, created_at: %v", payment.CreatedAt)
+	return nil
 }
 
 func (r *postgresCommissionRepo) GetAdvancePaymentByCommissionID(commissionID string) (*models.AdvancePayment, error) {
@@ -215,14 +226,15 @@ func (r *postgresCommissionRepo) UpdateRemainingPayment(payment *models.Remainin
 
 func (r *postgresCommissionRepo) CreateWorkUpload(upload *models.WorkUpload) error {
 	query := `
-		INSERT INTO public.work_uploads (id, commission_id, image_url, watermarked, is_final, notes)
-		VALUES ($1, $2, $3, $4, $5, $6)
+		INSERT INTO public.work_uploads (id, commission_id, image_url, clean_image_url, watermarked, is_final, notes)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
 		RETURNING created_at`
 
 	return r.db.QueryRow(query,
 		upload.ID,
 		upload.CommissionID,
 		upload.ImageURL,
+		upload.CleanImageURL,
 		upload.Watermarked,
 		upload.IsFinal,
 		upload.Notes,
@@ -231,7 +243,7 @@ func (r *postgresCommissionRepo) CreateWorkUpload(upload *models.WorkUpload) err
 
 func (r *postgresCommissionRepo) GetWorkUploadsByCommissionID(commissionID string) ([]models.WorkUpload, error) {
 	query := `
-		SELECT id, commission_id, image_url, watermarked, is_final, notes, created_at
+		SELECT id, commission_id, image_url, clean_image_url, watermarked, is_final, notes, created_at
 		FROM public.work_uploads
 		WHERE commission_id = $1
 		ORDER BY created_at DESC`
@@ -245,7 +257,7 @@ func (r *postgresCommissionRepo) GetWorkUploadsByCommissionID(commissionID strin
 	var uploads []models.WorkUpload
 	for rows.Next() {
 		var u models.WorkUpload
-		err := rows.Scan(&u.ID, &u.CommissionID, &u.ImageURL, &u.Watermarked, &u.IsFinal, &u.Notes, &u.CreatedAt)
+		err := rows.Scan(&u.ID, &u.CommissionID, &u.ImageURL, &u.CleanImageURL, &u.Watermarked, &u.IsFinal, &u.Notes, &u.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
@@ -270,8 +282,8 @@ func (r *postgresCommissionRepo) UpdateWorkUpload(upload *models.WorkUpload) err
 
 func (r *postgresCommissionRepo) CreateRevision(revision *models.CommissionRevision) error {
 	query := `
-		INSERT INTO public.commission_revisions (id, commission_id, work_upload_id, request_notes, status)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO public.commission_revisions (id, commission_id, work_upload_id, request_notes, response_notes, status)
+		VALUES ($1, $2, $3, $4, $5, $6)
 		RETURNING created_at`
 
 	return r.db.QueryRow(query,
@@ -279,13 +291,14 @@ func (r *postgresCommissionRepo) CreateRevision(revision *models.CommissionRevis
 		revision.CommissionID,
 		revision.WorkUploadID,
 		revision.RequestNotes,
+		revision.ResponseNotes,
 		revision.Status,
 	).Scan(&revision.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetRevisionsByCommissionID(commissionID string) ([]models.CommissionRevision, error) {
 	query := `
-		SELECT id, commission_id, work_upload_id, request_notes, status, created_at, resolved_at
+		SELECT id, commission_id, work_upload_id, request_notes, response_notes, status, created_at, resolved_at
 		FROM public.commission_revisions
 		WHERE commission_id = $1
 		ORDER BY created_at DESC`
@@ -299,7 +312,7 @@ func (r *postgresCommissionRepo) GetRevisionsByCommissionID(commissionID string)
 	var revisions []models.CommissionRevision
 	for rows.Next() {
 		var rev models.CommissionRevision
-		err := rows.Scan(&rev.ID, &rev.CommissionID, &rev.WorkUploadID, &rev.RequestNotes, &rev.Status, &rev.CreatedAt, &rev.ResolvedAt)
+		err := rows.Scan(&rev.ID, &rev.CommissionID, &rev.WorkUploadID, &rev.RequestNotes, &rev.ResponseNotes, &rev.Status, &rev.CreatedAt, &rev.ResolvedAt)
 		if err != nil {
 			return nil, err
 		}

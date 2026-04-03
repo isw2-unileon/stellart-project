@@ -2,6 +2,7 @@ package service
 
 import (
 	"errors"
+	"log"
 	"time"
 
 	"stellart/backend/src/database/models"
@@ -98,8 +99,15 @@ func (s *CommissionService) ApproveWork(commissionID string) error {
 }
 
 func (s *CommissionService) CreateAdvancePayment(payment *models.AdvancePayment) error {
+	log.Printf("[DEBUG] CommissionService.CreateAdvancePayment - Payment: %+v", payment)
 	payment.Status = models.PaymentStatusPending
-	return s.commissionRepo.CreateAdvancePayment(payment)
+	err := s.commissionRepo.CreateAdvancePayment(payment)
+	if err != nil {
+		log.Printf("[ERROR] CommissionService.CreateAdvancePayment - Repo error: %v", err)
+		return err
+	}
+	log.Printf("[DEBUG] CommissionService.CreateAdvancePayment - Success")
+	return nil
 }
 
 func (s *CommissionService) GetAdvancePayment(commissionID string) (*models.AdvancePayment, error) {
@@ -251,6 +259,27 @@ func (s *CommissionService) RejectRevision(revisionID string) error {
 	}
 
 	revision.Status = models.RevisionStatusRejected
+	return s.commissionRepo.UpdateRevision(revision)
+}
+
+func (s *CommissionService) RespondToRevision(revisionID, responseNotes string) error {
+	revisions, err := s.commissionRepo.GetRevisionsByCommissionID("")
+	if err != nil {
+		return err
+	}
+
+	var revision *models.CommissionRevision
+	for i := range revisions {
+		if revisions[i].ID == revisionID {
+			revision = &revisions[i]
+			break
+		}
+	}
+	if revision == nil {
+		return errors.New("revision not found")
+	}
+
+	revision.ResponseNotes = responseNotes
 	return s.commissionRepo.UpdateRevision(revision)
 }
 

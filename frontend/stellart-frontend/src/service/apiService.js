@@ -355,6 +355,15 @@ export const rejectRevision = async (revisionId) => {
     if (!response.ok) throw new Error('Failed to reject revision');
 };
 
+export const respondToRevision = async (revisionId, responseNotes) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/revisions/${revisionId}/respond`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ revision_id: revisionId, response_notes: responseNotes }),
+    });
+    if (!response.ok) throw new Error('Failed to respond to revision');
+};
+
 // Refunds
 export const createRefund = async (refundData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/refunds`, {
