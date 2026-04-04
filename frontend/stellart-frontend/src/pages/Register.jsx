@@ -45,7 +45,7 @@ export default function Register() {
             </div>
       
             <div className="w-full"> 
-                <div className="w-full max-w-2xl mx-auto bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
+                <div className="w-full max-w-2xl mx-auto bg-white p-8 md:p-12 rounded-[2.5rem] shadow-2xl shadow-slate-200/60 border border-slate-100">
                     <form className="flex flex-col gap-10" onSubmit={handleSubmit}>
                         
                         <div className="space-y-5">
@@ -58,9 +58,9 @@ export default function Register() {
                                 <h3 className="font-black text-slate-800 text-2xl tracking-tight">User Details</h3>
                             </div>
                             
-                            <input name="name" type="text" placeholder="Full name" value={userData.name} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
-                            <input name="email" type="email" placeholder="Email" value={userData.email} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
-                            <input name="password" type="password" placeholder="Password" value={userData.password} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
+                            <input name="name" type="text" placeholder="Full name" value={userData.name} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
+                            <input name="email" type="email" placeholder="Email" value={userData.email} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
+                            <input name="password" type="password" placeholder="Password" value={userData.password} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
                         </div>
 
                         <div className="space-y-5">
@@ -74,12 +74,12 @@ export default function Register() {
                                 <h3 className="font-black text-slate-800 text-2xl tracking-tight">Shipping Address</h3>
                             </div>
 
-                            <input name="street" type="text" placeholder="Street Address" value={addressData.street} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
+                            <input name="street" type="text" placeholder="Street Address" value={addressData.street} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
                             <div className="grid grid-cols-2 gap-4">
-                                <input name="city" type="text" placeholder="City" value={addressData.city} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
-                                <input name="postal_code" type="text" placeholder="Postal Code" value={addressData.postal_code} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
+                                <input name="city" type="text" placeholder="City" value={addressData.city} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
+                                <input name="postal_code" type="text" placeholder="Postal Code" value={addressData.postal_code} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
                             </div>
-                            <input name="country" type="text" placeholder="Country" value={addressData.country} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
+                            <input name="country" type="text" placeholder="Country" value={addressData.country} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
                         </div>
 
                         <div className="space-y-5">
@@ -92,10 +92,10 @@ export default function Register() {
                                 <h3 className="font-black text-slate-800 text-2xl tracking-tight">Bank Details</h3>
                             </div>
 
-                            <input name="account_number" type="text" placeholder="IBAN / Account Number" value={bankData.account_number} onChange={handleBankChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
+                            <input name="account_number" type="text" placeholder="IBAN / Account Number" value={bankData.account_number} onChange={handleBankChange} className="w-full px-5 py-4 rounded-xl bg-slate-100 border-2 border-transparent focus:border-yellow-500 focus:bg-white focus:ring-4 focus:ring-yellow-500/20 outline-none transition-all font-medium text-slate-700 shadow-sm" required />
                         </div>
 
-                        <button type="submit" className="w-full bg-[#0f172a] text-white font-black py-5 rounded-2xl hover:bg-yellow-500 hover:text-black hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-200 transition-all duration-300 mt-4 text-xl">
+                        <button type="submit" className="w-full bg-[#0f172a] text-white font-black py-5 rounded-2xl hover:bg-yellow-500 hover:text-black hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-200 active:scale-95 transition-all duration-300 mt-4 text-xl">
                             Sign up & Save Details
                         </button>
                     </form>
