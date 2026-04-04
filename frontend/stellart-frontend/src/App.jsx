@@ -13,6 +13,7 @@ import FindArtists from './pages/FindArtists';
 import StartCommission from './pages/StartCommission';
 import Commissions from './pages/Commissions';
 import CommissionDetail from './pages/CommissionDetail';
+import Wishlist from './pages/Wishlist';
 
 export default function App() {
     return (
@@ -43,6 +44,7 @@ export default function App() {
                 <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
+                <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />
             </Routes>
         </>
     )

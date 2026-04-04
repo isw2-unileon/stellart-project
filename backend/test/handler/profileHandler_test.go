@@ -21,6 +21,9 @@ type mockProfileRepo struct {
 	mockUpdateOpenCommissions     func(id string, open bool) error
 	mockGetSkillsByProfileID      func(profileID string) ([]models.ProfileSkill, error)
 	mockGetMasterSkills           func() ([]models.MasterSkill, error)
+	mockGetWishlist               func(profileID string) ([]models.Artwork, error)
+	mockAddToWishlist             func(profileID, artworkID string) error
+	mockRemoveFromWishlist        func(profileID, artworkID string) error
 }
 
 func (m *mockProfileRepo) GetByID(id string) (*models.Profile, error) {
@@ -51,6 +54,27 @@ func (m *mockProfileRepo) GetSkillsByProfileID(profileID string) ([]models.Profi
 
 func (m *mockProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {
 	return m.mockGetMasterSkills()
+}
+
+func (m *mockProfileRepo) GetWishlist(profileID string) ([]models.Artwork, error) {
+	if m.mockGetWishlist != nil {
+		return m.mockGetWishlist(profileID)
+	}
+	return nil, nil
+}
+
+func (m *mockProfileRepo) AddToWishlist(profileID, artworkID string) error {
+	if m.mockAddToWishlist != nil {
+		return m.mockAddToWishlist(profileID, artworkID)
+	}
+	return nil
+}
+
+func (m *mockProfileRepo) RemoveFromWishlist(profileID, artworkID string) error {
+	if m.mockRemoveFromWishlist != nil {
+		return m.mockRemoveFromWishlist(profileID, artworkID)
+	}
+	return nil
 }
 
 func TestProfileHandler_GetProfile(t *testing.T) {

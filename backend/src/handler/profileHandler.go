@@ -98,6 +98,41 @@ func (h *ProfileHandler) UpdateOpenCommissions(w http.ResponseWriter, r *http.Re
 		http.Error(w, "Update failed", http.StatusInternalServerError)
 		return
 	}
+}
 
+func (h *ProfileHandler) GetWishlist(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	artworks, err := h.profileService.GetWishlist(id)
+	if err != nil {
+		http.Error(w, "Failed to fetch wishlist", http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(artworks)
+}
+
+func (h *ProfileHandler) AddToWishlist(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	var body struct {
+		ArtworkID string `json:"artwork_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		return
+	}
+	if err := h.profileService.AddToWishlist(id, body.ArtworkID); err != nil {
+		http.Error(w, "Failed to add to wishlist: "+err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusCreated)
+}
+
+func (h *ProfileHandler) RemoveFromWishlist(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	artworkID := chi.URLParam(r, "artworkId")
+	if err := h.profileService.RemoveFromWishlist(id, artworkID); err != nil {
+		http.Error(w, "Failed to remove from wishlist", http.StatusInternalServerError)
+		return
+	}
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -194,6 +194,32 @@ export const updateProfileAndSkills = async (userId, profileData, skillsData) =>
     return true; 
 };
 
+export const getWishlist = async (userId) => {
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}/wishlist`);
+    if (!response.ok) return [];
+    return response.json();
+};
+
+export const addToWishlist = async (userId, artworkId) => {
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}/wishlist`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ artwork_id: artworkId }),
+    });
+    if (!response.ok) {
+        const text = await response.text();
+        console.error('addToWishlist error:', text);
+        throw new Error(text);
+    }
+};
+
+export const removeFromWishlist = async (userId, artworkId) => {
+    const response = await fetch(`${BACKEND_URL}/profiles/${userId}/wishlist/${artworkId}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to remove from wishlist');
+};
+
 export const searchArtworks = async (query) => {
     try {
         

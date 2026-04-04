@@ -2,12 +2,42 @@ import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import PaymentModal from './PaymentModal';
 import { getProfile } from '../service/apiService';
+import { getLoggedUser, getWishlist, addToWishlist, removeFromWishlist } from '../service/apiService';
 
 export default function ExploreGallery({ artworks = [] }) {
     
     const [selectedArtwork, setSelectedArtwork] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [artistNames, setArtistNames] = useState({});
+    const [user, setUser] = useState(null);
+    const [wishlistIds, setWishlistIds] = useState(new Set());
+
+    useEffect(() => {
+        async function loadWishlist() {
+            const loggedUser = await getLoggedUser();
+            if (!loggedUser) return;
+            setUser(loggedUser);
+            const items = await getWishlist(loggedUser.id);
+            setWishlistIds(new Set((items || []).map(a => a.id)));
+        }
+        loadWishlist();
+    }, []);
+
+    const toggleWishlist = async (e, artworkId) => {
+        e.stopPropagation();
+        if (!user) { toast.error('Log in to save artworks'); return; }
+        try {
+            if (wishlistIds.has(artworkId)) {
+                await removeFromWishlist(user.id, artworkId);
+                setWishlistIds(prev => { const next = new Set(prev); next.delete(artworkId); return next; });
+                toast.success('Removed from wishlist');
+            } else {
+                await addToWishlist(user.id, artworkId);
+                setWishlistIds(prev => new Set(prev).add(artworkId));
+                toast.success('Added to wishlist');
+            }
+        } catch { toast.error('Wishlist update failed'); }
+    };
 
     const placeholderArtworks = [
         { id: 1, title: "Neon City", artist: "@cyber_artist", productType: "Digital", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop" },
@@ -54,7 +84,8 @@ export default function ExploreGallery({ artworks = [] }) {
         fetchProfiles();
     }, [artworks]);
 
-    const displayArtworks = artworks && artworks.length > 0 
+    const isRealData = artworks && artworks.length > 0;
+    const displayArtworks = isRealData 
         ? artworks.map((art, index) => ({
             id: art.id || `art-${index}`,
             title: art.title || "Untitled Artwork",
@@ -111,14 +142,27 @@ export default function ExploreGallery({ artworks = [] }) {
                                             <p className="text-yellow-600 font-bold text-sm mt-1">${art.price.toFixed(2)}</p>
                                         )}
                                     </div>
-                                    <button 
-                                        onClick={(e) => { e.stopPropagation(); }}
-                                        className="text-slate-300 hover:text-red-500 transition-colors shrink-0"
-                                    >
-                                        <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
-                                        </svg>
-                                    </button>
+                                    <div className="flex items-center gap-1 shrink-0">
+                                        {isRealData && (
+                                            <button 
+                                                onClick={(e) => toggleWishlist(e, art.id)}
+                                                className={`transition-colors ${wishlistIds.has(art.id) ? 'text-yellow-500' : 'text-slate-300 hover:text-yellow-500'}`}
+                                                title={wishlistIds.has(art.id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill={wishlistIds.has(art.id) ? 'currentColor' : 'none'} viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                                                </svg>
+                                            </button>
+                                        )}
+                                        <button 
+                                            onClick={(e) => { e.stopPropagation(); }}
+                                            className="text-slate-300 hover:text-red-500 transition-colors"
+                                        >
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            </svg>
+                                        </button>
+                                    </div>
                                 </div>
                                 <div className="px-1 pb-1">
                                     <button 

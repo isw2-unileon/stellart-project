@@ -58,12 +58,20 @@ function GeneralHeader() {
 
                 <div className="flex items-center gap-4">
                     {user ? (
-                        <div className="pl-4 border-l border-slate-100 flex items-center gap-3">
-                            <AvatarDropdown />
-                            <span className="hidden md:block text-sm font-bold text-slate-700">
-                                {user.user_metadata?.full_name || user.email.split('@')[0]}
-                            </span>
-                        </div>
+                        <>
+                            <Link to="/wishlist" className="hidden md:flex items-center gap-1.5 text-slate-400 hover:text-yellow-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
+                                </svg>
+                                <span className="text-xs font-bold uppercase tracking-widest">Wishlist</span>
+                            </Link>
+                            <div className="pl-4 border-l border-slate-100 flex items-center gap-3">
+                                <AvatarDropdown />
+                                <span className="hidden md:block text-sm font-bold text-slate-700">
+                                    {user.user_metadata?.full_name || user.email.split('@')[0]}
+                                </span>
+                            </div>
+                        </>
                     ) : (
                         <div className="flex items-center gap-2">
                             <Link 
