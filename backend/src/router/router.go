@@ -25,6 +25,13 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Get("/{id}", ph.GetProfile)
 		r.Put("/{id}/open-commissions", ph.UpdateOpenCommissions)
 		r.Put("/{id}", ph.UpdateProfile)
+<<<<<<< Updated upstream
+=======
+		r.Get("/master-skills", ph.GetMasterSkills)
+		r.Get("/{id}/wishlist", ph.GetWishlist)
+		r.Post("/{id}/wishlist", ph.AddToWishlist)
+		r.Delete("/{id}/wishlist/{artworkId}", ph.RemoveFromWishlist)
+>>>>>>> Stashed changes
 	})
 
 	// Contact
