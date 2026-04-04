@@ -15,22 +15,15 @@ import (
 )
 
 type mockProfileRepo struct {
-<<<<<<< Updated upstream
 	mockGetByID                   func(id string) (*models.Profile, error)
 	mockGetOpenCommissionProfiles func() ([]models.Profile, error)
 	mockUpdate                    func(profile *models.Profile, skills []models.ProfileSkill) error
 	mockUpdateOpenCommissions     func(id string, open bool) error
 	mockGetSkillsByProfileID      func(profileID string) ([]models.ProfileSkill, error)
 	mockGetMasterSkills           func() ([]models.MasterSkill, error)
-=======
-	mockGetByID              func(id string) (*models.Profile, error)
-	mockGetMasterSkills      func() ([]models.MasterSkill, error)
-	mockGetSkillsByProfileID func(profileID string) ([]models.ProfileSkill, error)
-	mockUpdate               func(profile *models.Profile, skills []models.ProfileSkill) error
-	mockGetWishlist          func(profileID string) ([]models.Artwork, error)
-	mockAddToWishlist        func(profileID, artworkID string) error
-	mockRemoveFromWishlist   func(profileID, artworkID string) error
->>>>>>> Stashed changes
+	mockGetWishlist               func(profileID string) ([]models.Artwork, error)
+	mockAddToWishlist             func(profileID, artworkID string) error
+	mockRemoveFromWishlist        func(profileID, artworkID string) error
 }
 
 func (m *mockProfileRepo) GetByID(id string) (*models.Profile, error) {

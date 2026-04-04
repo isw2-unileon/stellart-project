@@ -73,7 +73,6 @@ func (h *ProfileHandler) GetMasterSkills(w http.ResponseWriter, r *http.Request)
 	json.NewEncoder(w).Encode(skills)
 }
 
-<<<<<<< Updated upstream
 func (h *ProfileHandler) GetOpenCommissionProfiles(w http.ResponseWriter, r *http.Request) {
 	profiles, err := h.profileService.GetOpenCommissionProfiles()
 	if err != nil {
@@ -99,8 +98,8 @@ func (h *ProfileHandler) UpdateOpenCommissions(w http.ResponseWriter, r *http.Re
 		http.Error(w, "Update failed", http.StatusInternalServerError)
 		return
 	}
+}
 
-=======
 func (h *ProfileHandler) GetWishlist(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
 	artworks, err := h.profileService.GetWishlist(id)
@@ -135,6 +134,5 @@ func (h *ProfileHandler) RemoveFromWishlist(w http.ResponseWriter, r *http.Reque
 		http.Error(w, "Failed to remove from wishlist", http.StatusInternalServerError)
 		return
 	}
->>>>>>> Stashed changes
 	w.WriteHeader(http.StatusNoContent)
 }

@@ -29,14 +29,14 @@ func (s *ProfileService) GetMasterSkills() ([]models.MasterSkill, error) {
 	return s.repo.GetMasterSkills()
 }
 
-<<<<<<< Updated upstream
 func (s *ProfileService) GetOpenCommissionProfiles() ([]models.Profile, error) {
 	return s.repo.GetOpenCommissionProfiles()
 }
 
 func (s *ProfileService) UpdateOpenCommissions(id string, open bool) error {
 	return s.repo.UpdateOpenCommissions(id, open)
-=======
+}
+
 func (s *ProfileService) AddToWishlist(profileID, artworkID string) error {
 	return s.repo.AddToWishlist(profileID, artworkID)
 }
@@ -47,5 +47,4 @@ func (s *ProfileService) RemoveFromWishlist(profileID, artworkID string) error {
 
 func (s *ProfileService) GetWishlist(profileID string) ([]models.Artwork, error) {
 	return s.repo.GetWishlist(profileID)
->>>>>>> Stashed changes
 }
