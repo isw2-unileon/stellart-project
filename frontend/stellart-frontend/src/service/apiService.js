@@ -11,38 +11,20 @@ export const getLoggedUser = async () => {
     return user;
 };
 
-export const registerUser = async (email, password, fullName) => {
+export const registerUser = async (email, password, fullName,addressObj, bankObj) => {
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
             data: {
                 full_name: fullName,
+                address: addressObj,
+                bank: bankObj,
             },
         },
     });
 
     if (error) throw error;
-    
-    if (data?.user) {
-        try {
-            await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    profile: {
-                        id: data.user.id,
-                        full_name: fullName,
-                        avatar_url: null
-                    },
-                    skills: []
-                }),
-            });
-        } catch (e) {
-            console.error("Profile creation error:", e);
-        }
-    }
-    
     return data;
 };
 
