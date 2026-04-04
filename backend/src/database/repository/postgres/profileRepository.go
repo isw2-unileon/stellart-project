@@ -6,6 +6,8 @@ import (
 
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/database/repository/uis"
+
+	"github.com/lib/pq"
 )
 
 type postgresProfileRepo struct {
@@ -118,6 +120,44 @@ func (r *postgresProfileRepo) GetSkillsByProfileID(profileID string) ([]models.P
 	}
 
 	return skills, nil
+}
+
+func (r *postgresProfileRepo) AddToWishlist(profileID, artworkID string) error {
+	query := `INSERT INTO public.wishlist (profile_id, artwork_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`
+	_, err := r.db.Exec(query, profileID, artworkID)
+	return err
+}
+
+func (r *postgresProfileRepo) RemoveFromWishlist(profileID, artworkID string) error {
+	query := `DELETE FROM public.wishlist WHERE profile_id = $1 AND artwork_id = $2`
+	_, err := r.db.Exec(query, profileID, artworkID)
+	return err
+}
+
+func (r *postgresProfileRepo) GetWishlist(profileID string) ([]models.Artwork, error) {
+	query := `
+		SELECT a.id, a.title, a.description, a.image_url, a.artist_id, a.tags, a.created_at, a.price, a.likes_count, a.product_type
+		FROM public.wishlist w
+		JOIN public.artworks a ON w.artwork_id = a.id
+		WHERE w.profile_id = $1
+		ORDER BY w.created_at DESC`
+
+	rows, err := r.db.Query(query, profileID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var artworks []models.Artwork
+	for rows.Next() {
+		var a models.Artwork
+		err := rows.Scan(&a.ID, &a.Title, &a.Description, &a.ImageURL, &a.ArtistID, pq.Array(&a.Tags), &a.CreatedAt, &a.Price, &a.LikesCount, &a.ProductType)
+		if err != nil {
+			return nil, err
+		}
+		artworks = append(artworks, a)
+	}
+	return artworks, rows.Err()
 }
 
 func (r *postgresProfileRepo) GetMasterSkills() ([]models.MasterSkill, error) {

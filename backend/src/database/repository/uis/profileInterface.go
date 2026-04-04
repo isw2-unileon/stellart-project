@@ -9,4 +9,7 @@ type ProfileRepository interface {
 	UpdateOpenCommissions(id string, open bool) error
 	GetSkillsByProfileID(profileID string) ([]models.ProfileSkill, error)
 	GetMasterSkills() ([]models.MasterSkill, error)
+	AddToWishlist(profileID, artworkID string) error
+	RemoveFromWishlist(profileID, artworkID string) error
+	GetWishlist(profileID string) ([]models.Artwork, error)
 }
