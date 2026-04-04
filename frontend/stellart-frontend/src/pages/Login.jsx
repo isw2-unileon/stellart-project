@@ -26,7 +26,19 @@ export default function Login() {
 
     return (
         <div className="flex flex-col items-center py-12">
-            <h1 className="text-5xl font-black mb-8 tracking-tighter text-[#0f172a]">Log in</h1>
+            
+            <div className="flex flex-col items-center text-center mb-8">
+                <div className="inline-block mb-2">
+                    <h1 className="text-5xl md:text-6xl font-black text-[#0f172a] tracking-tighter">
+                        Log in
+                    </h1>
+                    <div className="w-full h-1.5 bg-yellow-500 rounded-full mt-2"></div>
+                </div>
+                
+                <p className="text-xl md:text-2xl font-bold text-slate-500 mb-2">
+                    Welcome back, <span className="text-yellow-500">star</span>
+                </p>
+            </div>
             <div className="w-full max-w-md bg-white p-10 rounded-3xl shadow-sm border border-slate-100">
                 <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
                     <input 

@@ -41,7 +41,7 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 
 func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]models.Artwork, error) {
 	query := `
-        SELECT id, title, description, image_url, artist_id, tags, created_at, price
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type
         FROM public.artworks
         ORDER BY embedding <=> $1
         LIMIT $2`
@@ -64,6 +64,7 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 			pq.Array(&artwork.Tags),
 			&artwork.CreatedAt,
 			&artwork.Price,
+			&artwork.ProductType,
 		)
 		if err != nil {
 			return nil, err
@@ -74,7 +75,11 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 }
 
 func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, error) {
-	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price FROM public.artworks WHERE artist_id = $1`
+	query := `
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type 
+        FROM public.artworks 
+        WHERE artist_id = $1`
+
 	rows, err := p.db.Query(query, artistID)
 	if err != nil {
 		return nil, err
@@ -84,7 +89,17 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 	var artworks []models.Artwork
 	for rows.Next() {
 		var artwork models.Artwork
-		err := rows.Scan(&artwork.ID, &artwork.Title, &artwork.Description, &artwork.ImageURL, &artwork.ArtistID, pq.Array(&artwork.Tags), &artwork.CreatedAt, &artwork.Price)
+		err := rows.Scan(
+			&artwork.ID,
+			&artwork.Title,
+			&artwork.Description,
+			&artwork.ImageURL,
+			&artwork.ArtistID,
+			pq.Array(&artwork.Tags),
+			&artwork.CreatedAt,
+			&artwork.Price,
+			&artwork.ProductType,
+		)
 		if err != nil {
 			return nil, err
 		}

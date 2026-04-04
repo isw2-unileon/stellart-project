@@ -13,6 +13,11 @@ type ArtworkHandler struct {
 	artworkService *service.ArtworkService
 }
 
+type ArtworkResponse struct {
+	models.Artwork
+	ArtistName string `json:"artist_name"`
+}
+
 func NewArtworkHandler(as *service.ArtworkService) ArtworkHandler {
 	return ArtworkHandler{artworkService: as}
 }
