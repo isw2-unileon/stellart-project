@@ -1,19 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import PaymentModal from './PaymentModal';
-<<<<<<< Updated upstream
 import { getProfile } from '../service/apiService';
-=======
 import { getLoggedUser, getWishlist, addToWishlist, removeFromWishlist } from '../service/apiService';
->>>>>>> Stashed changes
 
 export default function ExploreGallery({ artworks = [] }) {
     
     const [selectedArtwork, setSelectedArtwork] = useState(null);
     const [showPaymentModal, setShowPaymentModal] = useState(false);
-<<<<<<< Updated upstream
     const [artistNames, setArtistNames] = useState({});
-=======
     const [user, setUser] = useState(null);
     const [wishlistIds, setWishlistIds] = useState(new Set());
 
@@ -43,7 +38,6 @@ export default function ExploreGallery({ artworks = [] }) {
             }
         } catch { toast.error('Wishlist update failed'); }
     };
->>>>>>> Stashed changes
 
     const placeholderArtworks = [
         { id: 1, title: "Neon City", artist: "@cyber_artist", productType: "Digital", img: "https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop" },
@@ -57,7 +51,6 @@ export default function ExploreGallery({ artworks = [] }) {
         { id: 9, title: "Crystal Cave", artist: "@gem_creator", productType: "Digital", img: "https://images.unsplash.com/photo-1515405295579-ba7b45403062?q=80&w=2080&auto=format&fit=crop" },
     ];
 
-<<<<<<< Updated upstream
     useEffect(() => {
         const fetchProfiles = async () => {
             if (!artworks || artworks.length === 0) return;
@@ -91,11 +84,8 @@ export default function ExploreGallery({ artworks = [] }) {
         fetchProfiles();
     }, [artworks]);
 
-    const displayArtworks = artworks && artworks.length > 0 
-=======
     const isRealData = artworks && artworks.length > 0;
     const displayArtworks = isRealData 
->>>>>>> Stashed changes
         ? artworks.map((art, index) => ({
             id: art.id || `art-${index}`,
             title: art.title || "Untitled Artwork",
