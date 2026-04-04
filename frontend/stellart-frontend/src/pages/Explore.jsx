@@ -23,7 +23,6 @@ export default function Explore() {
     const items = [...placeholderArtworks, ...placeholderArtworks];
 
     useEffect(() => {
-        // Only run animation if the carousel is actually rendered
         if (artworks.length > 0 || !rollingRef.current) return;
 
         const el = rollingRef.current;
@@ -69,7 +68,6 @@ export default function Explore() {
         try {
             const results = await searchArtworks(searchQuery);
             
-            // Extract the artworks array regardless of the backend response structure
             let finalArtworks = [];
             if (Array.isArray(results)) {
                 finalArtworks = results;
@@ -111,24 +109,15 @@ export default function Explore() {
                         onSubmit={handleSearch} 
                         className="w-full lg:max-w-md flex items-center bg-white rounded-full border border-slate-200 shadow-sm hover:shadow-md transition-shadow p-1.5"
                     >
-                        <div className="pl-3 pr-2">
-                            <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-400">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="w-5 h-5">
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.5-1.719Z" />
-                                </svg>
-                            </div>
-                        </div>
-                        
                         <input
                             type="text"
                             placeholder="Search artworks..."
                             value={searchQuery}
                             onChange={(e) => {
                                 setSearchQuery(e.target.value);
-                                // If the text is cleared, show the carousel again
                                 if (e.target.value === '') setArtworks([]);
                             }}
-                            className="flex-grow px-2 py-2 outline-none text-slate-700 bg-transparent text-base placeholder:text-slate-400"
+                            className="grow px-2 py-2 outline-none text-slate-700 bg-transparent text-base placeholder:text-slate-400"
                         />
                         
                         <button 
@@ -158,8 +147,8 @@ export default function Explore() {
                     </div>
 
                     <div className='w-full bg-slate-50 py-12 flex flex-col justify-center overflow-hidden relative'>
-                        <div className='absolute inset-y-0 left-0 w-24 md:w-40 bg-gradient-to-r from-slate-50 to-transparent z-10 pointer-events-none' />
-                        <div className='absolute inset-y-0 right-0 w-24 md:w-40 bg-gradient-to-l from-slate-50 to-transparent z-10 pointer-events-none' />
+                        <div className='absolute inset-y-0 left-0 w-24 md:w-40 bg-linear-to-r from-slate-50 to-transparent z-10 pointer-events-none' />
+                        <div className='absolute inset-y-0 right-0 w-24 md:w-40 bg-linear-to-l from-slate-50 to-transparent z-10 pointer-events-none' />
                         
                         <div ref={rollingRef} className='flex w-fit gap-8 px-4'>
                             {items.map((art, index) => (
