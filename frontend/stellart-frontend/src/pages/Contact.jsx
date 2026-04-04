@@ -27,16 +27,16 @@ export default function Contact() {
 
     return (
         <div className="flex flex-col items-center py-12 px-4">
+        
             <div className="flex flex-col items-center text-center mb-10">
                 <div className="inline-block mb-2">
                     <h1 className="text-5xl md:text-6xl font-black text-[#0f172a] tracking-tighter">
                         Contact
                     </h1>
-                    <div className="w-full h-1.5 bg-yellow-500 rounded-full mt-2"></div>
+                    <div className="w-full h-1.5 bg-yellow-500 rounded-full mt-2" />
                 </div>
-                
                 <p className="text-xl md:text-2xl font-bold text-slate-500 mb-2 max-w-md">
-                    Found an issue? We're here to <span className="text-yellow-500">help</span>.
+                    Found an issue? We're here to help.
                 </p>
             </div>
 
