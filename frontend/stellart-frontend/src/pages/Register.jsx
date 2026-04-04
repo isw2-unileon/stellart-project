@@ -30,8 +30,7 @@ export default function Register() {
 
     return (
         <div className="flex flex-col gap-10 py-12 px-4 bg-slate-50 min-h-screen"> 
-            
-            {/* CABECERA (Actualizada con tu diseño) */}
+
             <div className="flex flex-col items-center text-center">
                 <div className="inline-block mb-2">
                     <h1 className="text-5xl md:text-6xl font-black text-[#0f172a] tracking-tighter">
@@ -45,14 +44,11 @@ export default function Register() {
                 </p>
             </div>
       
-            {/* CONTENEDOR DEL FORMULARIO */}
             <div className="w-full"> 
                 <div className="w-full max-w-2xl mx-auto bg-white p-8 md:p-12 rounded-[2.5rem] shadow-xl shadow-slate-200/50 border border-slate-100">
                     <form className="flex flex-col gap-10" onSubmit={handleSubmit}>
                         
-                        {/* --- DATOS DE USUARIO --- */}
                         <div className="space-y-5">
-                            {/* Cabecera de sección estética amarilla */}
                             <div className="flex items-center gap-4 border-b-2 border-slate-100 pb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white shadow-md shadow-yellow-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
@@ -67,9 +63,7 @@ export default function Register() {
                             <input name="password" type="password" placeholder="Password" value={userData.password} onChange={handleUserChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
                         </div>
 
-                        {/* --- DATOS DE ENVÍO --- */}
                         <div className="space-y-5">
-                            {/* Cabecera de sección estética amarilla */}
                             <div className="flex items-center gap-4 border-b-2 border-slate-100 pb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white shadow-md shadow-yellow-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
@@ -88,9 +82,7 @@ export default function Register() {
                             <input name="country" type="text" placeholder="Country" value={addressData.country} onChange={handleAddressChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
                         </div>
 
-                        {/* --- DATOS BANCARIOS --- */}
                         <div className="space-y-5">
-                            {/* Cabecera de sección estética amarilla */}
                             <div className="flex items-center gap-4 border-b-2 border-slate-100 pb-4">
                                 <div className="w-12 h-12 rounded-2xl bg-yellow-400 flex items-center justify-center text-white shadow-md shadow-yellow-200">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-6 h-6">
@@ -103,7 +95,6 @@ export default function Register() {
                             <input name="account_number" type="text" placeholder="IBAN / Account Number" value={bankData.account_number} onChange={handleBankChange} className="w-full px-5 py-4 rounded-xl bg-slate-50 border-2 border-transparent focus:border-yellow-400 outline-none transition-all font-medium text-slate-700" required />
                         </div>
 
-                        {/* Botón con hover animado */}
                         <button type="submit" className="w-full bg-[#0f172a] text-white font-black py-5 rounded-2xl hover:bg-yellow-500 hover:text-black hover:-translate-y-1 hover:shadow-xl hover:shadow-yellow-200 transition-all duration-300 mt-4 text-xl">
                             Sign up & Save Details
                         </button>
