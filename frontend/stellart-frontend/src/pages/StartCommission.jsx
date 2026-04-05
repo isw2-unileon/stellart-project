@@ -68,7 +68,6 @@ export default function StartCommission() {
         setIsSubmitting(true);
         try {
             const commissionData = {
-                commission_id: `comm_${Date.now()}`,
                 buyer_id: user.id,
                 artist_id: artistId,
                 title: formData.title,
@@ -77,23 +76,24 @@ export default function StartCommission() {
                 deadline: formData.deadline
             };
 
+            const createdCommission = await createCommission(commissionData);
+            const realCommissionId = createdCommission.id;
+
             const paymentData = {
-                payment_id: `pay_${Date.now()}`,
-                commission_id: commissionData.commission_id,
+                commission_id: realCommissionId,
                 amount: advanceAmount,
                 payment_intent: `pi_${Date.now()}`
             };
+
             await createAdvancePayment(paymentData);
-            await markPaymentPaid(commissionData.commission_id);
-            
-            await createCommission(commissionData);
+            await markPaymentPaid(realCommissionId);
             
             setShowPaymentModal(false);
             toast.success("Commission requested! Payment successful.");
             navigate("/commissions");
         } catch (error) {
             console.error("Error:", error);
-            toast.error("Failed to create commission");
+            toast.error("Failed to create commission or payment");
         } finally {
             setIsSubmitting(false);
         }
@@ -120,7 +120,6 @@ export default function StartCommission() {
                 Request a commission from <span className="font-bold text-slate-900">{artist?.full_name}</span>
             </p>
 
-            {/* Progress Steps */}
             <div className="flex items-center gap-2 mb-8">
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full ${step >= 1 ? 'bg-yellow-500 text-black' : 'bg-slate-200 text-slate-500'} font-bold text-sm`}>1</div>
                 <div className={`h-1 flex-1 ${step >= 2 ? 'bg-yellow-500' : 'bg-slate-200'}`} />

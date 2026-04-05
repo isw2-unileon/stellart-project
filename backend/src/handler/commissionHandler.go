@@ -38,8 +38,8 @@ func (h *CommissionHandler) CreateCommission(w http.ResponseWriter, r *http.Requ
 		return
 	}
 
+	// NO asignamos ID manualmente, dejamos que el repositorio/BD lo haga
 	commission := &models.Commission{
-		ID:          req.CommissionID,
 		BuyerID:     req.BuyerID,
 		ArtistID:    req.ArtistID,
 		Title:       req.Title,
@@ -55,7 +55,8 @@ func (h *CommissionHandler) CreateCommission(w http.ResponseWriter, r *http.Requ
 	}
 
 	if err := h.commissionService.CreateCommission(commission); err != nil {
-		http.Error(w, "Failed to create commission", http.StatusInternalServerError)
+		log.Printf("[ERROR] CreateCommission failed: %v", err)
+		http.Error(w, "Failed to create commission: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
@@ -190,7 +191,6 @@ func (h *CommissionHandler) CreateAdvancePayment(w http.ResponseWriter, r *http.
 	log.Printf("[DEBUG] CreateAdvancePayment - Request: %+v", req)
 
 	payment := &models.AdvancePayment{
-		ID:            req.PaymentID,
 		CommissionID:  req.CommissionID,
 		Amount:        req.Amount,
 		PaymentIntent: req.PaymentIntent,
@@ -254,7 +254,6 @@ func (h *CommissionHandler) CreateRemainingPayment(w http.ResponseWriter, r *htt
 	log.Printf("[DEBUG] CreateRemainingPayment - Request: %+v", req)
 
 	payment := &models.RemainingPayment{
-		ID:            req.PaymentID,
 		CommissionID:  req.CommissionID,
 		Amount:        req.Amount,
 		PaymentIntent: req.PaymentIntent,
@@ -314,7 +313,6 @@ func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	upload := &models.WorkUpload{
-		ID:            req.UploadID,
 		CommissionID:  req.CommissionID,
 		ImageURL:      req.ImageURL,
 		CleanImageURL: req.CleanImageURL,
@@ -324,6 +322,7 @@ func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.commissionService.CreateWorkUpload(upload); err != nil {
+		log.Printf("[ERROR] UploadWork - Service error: %v", err)
 		http.Error(w, "Failed to upload work", http.StatusInternalServerError)
 		return
 	}
@@ -358,13 +357,13 @@ func (h *CommissionHandler) RequestRevision(w http.ResponseWriter, r *http.Reque
 	}
 
 	revision := &models.CommissionRevision{
-		ID:           req.RevisionID,
 		CommissionID: req.CommissionID,
 		WorkUploadID: req.WorkUploadID,
 		RequestNotes: req.RequestNotes,
 	}
 
 	if err := h.commissionService.RequestRevision(revision); err != nil {
+		log.Printf("[ERROR] RequestRevision - Service error: %v", err)
 		http.Error(w, "Failed to request revision", http.StatusInternalServerError)
 		return
 	}
@@ -436,13 +435,13 @@ func (h *CommissionHandler) CreateRefund(w http.ResponseWriter, r *http.Request)
 	}
 
 	refund := &models.Refund{
-		ID:           req.RefundID,
 		CommissionID: req.CommissionID,
 		Amount:       req.Amount,
 		Reason:       req.Reason,
 	}
 
 	if err := h.commissionService.CreateRefund(refund); err != nil {
+		log.Printf("[ERROR] CreateRefund - Service error: %v", err)
 		http.Error(w, "Failed to create refund", http.StatusInternalServerError)
 		return
 	}
@@ -490,13 +489,13 @@ func (h *CommissionHandler) SendMessage(w http.ResponseWriter, r *http.Request) 
 	}
 
 	message := &models.ChatMessage{
-		ID:           req.MessageID,
 		CommissionID: req.CommissionID,
 		SenderID:     req.SenderID,
 		Content:      req.Content,
 	}
 
 	if err := h.commissionService.SendMessage(message); err != nil {
+		log.Printf("[ERROR] SendMessage - Service error: %v", err)
 		http.Error(w, "Failed to send message", http.StatusInternalServerError)
 		return
 	}

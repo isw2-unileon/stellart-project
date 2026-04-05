@@ -22,12 +22,11 @@ func NewCommissionRepository(db *sql.DB) uis.CommissionRepository {
 
 func (r *postgresCommissionRepo) Create(commission *models.Commission) error {
 	query := `
-		INSERT INTO public.commissions (id, buyer_id, artist_id, title, description, price, status, deadline)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
-		RETURNING created_at, updated_at`
+		INSERT INTO public.commissions (buyer_id, artist_id, title, description, price, status, deadline)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, created_at, updated_at`
 
 	return r.db.QueryRow(query,
-		commission.ID,
 		commission.BuyerID,
 		commission.ArtistID,
 		commission.Title,
@@ -35,7 +34,7 @@ func (r *postgresCommissionRepo) Create(commission *models.Commission) error {
 		commission.Price,
 		commission.Status,
 		commission.Deadline,
-	).Scan(&commission.CreatedAt, &commission.UpdatedAt)
+	).Scan(&commission.ID, &commission.CreatedAt, &commission.UpdatedAt)
 }
 
 func (r *postgresCommissionRepo) GetByID(id string) (*models.Commission, error) {
@@ -126,17 +125,16 @@ func (r *postgresCommissionRepo) CreateAdvancePayment(payment *models.AdvancePay
 	log.Printf("[DEBUG] Repo.CreateAdvancePayment - Inserting payment: %+v", payment)
 
 	query := `
-		INSERT INTO public.advance_payments (id, commission_id, amount, status, payment_intent)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING created_at`
+		INSERT INTO public.advance_payments (commission_id, amount, status, payment_intent)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at`
 
 	err := r.db.QueryRow(query,
-		payment.ID,
 		payment.CommissionID,
 		payment.Amount,
 		payment.Status,
 		payment.PaymentIntent,
-	).Scan(&payment.CreatedAt)
+	).Scan(&payment.ID, &payment.CreatedAt)
 
 	if err != nil {
 		log.Printf("[ERROR] Repo.CreateAdvancePayment - DB error: %v", err)
@@ -180,17 +178,16 @@ func (r *postgresCommissionRepo) UpdateAdvancePayment(payment *models.AdvancePay
 
 func (r *postgresCommissionRepo) CreateRemainingPayment(payment *models.RemainingPayment) error {
 	query := `
-		INSERT INTO public.remaining_payments (id, commission_id, amount, status, payment_intent)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING created_at`
+		INSERT INTO public.remaining_payments (commission_id, amount, status, payment_intent)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at`
 
 	return r.db.QueryRow(query,
-		payment.ID,
 		payment.CommissionID,
 		payment.Amount,
 		payment.Status,
 		payment.PaymentIntent,
-	).Scan(&payment.CreatedAt)
+	).Scan(&payment.ID, &payment.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetRemainingPaymentByCommissionID(commissionID string) (*models.RemainingPayment, error) {
@@ -226,19 +223,18 @@ func (r *postgresCommissionRepo) UpdateRemainingPayment(payment *models.Remainin
 
 func (r *postgresCommissionRepo) CreateWorkUpload(upload *models.WorkUpload) error {
 	query := `
-		INSERT INTO public.work_uploads (id, commission_id, image_url, clean_image_url, watermarked, is_final, notes)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
-		RETURNING created_at`
+		INSERT INTO public.work_uploads (commission_id, image_url, clean_image_url, watermarked, is_final, notes)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, created_at`
 
 	return r.db.QueryRow(query,
-		upload.ID,
 		upload.CommissionID,
 		upload.ImageURL,
 		upload.CleanImageURL,
 		upload.Watermarked,
 		upload.IsFinal,
 		upload.Notes,
-	).Scan(&upload.CreatedAt)
+	).Scan(&upload.ID, &upload.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetWorkUploadsByCommissionID(commissionID string) ([]models.WorkUpload, error) {
@@ -282,18 +278,17 @@ func (r *postgresCommissionRepo) UpdateWorkUpload(upload *models.WorkUpload) err
 
 func (r *postgresCommissionRepo) CreateRevision(revision *models.CommissionRevision) error {
 	query := `
-		INSERT INTO public.commission_revisions (id, commission_id, work_upload_id, request_notes, response_notes, status)
-		VALUES ($1, $2, $3, $4, $5, $6)
-		RETURNING created_at`
+		INSERT INTO public.commission_revisions (commission_id, work_upload_id, request_notes, response_notes, status)
+		VALUES ($1, $2, $3, $4, $5)
+		RETURNING id, created_at`
 
 	return r.db.QueryRow(query,
-		revision.ID,
 		revision.CommissionID,
 		revision.WorkUploadID,
 		revision.RequestNotes,
 		revision.ResponseNotes,
 		revision.Status,
-	).Scan(&revision.CreatedAt)
+	).Scan(&revision.ID, &revision.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetRevisionsByCommissionID(commissionID string) ([]models.CommissionRevision, error) {
@@ -342,17 +337,16 @@ func (r *postgresCommissionRepo) UpdateRevision(revision *models.CommissionRevis
 
 func (r *postgresCommissionRepo) CreateRefund(refund *models.Refund) error {
 	query := `
-		INSERT INTO public.refunds (id, commission_id, amount, reason, status)
-		VALUES ($1, $2, $3, $4, $5)
-		RETURNING created_at`
+		INSERT INTO public.refunds (commission_id, amount, reason, status)
+		VALUES ($1, $2, $3, $4)
+		RETURNING id, created_at`
 
 	return r.db.QueryRow(query,
-		refund.ID,
 		refund.CommissionID,
 		refund.Amount,
 		refund.Reason,
 		refund.Status,
-	).Scan(&refund.CreatedAt)
+	).Scan(&refund.ID, &refund.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetRefundByCommissionID(commissionID string) (*models.Refund, error) {
@@ -392,16 +386,15 @@ func (r *postgresCommissionRepo) UpdateRefund(refund *models.Refund) error {
 
 func (r *postgresCommissionRepo) CreateChatMessage(message *models.ChatMessage) error {
 	query := `
-		INSERT INTO public.chat_messages (id, commission_id, sender_id, content)
-		VALUES ($1, $2, $3, $4)
-		RETURNING created_at`
+		INSERT INTO public.chat_messages (commission_id, sender_id, content)
+		VALUES ($1, $2, $3)
+		RETURNING id, created_at`
 
 	return r.db.QueryRow(query,
-		message.ID,
 		message.CommissionID,
 		message.SenderID,
 		message.Content,
-	).Scan(&message.CreatedAt)
+	).Scan(&message.ID, &message.CreatedAt)
 }
 
 func (r *postgresCommissionRepo) GetChatMessagesByCommissionID(commissionID string) ([]models.ChatMessage, error) {
