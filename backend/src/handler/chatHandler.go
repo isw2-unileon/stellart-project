@@ -2,16 +2,14 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
-	"math/rand"
 	"net/http"
 	"sync"
-	"time"
 
-	"github.com/gorilla/websocket"
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/service"
+
+	"github.com/gorilla/websocket"
 )
 
 var upgrader = websocket.Upgrader{
@@ -170,7 +168,6 @@ func (h *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	}
 
 	go h.readLoop(commissionID, userID, conn)
-	go h.writeLoop(commissionID, conn)
 }
 
 func (h *ChatHandler) readLoop(commissionID, userID string, conn *websocket.Conn) {
@@ -191,7 +188,6 @@ func (h *ChatHandler) readLoop(commissionID, userID string, conn *websocket.Conn
 		}
 
 		chatMsg := &models.ChatMessage{
-			ID:           generateID(),
 			CommissionID: commissionID,
 			SenderID:     userID,
 			Content:      wsMsg.Content,
@@ -208,18 +204,4 @@ func (h *ChatHandler) readLoop(commissionID, userID string, conn *websocket.Conn
 		broadcastBytes, _ := json.Marshal(wsMsg)
 		h.hub.Broadcast(commissionID, userID, broadcastBytes)
 	}
-}
-
-func (h *ChatHandler) writeLoop(commissionID string, conn *websocket.Conn) {
-	defer conn.Close()
-	for {
-		_, _, err := conn.ReadMessage()
-		if err != nil {
-			break
-		}
-	}
-}
-
-func generateID() string {
-	return fmt.Sprintf("%d-%d", time.Now().UnixNano(), rand.Intn(100000))
 }
