@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import PaymentModal from './PaymentModal';
-import { getProfile } from '../service/apiService';
-import { getLoggedUser, getWishlist, addToWishlist, removeFromWishlist } from '../service/apiService';
+import { getProfile, getLoggedUser, getWishlist, addToWishlist, removeFromWishlist } from '../service/apiService';
 
 export default function ExploreGallery({ artworks = [] }) {
     
@@ -11,6 +10,7 @@ export default function ExploreGallery({ artworks = [] }) {
     const [artistNames, setArtistNames] = useState({});
     const [user, setUser] = useState(null);
     const [wishlistIds, setWishlistIds] = useState(new Set());
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         async function loadWishlist() {
@@ -21,6 +21,14 @@ export default function ExploreGallery({ artworks = [] }) {
             setWishlistIds(new Set((items || []).map(a => a.id)));
         }
         loadWishlist();
+    }, []);
+
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape') setIsModalOpen(false);
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
     }, []);
 
     const toggleWishlist = async (e, artworkId) => {
@@ -37,6 +45,16 @@ export default function ExploreGallery({ artworks = [] }) {
                 toast.success('Added to wishlist');
             }
         } catch { toast.error('Wishlist update failed'); }
+    };
+
+    const handleFullscreenRequest = (e) => {
+        e.stopPropagation();
+        const elem = document.getElementById("expanded-artwork");
+        if (elem) {
+            if (elem.requestFullscreen) elem.requestFullscreen();
+            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
+            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+        }
     };
 
     const placeholderArtworks = [
@@ -64,7 +82,6 @@ export default function ExploreGallery({ artworks = [] }) {
                     try {
                         const profileData = await getProfile(id);
                         if (profileData) {
-                            // Usamos full_name porque así lo guardas al registrar al usuario
                             newNames[id] = profileData.full_name || profileData.name || profileData.username || "Unknown Artist";
                             stateNeedsUpdate = true;
                         }
@@ -119,7 +136,10 @@ export default function ExploreGallery({ artworks = [] }) {
                         {displayArtworks.map((art) => (
                             <article 
                                 key={art.id} 
-                                onClick={() => setSelectedArtwork(art)}
+                                onClick={() => {
+                                    setSelectedArtwork(art);
+                                    setIsModalOpen(false);
+                                }}
                                 className={`group cursor-pointer rounded-2xl transition-all duration-300 ${selectedArtwork?.id === art.id ? 'ring-4 ring-yellow-400 ring-offset-2' : 'hover:-translate-y-1'}`}
                             >
                                 <div className="aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-4 shadow-sm group-hover:shadow-md transition-shadow">
@@ -133,7 +153,6 @@ export default function ExploreGallery({ artworks = [] }) {
                                     <div className="flex-1 min-w-0 pr-2">
                                         <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
                                         
-                                        {/* Nombre del artista y tipo de obra */}
                                         <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">
                                             {art.artist} <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.productType}</span>
                                         </p>
@@ -184,15 +203,23 @@ export default function ExploreGallery({ artworks = [] }) {
                         <>
                             <button 
                                 onClick={() => setSelectedArtwork(null)}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors shadow-sm"
+                                className="absolute top-4 right-4 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-200 transition-colors shadow-sm z-10"
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
                                 </svg>
                             </button>
 
-                            <div className="w-full aspect-square rounded-2xl overflow-hidden mb-6 bg-slate-200 mt-2">
-                                <img src={selectedArtwork.img} alt={selectedArtwork.title} className="w-full h-full object-cover" />
+                            <div 
+                                className="w-full aspect-square rounded-2xl overflow-hidden mb-6 bg-slate-200 mt-2 relative group cursor-pointer"
+                                onClick={() => setIsModalOpen(true)}
+                            >
+                                <img src={selectedArtwork.img} alt={selectedArtwork.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 duration-300">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-10 h-10 text-white drop-shadow-md">
+                                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                                    </svg>
+                                </div>
                             </div>
 
                             <div>
@@ -227,6 +254,41 @@ export default function ExploreGallery({ artworks = [] }) {
                 </aside>
 
             </div>
+
+            {isModalOpen && selectedArtwork && (
+                <div 
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/90 backdrop-blur-sm p-4 md:p-8"
+                    onClick={() => setIsModalOpen(false)}
+                >
+                    <div className="relative flex items-center justify-center w-full h-full">
+                        <button 
+                            onClick={() => setIsModalOpen(false)}
+                            className="absolute top-4 right-4 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+
+                        <button 
+                            onClick={handleFullscreenRequest}
+                            className="absolute top-4 right-20 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                            </svg>
+                        </button>
+
+                        <img 
+                            id="expanded-artwork"
+                            src={selectedArtwork.img} 
+                            alt={selectedArtwork.title} 
+                            className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
+                            onClick={(e) => e.stopPropagation()} 
+                        />
+                    </div>
+                </div>
+            )}
 
             <PaymentModal 
                 isOpen={showPaymentModal}
