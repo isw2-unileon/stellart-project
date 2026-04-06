@@ -158,3 +158,47 @@ func (h *ArtworkHandler) ReportArtwork(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"message": "Report sent successfully"})
 }
+
+func (h *ArtworkHandler) LikeArtwork(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Artwork ID is required", http.StatusBadRequest)
+		return
+	}
+
+	err := h.artworkService.LikeArtwork(id)
+	if err != nil {
+		http.Error(w, "Failed to like artwork", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Artwork liked successfully"})
+}
+
+func (h *ArtworkHandler) GetTrendingArtworks(w http.ResponseWriter, r *http.Request) {
+	artworks, err := h.artworkService.GetTrendingArtworks()
+	if err != nil {
+		http.Error(w, "Failed to fetch trending artworks", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(artworks)
+}
+
+func (h *ArtworkHandler) UnlikeArtwork(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Artwork ID is required", http.StatusBadRequest)
+		return
+	}
+
+	err := h.artworkService.UnlikeArtwork(id)
+	if err != nil {
+		http.Error(w, "Failed to unlike artwork", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
