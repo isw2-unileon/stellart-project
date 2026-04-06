@@ -9,6 +9,9 @@ type Config struct {
 	DatabaseURL     string
 	SupabaseURL     string
 	SupabaseAnonKey string
+	ResendAPIKey    string
+	ContactEmail    string
+	CohereAPIKey    string
 }
 
 func LoadConfig() *Config {
@@ -21,5 +24,8 @@ func LoadConfig() *Config {
 		DatabaseURL:     dbURL,
 		SupabaseURL:     os.Getenv("SUPABASE_URL"),
 		SupabaseAnonKey: os.Getenv("SUPABASE_ANON_KEY"),
+		ResendAPIKey:    os.Getenv("RESEND_API_KEY"),
+		ContactEmail:    os.Getenv("CONTACT_EMAIL"),
+		CohereAPIKey:    os.Getenv("COHERE_API_KEY"),
 	}
 }

@@ -41,6 +41,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Get("/artist/{artistId}", ah.GetArtworksByArtist)
 		r.Get("/{id}", ah.GetArtwork)
 		r.Post("/", ah.CreateArtwork)
+		r.Post("/{id}/report", ah.ReportArtwork)
 	})
 
 	// Commissions - ALL routes in one place to avoid conflicts
