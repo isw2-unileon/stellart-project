@@ -137,3 +137,51 @@ func formatVector(v []float32) string {
 	}
 	return "[" + strings.Join(strValues, ",") + "]"
 }
+
+func (p *postgresArtWorkRepo) IncrementLikes(id string) error {
+	query := `UPDATE artworks SET likes_count = COALESCE(likes_count, 0) + 1 WHERE id = $1`
+	_, err := p.db.Exec(query, id)
+	return err
+}
+
+func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
+	query := `
+		SELECT id, artist_id, title, description, image_url, tags, price, likes_count, product_type, created_at 
+		FROM artworks 
+		ORDER BY likes_count DESC NULLS LAST, created_at DESC 
+		LIMIT 10
+	`
+	rows, err := p.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var artworks []models.Artwork
+	for rows.Next() {
+		var a models.Artwork
+		err := rows.Scan(
+			&a.ID,
+			&a.ArtistID,
+			&a.Title,
+			&a.Description,
+			&a.ImageURL,
+			pq.Array(&a.Tags),
+			&a.Price,
+			&a.LikesCount,
+			&a.ProductType,
+			&a.CreatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		artworks = append(artworks, a)
+	}
+	return artworks, nil
+}
+
+func (p *postgresArtWorkRepo) DecrementLikes(id string) error {
+	query := `UPDATE artworks SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0) WHERE id = $1`
+	_, err := p.db.Exec(query, id)
+	return err
+}

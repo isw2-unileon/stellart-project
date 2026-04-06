@@ -62,3 +62,16 @@ describe('apiService - submitContact', () => {
         expect(mockSubmitContact).toHaveBeenCalledWith({ name: '', title: '', message: '' });
     });
 });
+
+export const unlikeArtwork = async (artworkId) => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/unlike`, {
+            method: 'POST',
+        });
+        if (!response.ok) throw new Error('Failed to unlike artwork');
+        return true;
+    } catch (error) {
+        console.error("Error unliking artwork:", error);
+        throw error;
+    }
+};
