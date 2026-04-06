@@ -496,3 +496,24 @@ export const updateOpenCommissions = async (userId, openCommissions) => {
     if (!response.ok) throw new Error('Failed to update open commissions');
     return true;
 };
+
+export const reportArtwork = async (artworkId, reporterId, reason) => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/report`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ reporterId, reason })
+        });
+        
+        if (!response.ok) {
+            throw new Error('Failed to send report');
+        }
+        
+        return await response.json();
+    } catch (error) {
+        console.error("Error reporting artwork:", error);
+        throw error;
+    }
+};

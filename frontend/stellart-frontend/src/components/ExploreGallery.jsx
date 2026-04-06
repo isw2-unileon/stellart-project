@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 import PaymentModal from './PaymentModal';
-import { getProfile, getLoggedUser, getWishlist, addToWishlist, removeFromWishlist } from '../service/apiService';
+import { getProfile, getLoggedUser, getWishlist, addToWishlist, removeFromWishlist, reportArtwork } from '../service/apiService';
 
 export default function ExploreGallery({ artworks = [] }) {
     
@@ -11,6 +11,10 @@ export default function ExploreGallery({ artworks = [] }) {
     const [user, setUser] = useState(null);
     const [wishlistIds, setWishlistIds] = useState(new Set());
     const [isModalOpen, setIsModalOpen] = useState(false);
+
+    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
+    const [reportReason, setReportReason] = useState("");
+    const [isSubmittingReport, setIsSubmittingReport] = useState(false);
 
     useEffect(() => {
         async function loadWishlist() {
@@ -25,7 +29,10 @@ export default function ExploreGallery({ artworks = [] }) {
 
     useEffect(() => {
         const handleKeyDown = (e) => {
-            if (e.key === 'Escape') setIsModalOpen(false);
+            if (e.key === 'Escape') {
+                setIsModalOpen(false);
+                setIsReportModalOpen(false);
+            }
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
@@ -54,6 +61,29 @@ export default function ExploreGallery({ artworks = [] }) {
             if (elem.requestFullscreen) elem.requestFullscreen();
             else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
             else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
+        }
+    };
+
+    const handleReportSubmit = async () => {
+        if (!user) {
+            toast.error('Log in to report artworks');
+            return;
+        }
+        if (!reportReason) {
+            toast.error('Please select a reason');
+            return;
+        }
+        
+        setIsSubmittingReport(true);
+        try {
+            await reportArtwork(selectedArtwork.id, user.id, reportReason);
+            toast.success('Report sent successfully');
+            setIsReportModalOpen(false);
+            setReportReason("");
+        } catch {
+            toast.error('Failed to send report');
+        } finally {
+            setIsSubmittingReport(false);
         }
     };
 
@@ -173,12 +203,18 @@ export default function ExploreGallery({ artworks = [] }) {
                                                 </svg>
                                             </button>
                                         )}
+                                        {/* BANDERÍN EN LA TARJETA DE GALERÍA */}
                                         <button 
-                                            onClick={(e) => { e.stopPropagation(); }}
+                                            onClick={(e) => { 
+                                                e.stopPropagation(); 
+                                                setSelectedArtwork(art); 
+                                                setIsReportModalOpen(true); 
+                                            }}
                                             className="text-slate-300 hover:text-red-500 transition-colors"
+                                            title="Report Artwork"
                                         >
-                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                                                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                                            <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
                                             </svg>
                                         </button>
                                     </div>
@@ -207,6 +243,16 @@ export default function ExploreGallery({ artworks = [] }) {
                             >
                                 <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor">
                                     <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                                </svg>
+                            </button>
+
+                            <button 
+                                onClick={() => setIsReportModalOpen(true)}
+                                title="Report Artwork"
+                                className="absolute top-4 right-16 w-10 h-10 bg-white rounded-full flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-slate-200 transition-colors shadow-sm z-10"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
                                 </svg>
                             </button>
 
@@ -252,7 +298,6 @@ export default function ExploreGallery({ artworks = [] }) {
                         </>
                     )}
                 </aside>
-
             </div>
 
             {isModalOpen && selectedArtwork && (
@@ -279,6 +324,17 @@ export default function ExploreGallery({ artworks = [] }) {
                             </svg>
                         </button>
 
+                        {/* BANDERÍN EN EL MODAL FULLSCREEN */}
+                        <button 
+                            onClick={() => setIsReportModalOpen(true)}
+                            className="absolute top-4 right-36 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
+                            title="Report Artwork"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+                            </svg>
+                        </button>
+
                         <img 
                             id="expanded-artwork"
                             src={selectedArtwork.img} 
@@ -286,6 +342,46 @@ export default function ExploreGallery({ artworks = [] }) {
                             className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
                             onClick={(e) => e.stopPropagation()} 
                         />
+                    </div>
+                </div>
+            )}
+
+            {isReportModalOpen && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+                        <h3 className="text-xl font-bold text-slate-900 mb-2">Report Artwork</h3>
+                        <p className="text-sm text-slate-500 mb-6">Why are you reporting this artwork?</p>
+                        
+                        <select 
+                            value={reportReason}
+                            onChange={(e) => setReportReason(e.target.value)}
+                            className="w-full border border-slate-200 rounded-xl p-3 mb-6 text-slate-700 outline-none focus:border-yellow-400 bg-white"
+                        >
+                            <option value="" disabled>Select a reason...</option>
+                            <option value="NSFW / Inappropriate Content">NSFW / Inappropriate Content</option>
+                            <option value="Copyright Violation / Stolen Art">Copyright Violation / Stolen Art</option>
+                            <option value="Spam / Misleading">Spam / Misleading</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => {
+                                    setIsReportModalOpen(false);
+                                    setReportReason("");
+                                }}
+                                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={handleReportSubmit}
+                                disabled={isSubmittingReport || !reportReason}
+                                className="flex-1 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50"
+                            >
+                                {isSubmittingReport ? 'Sending...' : 'Submit Report'}
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

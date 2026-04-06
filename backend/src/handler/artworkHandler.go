@@ -1,10 +1,13 @@
 package handler
 
 import (
+	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/service"
+	"stellart/backend/src/settings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -101,4 +104,57 @@ func (h *ArtworkHandler) SearchArtworks(w http.ResponseWriter, r *http.Request) 
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(artworks)
+}
+
+func (h *ArtworkHandler) ReportArtwork(w http.ResponseWriter, r *http.Request) {
+	artworkID := chi.URLParam(r, "id")
+
+	var req struct {
+		ReporterID string `json:"reporterId"`
+		Reason     string `json:"reason"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
+		return
+	}
+
+	cfg := settings.LoadConfig()
+
+	if cfg.ResendAPIKey == "" || cfg.ContactEmail == "" {
+		http.Error(w, `{"error": "Email service not configured"}`, http.StatusInternalServerError)
+		return
+	}
+
+	textBody := fmt.Sprintf("New Artwork Report\n\nArtwork ID: %s\nReported by User ID: %s\nReason: %s", artworkID, req.ReporterID, req.Reason)
+
+	payload := map[string]interface{}{
+		"from":    "Stellart Moderation <onboarding@resend.dev>",
+		"to":      []string{cfg.ContactEmail},
+		"subject": "Artwork Report: " + artworkID,
+		"text":    textBody,
+	}
+
+	jsonPayload, _ := json.Marshal(payload)
+
+	httpReq, err := http.NewRequest("POST", "https://api.resend.com/emails", bytes.NewBuffer(jsonPayload))
+	if err != nil {
+		http.Error(w, `{"error": "Failed to create request"}`, http.StatusInternalServerError)
+		return
+	}
+
+	httpReq.Header.Set("Authorization", "Bearer "+cfg.ResendAPIKey)
+	httpReq.Header.Set("Content-Type", "application/json")
+
+	client := &http.Client{}
+	resp, err := client.Do(httpReq)
+	if err != nil || resp.StatusCode >= 400 {
+		http.Error(w, `{"error": "Failed to send email"}`, http.StatusInternalServerError)
+		return
+	}
+	defer resp.Body.Close()
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Report sent successfully"})
 }
