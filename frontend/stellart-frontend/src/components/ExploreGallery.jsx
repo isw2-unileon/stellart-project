@@ -129,6 +129,7 @@ export default function ExploreGallery({ artworks = [] }) {
         };
 
         fetchProfiles();
+
     }, [artworks]);
 
     const isRealData = artworks && artworks.length > 0;
@@ -203,7 +204,6 @@ export default function ExploreGallery({ artworks = [] }) {
                                                 </svg>
                                             </button>
                                         )}
-                                        {/* BANDERÍN EN LA TARJETA DE GALERÍA */}
                                         <button 
                                             onClick={(e) => { 
                                                 e.stopPropagation(); 
@@ -324,7 +324,6 @@ export default function ExploreGallery({ artworks = [] }) {
                             </svg>
                         </button>
 
-                        {/* BANDERÍN EN EL MODAL FULLSCREEN */}
                         <button 
                             onClick={() => setIsReportModalOpen(true)}
                             className="absolute top-4 right-36 w-12 h-12 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white transition-colors z-50"
@@ -348,7 +347,7 @@ export default function ExploreGallery({ artworks = [] }) {
 
             {isReportModalOpen && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
+                    <div className="bg-white rounded-2xl p-6 w-full max-sm shadow-xl">
                         <h3 className="text-xl font-bold text-slate-900 mb-2">Report Artwork</h3>
                         <p className="text-sm text-slate-500 mb-6">Why are you reporting this artwork?</p>
                         
