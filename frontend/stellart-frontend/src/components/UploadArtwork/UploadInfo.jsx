@@ -79,6 +79,7 @@ export default function UploadInfo({ file }) {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ',') {
             e.preventDefault(); 
+            e.stopPropagation();
             const newTag = tagInput.trim();
             if (newTag && !tags.includes(newTag)) {
                 setTags([...tags, newTag]);
@@ -94,7 +95,15 @@ export default function UploadInfo({ file }) {
     const inputClasses = "w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 outline-none focus:bg-white focus:ring-2 focus:ring-yellow-400 transition-all text-slate-700 placeholder-slate-400 shadow-sm";
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col gap-6 w-full">
+        <form onSubmit={handleSubmit} 
+            onKeyDown={(e) => {
+                // Si pulsamos Enter y NO estamos dentro del textarea de la descripción, bloqueamos el envío
+                if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') {
+                    e.preventDefault();
+                }
+            }}  
+            className="flex flex-col gap-6 w-full"
+        >
             <div className="flex flex-col gap-2">
                 <label className="text-sm font-bold text-slate-700">
                     Artwork title <span className="text-red-400">*</span>
