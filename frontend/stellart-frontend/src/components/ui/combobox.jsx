@@ -240,7 +240,6 @@ function ComboboxChip({
         className
       )}
       {...props}>
-      {children}
       {showRemove && (
         <ComboboxPrimitive.ChipRemove
           render={<Button variant="ghost" size="icon-xs" />}
@@ -255,7 +254,6 @@ function ComboboxChip({
 
 function ComboboxChipsInput({
   className,
-  children,
   ...props
 }) {
   return (

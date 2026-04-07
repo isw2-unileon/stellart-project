@@ -137,7 +137,7 @@ export default function Profile() {
         } catch {
             toast.error("Save failed");
         }
-    }, [user?.id, displayName, bio, avatar, skills]);
+    }, [user?.id, user?.email, displayName, bio, avatar, skills]);
 
     const [initialLoadDone, setInitialLoadDone] = useState(false);
 
@@ -152,7 +152,7 @@ export default function Profile() {
             }, 2000);
             return () => clearTimeout(timeoutId);
         }
-    }, [handleSaveProfile, isLoading, user?.id, user?.email, skills.length, initialLoadDone]);
+    }, [handleSaveProfile, isLoading, user?.id, skills.length, initialLoadDone]);
 
     const handleBioChange = (e) => {
         setBio(e.target.value);
