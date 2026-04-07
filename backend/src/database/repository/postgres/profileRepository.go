@@ -50,29 +50,37 @@ func (r *postgresProfileRepo) Update(profile *models.Profile, skills []models.Pr
 	defer tx.Rollback()
 
 	queryProfile := `
-		UPDATE public.profiles 
-		SET full_name = $1, avatar_url = $2, biography = $3, open_commissions = $4, updated_at = CURRENT_TIMESTAMP
-		WHERE id = $5
+		INSERT INTO public.profiles (id, full_name, email, avatar_url, biography, open_commissions, updated_at, created_at)
+		VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+		ON CONFLICT (id) DO UPDATE
+		SET full_name = EXCLUDED.full_name,
+		    avatar_url = EXCLUDED.avatar_url,
+		    biography = EXCLUDED.biography,
+		    open_commissions = EXCLUDED.open_commissions,
+		    updated_at = CURRENT_TIMESTAMP
 		RETURNING updated_at`
 
 	err = tx.QueryRow(queryProfile,
+		profile.ID,
 		profile.FullName,
+		profile.Email,
 		profile.AvatarURL,
 		profile.Biography,
 		profile.OpenCommissions,
-		profile.ID,
 	).Scan(&profile.UpdatedAt)
 
 	if err != nil {
 		return err
 	}
 
-	_, err = tx.Exec(`DELETE FROM public.profile_skills WHERE profile_id = $1`, profile.ID)
-	if err != nil {
-		return err
-	}
-
+	// Only replace skills if the caller explicitly sends them.
+	// This prevents the login sync (which sends skills: []) from wiping existing skills.
 	if len(skills) > 0 {
+		_, err = tx.Exec(`DELETE FROM public.profile_skills WHERE profile_id = $1`, profile.ID)
+		if err != nil {
+			return err
+		}
+
 		querySkills := `
 			INSERT INTO public.profile_skills (profile_id, skill_id, level) 
 			VALUES ($1, $2, $3) Returning id`

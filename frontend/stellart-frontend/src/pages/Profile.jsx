@@ -93,13 +93,27 @@ export default function Profile() {
             setIsUploadingAvatar(true);
             const url = await uploadAvatar(file);
             setAvatar(url);
+
+            // Persist to database immediately using the url variable
+            // (not state, which hasn't re-rendered yet)
+            await updateProfileAndSkills(user.id, {
+                fullName: displayName,
+                email: user.email,
+                biography: bio,
+                avatarUrl: url
+            }, skills.map(s => ({
+                profile_id: user.id,
+                skill_id: s.skill_id,
+                level: parseInt(s.value)
+            })));
+
             toast.success("Avatar updated");
-            } catch {
-                console.error("Avatar upload error.");
-                toast.error("Failed to upload avatar");
-            } finally {
-                setIsUploadingAvatar(false);
-            }
+        } catch {
+            console.error("Avatar upload error.");
+            toast.error("Failed to upload avatar");
+        } finally {
+            setIsUploadingAvatar(false);
+        }
     }
 
     const handleSaveProfile = useCallback(async () => {
@@ -107,6 +121,7 @@ export default function Profile() {
         try {
             const profileData = {
                 fullName: displayName,
+                email: user.email,
                 biography: bio,
                 avatarUrl: avatar
             };
@@ -118,6 +133,7 @@ export default function Profile() {
             }));
 
             await updateProfileAndSkills(user.id, profileData, skillsData);
+            toast.success("Profile saved");
         } catch {
             toast.error("Save failed");
         }

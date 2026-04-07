@@ -39,18 +39,24 @@ export const loginUser = async (email, password) => {
         const fullName = data.user.user_metadata?.full_name;
         if (fullName) {
             try {
-                await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        profile: {
-                            id: data.user.id,
-                            full_name: fullName,
-                            avatar_url: data.user.user_metadata?.avatar_url || null
-                        },
-                        skills: []
-                    }),
-                });
+                // Only create profile if it doesn't exist yet.
+                // Avoids overwriting avatar_url/biography with null on every login.
+                const existing = await getProfile(data.user.id);
+                if (!existing) {
+                    await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            profile: {
+                                id: data.user.id,
+                                full_name: fullName,
+                                email: data.user.email || "",
+                                avatar_url: data.user.user_metadata?.avatar_url || null
+                            },
+                            skills: []
+                        }),
+                    });
+                }
             } catch (e) {
                 console.error("Profile sync error:", e);
             }
@@ -159,6 +165,7 @@ export const updateProfileAndSkills = async (userId, profileData, skillsData) =>
         profile: {
             id: userId,
             full_name: profileData.fullName,
+            email: profileData.email || "",
             biography: profileData.biography,
             avatar_url: profileData.avatarUrl
         },
