@@ -1,3 +1,4 @@
+/* eslint-disable react-refresh/only-export-components */
 "use client"
 
 import * as React from "react"
@@ -228,7 +229,6 @@ function ComboboxChips({
 
 function ComboboxChip({
   className,
-  children,
   showRemove = true,
   ...props
 }) {

@@ -152,7 +152,7 @@ export default function Profile() {
             }, 2000);
             return () => clearTimeout(timeoutId);
         }
-    }, [handleSaveProfile, isLoading, user?.id, skills.length, initialLoadDone]);
+    }, [handleSaveProfile, isLoading, user?.id, user?.email, skills.length, initialLoadDone]);
 
     const handleBioChange = (e) => {
         setBio(e.target.value);
