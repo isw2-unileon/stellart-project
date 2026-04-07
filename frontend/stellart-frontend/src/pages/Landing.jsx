@@ -33,9 +33,11 @@ export default function Landing() {
                     </p>
 
                     <div className="flex gap-4">
-                        <button className="bg-black text-white px-8 py-4 rounded-full font-bold hover:bg-yellow-400 hover:text-black transition-colors shadow-lg">
-                            Explore gallery.
-                        </button>
+                        <a href="/explore">
+                            <button className="bg-black text-white px-8 py-4 rounded-full font-bold hover:bg-yellow-400 hover:text-black transition-colors shadow-lg cursor-pointer">
+                                Explore gallery.
+                            </button>
+                        </a>
                     </div>
                 </div>
             </div>

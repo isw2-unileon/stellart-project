@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { uploadImage, getLoggedUser } from '../../service/apiService';
 import { toast } from 'sonner';
+import GenericCombobox from '../ui/GenericCombobox';
 
 export default function UploadInfo({ file }) {
     const navigate = useNavigate();
@@ -14,6 +15,17 @@ export default function UploadInfo({ file }) {
     const [loading, setLoading] = useState(false);
     const [userId, setUserId] = useState(null);
     const [productType, setProductType] = useState("");
+    const typeOptions = [
+        { value: "Digital illustration", label: "Digital illustration"},
+        { value: "3D render", label: "3D render"},
+        { value: "Digital print", label: "Digital print"},
+        { value: "Sticker", label: "Sticker"},
+        { value: "Traditional illustration", label: "Traditional illustration"},
+        { value: "Painting", label: "Painting" },
+        { value: "Watercolor painting", label: "Watercolor painting"},
+        { value: "Oil painting", label: "Oil painting"},
+        { value: "Other", label: "Other" }
+    ]
 
     useEffect(() => {
         const fetchUser = async () => {
@@ -135,12 +147,11 @@ export default function UploadInfo({ file }) {
                 <label className="text-sm font-bold text-slate-700">
                     Product Type
                 </label>
-                <input
-                    type="text"
+                <GenericCombobox
+                    options={typeOptions}
                     value={productType}
-                    onChange={(e) => setProductType(e.target.value)}
+                    onChange={setProductType} 
                     placeholder="e.g. Digital Illustration, 3D Render, Oil Painting..."
-                    className={inputClasses}
                 />
             </div>
 
