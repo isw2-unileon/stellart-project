@@ -3,15 +3,20 @@ package service
 import (
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/database/repository/uis"
+	"stellart/backend/src/settings"
 	"stellart/backend/src/utils"
 )
 
 type ArtworkService struct {
-	repo uis.ArtworkInterface
+	repo   uis.ArtworkInterface
+	config *settings.Config
 }
 
-func NewArtworkService(repo uis.ArtworkInterface) *ArtworkService {
-	return &ArtworkService{repo: repo}
+func NewArtworkService(repo uis.ArtworkInterface, cfg *settings.Config) *ArtworkService {
+	return &ArtworkService{
+		repo:   repo,
+		config: cfg,
+	}
 }
 
 func (s *ArtworkService) GetArtworkByID(id string) *models.Artwork {
@@ -43,7 +48,7 @@ func (s *ArtworkService) CreateArtwork(artwork *models.Artwork) error {
 		}
 	}
 
-	embedding, err := utils.GenerateTextEmbedding(textToEmbed)
+	embedding, err := utils.GenerateTextEmbedding(textToEmbed, s.config.CohereAPIKey)
 	if err != nil {
 		return err
 	}
@@ -54,8 +59,7 @@ func (s *ArtworkService) CreateArtwork(artwork *models.Artwork) error {
 }
 
 func (s *ArtworkService) SearchArtworks(query string) ([]models.Artwork, error) {
-
-	embedding, err := utils.GenerateTextEmbedding(query)
+	embedding, err := utils.GenerateTextEmbedding(query, s.config.CohereAPIKey)
 	if err != nil {
 		return nil, err
 	}

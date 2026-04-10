@@ -10,6 +10,7 @@ import (
 	"stellart/backend/src/handler"
 	"stellart/backend/src/router"
 	"stellart/backend/src/service"
+	"stellart/backend/src/settings"
 
 	"github.com/joho/godotenv"
 )
@@ -18,6 +19,8 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		godotenv.Load("../.env")
 	}
+
+	cfg := settings.LoadConfig()
 
 	dbURL := os.Getenv("DATABASE_URL")
 	if dbURL == "" {
@@ -39,8 +42,8 @@ func main() {
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
-	artworkSvc := service.NewArtworkService(artworkRepo)
-	artworkHdl := handler.NewArtworkHandler(artworkSvc)
+	artworkSvc := service.NewArtworkService(artworkRepo, cfg)
+	artworkHdl := handler.NewArtworkHandler(artworkSvc, cfg)
 
 	// Commission
 	commissionRepo := postgres.NewCommissionRepository(db)
@@ -50,7 +53,7 @@ func main() {
 	// Chat WebSocket
 	chatHub := handler.NewChatHub()
 	go chatHub.Run()
-	chatHdl := handler.NewChatHandler(chatHub, commissionSvc)
+	chatHdl := handler.NewChatHandler(commissionSvc, chatHub)
 
 	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl)
 

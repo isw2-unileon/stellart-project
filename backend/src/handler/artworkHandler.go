@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"stellart/backend/src/database/models"
+	"stellart/backend/src/dto"
 	"stellart/backend/src/service"
 	"stellart/backend/src/settings"
 
@@ -14,23 +15,33 @@ import (
 
 type ArtworkHandler struct {
 	artworkService *service.ArtworkService
+	config         *settings.Config
 }
 
-type ArtworkResponse struct {
-	models.Artwork
-	ArtistName string `json:"artist_name"`
-}
-
-func NewArtworkHandler(as *service.ArtworkService) ArtworkHandler {
-	return ArtworkHandler{artworkService: as}
+func NewArtworkHandler(as *service.ArtworkService, cfg *settings.Config) ArtworkHandler {
+	return ArtworkHandler{
+		artworkService: as,
+		config:         cfg,
+	}
 }
 
 func (h *ArtworkHandler) CreateArtwork(w http.ResponseWriter, r *http.Request) {
-	var artwork models.Artwork
-	if err := json.NewDecoder(r.Body).Decode(&artwork); err != nil {
+	var req dto.CreateArtwork
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
+
+	artwork := models.Artwork{
+		ArtistID:    &req.ArtistID,
+		Title:       req.Title,
+		Description: &req.Description,
+		ImageURL:    req.ImageURL,
+		Price:       &req.Price,
+		Tags:        req.Tags,
+		ProductType: req.ProductType,
+	}
+
 	if err := h.artworkService.CreateArtwork(&artwork); err != nil {
 		http.Error(w, "Failed to create artwork: "+err.Error(), http.StatusInternalServerError)
 		return
@@ -65,21 +76,18 @@ func (h *ArtworkHandler) GetArtworksByArtist(w http.ResponseWriter, r *http.Requ
 }
 
 func (h *ArtworkHandler) SearchSimilar(w http.ResponseWriter, r *http.Request) {
-	var request struct {
-		Vector []float32 `json:"vector"`
-		Limit  int       `json:"limit"`
-	}
+	var req dto.SearchSimilarRequest
 
-	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	if request.Limit <= 0 {
-		request.Limit = 10
+	if req.Limit <= 0 {
+		req.Limit = 10
 	}
 
-	artworks, err := h.artworkService.SearchSimilarArtworks(request.Vector, request.Limit)
+	artworks, err := h.artworkService.SearchSimilarArtworks(req.Vector, req.Limit)
 	if err != nil {
 		http.Error(w, "Search failed", http.StatusInternalServerError)
 		return
@@ -109,19 +117,14 @@ func (h *ArtworkHandler) SearchArtworks(w http.ResponseWriter, r *http.Request) 
 func (h *ArtworkHandler) ReportArtwork(w http.ResponseWriter, r *http.Request) {
 	artworkID := chi.URLParam(r, "id")
 
-	var req struct {
-		ReporterID string `json:"reporterId"`
-		Reason     string `json:"reason"`
-	}
+	var req dto.ReportArtworkRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, `{"error": "Invalid request body"}`, http.StatusBadRequest)
 		return
 	}
 
-	cfg := settings.LoadConfig()
-
-	if cfg.ResendAPIKey == "" || cfg.ContactEmail == "" {
+	if h.config.ResendAPIKey == "" || h.config.ContactEmail == "" {
 		http.Error(w, `{"error": "Email service not configured"}`, http.StatusInternalServerError)
 		return
 	}
@@ -130,7 +133,7 @@ func (h *ArtworkHandler) ReportArtwork(w http.ResponseWriter, r *http.Request) {
 
 	payload := map[string]interface{}{
 		"from":    "Stellart Moderation <onboarding@resend.dev>",
-		"to":      []string{cfg.ContactEmail},
+		"to":      []string{h.config.ContactEmail},
 		"subject": "Artwork Report: " + artworkID,
 		"text":    textBody,
 	}
@@ -143,7 +146,7 @@ func (h *ArtworkHandler) ReportArtwork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpReq.Header.Set("Authorization", "Bearer "+cfg.ResendAPIKey)
+	httpReq.Header.Set("Authorization", "Bearer "+h.config.ResendAPIKey)
 	httpReq.Header.Set("Content-Type", "application/json")
 
 	client := &http.Client{}

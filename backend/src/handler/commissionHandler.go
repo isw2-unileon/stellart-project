@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"stellart/backend/src/database/models"
+	"stellart/backend/src/dto"
 	"stellart/backend/src/service"
 
 	"github.com/go-chi/chi/v5"
@@ -21,24 +22,13 @@ func NewCommissionHandler(cs *service.CommissionService) CommissionHandler {
 	return CommissionHandler{commissionService: cs}
 }
 
-type CreateCommissionRequest struct {
-	CommissionID string  `json:"commission_id"`
-	BuyerID      string  `json:"buyer_id"`
-	ArtistID     string  `json:"artist_id"`
-	Title        string  `json:"title"`
-	Description  string  `json:"description"`
-	Price        float64 `json:"price"`
-	Deadline     string  `json:"deadline"`
-}
-
 func (h *CommissionHandler) CreateCommission(w http.ResponseWriter, r *http.Request) {
-	var req CreateCommissionRequest
+	var req dto.CreateCommission
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
 
-	// NO asignamos ID manualmente, dejamos que el repositorio/BD lo haga
 	commission := &models.Commission{
 		BuyerID:     req.BuyerID,
 		ArtistID:    req.ArtistID,
@@ -171,17 +161,10 @@ func (h *CommissionHandler) DenyCommission(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type CreatePaymentRequest struct {
-	PaymentID     string  `json:"payment_id"`
-	CommissionID  string  `json:"commission_id"`
-	Amount        float64 `json:"amount"`
-	PaymentIntent string  `json:"payment_intent"`
-}
-
 func (h *CommissionHandler) CreateAdvancePayment(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[DEBUG] CreateAdvancePayment called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
-	var req CreatePaymentRequest
+	var req dto.CreatePayment
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("[ERROR] CreateAdvancePayment - Invalid payload: %v", err)
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
@@ -244,7 +227,7 @@ func (h *CommissionHandler) ReleasePayment(w http.ResponseWriter, r *http.Reques
 func (h *CommissionHandler) CreateRemainingPayment(w http.ResponseWriter, r *http.Request) {
 	log.Printf("[DEBUG] CreateRemainingPayment called - Method: %s, Path: %s", r.Method, r.URL.Path)
 
-	var req CreatePaymentRequest
+	var req dto.CreatePayment
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		log.Printf("[ERROR] CreateRemainingPayment - Invalid payload: %v", err)
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
@@ -295,18 +278,8 @@ func (h *CommissionHandler) MarkRemainingPaymentPaid(w http.ResponseWriter, r *h
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type UploadWorkRequest struct {
-	UploadID      string `json:"upload_id"`
-	CommissionID  string `json:"commission_id"`
-	ImageURL      string `json:"image_url"`
-	CleanImageURL string `json:"clean_image_url"`
-	Watermarked   bool   `json:"watermarked"`
-	IsFinal       bool   `json:"is_final"`
-	Notes         string `json:"notes"`
-}
-
 func (h *CommissionHandler) UploadWork(w http.ResponseWriter, r *http.Request) {
-	var req UploadWorkRequest
+	var req dto.UploadWork
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
@@ -342,15 +315,8 @@ func (h *CommissionHandler) GetWorkUploads(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(uploads)
 }
 
-type RequestRevisionRequest struct {
-	RevisionID   string `json:"revision_id"`
-	CommissionID string `json:"commission_id"`
-	WorkUploadID string `json:"work_upload_id"`
-	RequestNotes string `json:"request_notes"`
-}
-
 func (h *CommissionHandler) RequestRevision(w http.ResponseWriter, r *http.Request) {
-	var req RequestRevisionRequest
+	var req dto.RequestRevision
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
@@ -401,13 +367,8 @@ func (h *CommissionHandler) RejectRevision(w http.ResponseWriter, r *http.Reques
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type RespondToRevisionRequest struct {
-	RevisionID    string `json:"revision_id"`
-	ResponseNotes string `json:"response_notes"`
-}
-
 func (h *CommissionHandler) RespondToRevision(w http.ResponseWriter, r *http.Request) {
-	var req RespondToRevisionRequest
+	var req dto.RespondToRevision
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
@@ -420,15 +381,8 @@ func (h *CommissionHandler) RespondToRevision(w http.ResponseWriter, r *http.Req
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type CreateRefundRequest struct {
-	RefundID     string  `json:"refund_id"`
-	CommissionID string  `json:"commission_id"`
-	Amount       float64 `json:"amount"`
-	Reason       string  `json:"reason"`
-}
-
 func (h *CommissionHandler) CreateRefund(w http.ResponseWriter, r *http.Request) {
-	var req CreateRefundRequest
+	var req dto.CreateRefund
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
@@ -474,15 +428,8 @@ func (h *CommissionHandler) ProcessRefund(w http.ResponseWriter, r *http.Request
 	w.WriteHeader(http.StatusNoContent)
 }
 
-type SendMessageRequest struct {
-	MessageID    string `json:"message_id"`
-	CommissionID string `json:"commission_id"`
-	SenderID     string `json:"sender_id"`
-	Content      string `json:"content"`
-}
-
 func (h *CommissionHandler) SendMessage(w http.ResponseWriter, r *http.Request) {
-	var req SendMessageRequest
+	var req dto.SendMessage
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
