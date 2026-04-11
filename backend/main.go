@@ -1,3 +1,4 @@
+// backend/main.go
 package main
 
 import (
@@ -22,13 +23,9 @@ func main() {
 
 	cfg := settings.LoadConfig()
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("Error: DATABASE_URL not set")
-	}
+	port := os.Getenv("PORT")
 
-	port := "3001"
-	db := connection.InitDB(dbURL)
+	db := connection.InitDB(cfg.DatabaseURL)
 	defer db.Close()
 
 	// Profile
@@ -37,8 +34,8 @@ func main() {
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
 	// Contact
-	supportEmail := os.Getenv("CONTACT_EMAIL")
-	contactHdl := handler.NewContactHandlerWithEnv(supportEmail)
+	emailSender := handler.NewResendEmailSender(cfg.ResendAPIKey)
+	contactHdl := handler.NewContactHandler(cfg.ContactEmail, emailSender)
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
