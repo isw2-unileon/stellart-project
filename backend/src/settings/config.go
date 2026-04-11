@@ -12,6 +12,7 @@ type Config struct {
 	ResendAPIKey    string
 	ContactEmail    string
 	CohereAPIKey    string
+	Port            string
 }
 
 func LoadConfig() *Config {
@@ -20,6 +21,8 @@ func LoadConfig() *Config {
 		log.Fatal("DATABASE_URL is not defined in the .env file")
 	}
 
+	port := os.Getenv("PORT")
+
 	return &Config{
 		DatabaseURL:     dbURL,
 		SupabaseURL:     os.Getenv("SUPABASE_URL"),
@@ -27,5 +30,6 @@ func LoadConfig() *Config {
 		ResendAPIKey:    os.Getenv("RESEND_API_KEY"),
 		ContactEmail:    os.Getenv("CONTACT_EMAIL"),
 		CohereAPIKey:    os.Getenv("COHERE_API_KEY"),
+		Port:            port,
 	}
 }

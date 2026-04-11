@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 
+	"stellart/backend/src/dto"
+
 	"github.com/resend/resend-go/v3"
 )
 
@@ -49,14 +51,7 @@ func NewContactHandler(supportEmail string, emailSender EmailSender) ContactHand
 
 func NewContactHandlerWithEnv(supportEmail string) ContactHandler {
 	apiKey := os.Getenv("RESEND_API_KEY")
-	emailSender := NewResendEmailSender(apiKey)
-	return NewContactHandler(supportEmail, emailSender)
-}
-
-type ContactRequest struct {
-	Name    string `json:"name"`
-	Title   string `json:"title"`
-	Message string `json:"message"`
+	return NewContactHandler(supportEmail, NewResendEmailSender(apiKey))
 }
 
 func (h *ContactHandler) SubmitContact(w http.ResponseWriter, r *http.Request) {
@@ -65,47 +60,62 @@ func (h *ContactHandler) SubmitContact(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var req ContactRequest
+	var req dto.ContactMessage
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "Invalid payload", http.StatusBadRequest)
+		log.Printf("Error decoding contact request: %v", err)
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	if req.Name == "" || req.Email == "" || req.Message == "" {
+		http.Error(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
 	if h.emailSender == nil {
-		log.Println("Email service not configured")
+		log.Printf("Email sender not configured")
 		http.Error(w, "Email service not configured", http.StatusInternalServerError)
 		return
 	}
 
-	emailBody := buildEmailBody(req)
-
-	err := h.emailSender.Send(
-		"Stellart Support <noreply@resend.dev>",
-		h.supportEmail,
-		"[Stellart Support] "+req.Title,
-		emailBody,
-	)
+	htmlBody, err := generateEmailHTML(req)
 	if err != nil {
-		log.Printf("Failed to send email: %v", err)
+		log.Printf("Error generating email HTML: %v", err)
+		http.Error(w, "Error preparing email", http.StatusInternalServerError)
+		return
+	}
+
+	subject := "Stellart Contact: " + req.Subject
+	if req.Subject == "" {
+		subject = "New Stellart Contact Message"
+	}
+
+	fromEmail := "Stellart Support <onboarding@resend.dev>"
+
+	err = h.emailSender.Send(
+		fromEmail,
+		h.supportEmail,
+		subject,
+		htmlBody,
+	)
+
+	if err != nil {
+		log.Printf("Error sending email: %v", err)
 		http.Error(w, "Failed to send email", http.StatusInternalServerError)
 		return
 	}
 
-	log.Printf("Contact email sent from %s", req.Name)
-	w.WriteHeader(http.StatusNoContent)
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode(map[string]string{"message": "Contact form submitted successfully"})
 }
 
-func BuildEmailBody(req ContactRequest) string {
-	return buildEmailBody(req)
-}
-
-func buildEmailBody(req ContactRequest) string {
-	tmpl := `<!DOCTYPE html>
+func generateEmailHTML(req dto.ContactMessage) (string, error) {
+	tmpl := `
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1e293b; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; }
         .container { max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: #0f172a; color: white; padding: 20px; border-radius: 8px 8px 0 0; }
         .header h1 { margin: 0; font-size: 20px; }
@@ -127,8 +137,12 @@ func buildEmailBody(req ContactRequest) string {
                 <div class="value">{{.Name}}</div>
             </div>
             <div class="field">
-                <div class="label">Title</div>
-                <div class="value">{{.Title}}</div>
+                <div class="label">Email</div>
+                <div class="value"><a href="mailto:{{.Email}}">{{.Email}}</a></div>
+            </div>
+            <div class="field">
+                <div class="label">Subject</div>
+                <div class="value">{{if .Subject}}{{.Subject}}{{else}}Not provided{{end}}</div>
             </div>
             <div class="field">
                 <div class="label">Message</div>
@@ -137,10 +151,17 @@ func buildEmailBody(req ContactRequest) string {
         </div>
     </div>
 </body>
-</html>`
+</html>
+`
+	t, err := template.New("email").Parse(tmpl)
+	if err != nil {
+		return "", err
+	}
 
-	t, _ := template.New("email").Parse(tmpl)
-	var html bytes.Buffer
-	t.Execute(&html, req)
-	return html.String()
+	var buf bytes.Buffer
+	if err := t.Execute(&buf, req); err != nil {
+		return "", err
+	}
+
+	return buf.String(), nil
 }

@@ -1,3 +1,4 @@
+// backend/main.go
 package main
 
 import (
@@ -10,6 +11,7 @@ import (
 	"stellart/backend/src/handler"
 	"stellart/backend/src/router"
 	"stellart/backend/src/service"
+	"stellart/backend/src/settings"
 
 	"github.com/joho/godotenv"
 )
@@ -19,13 +21,11 @@ func main() {
 		godotenv.Load("../.env")
 	}
 
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		log.Fatal("Error: DATABASE_URL not set")
-	}
+	cfg := settings.LoadConfig()
 
-	port := "3001"
-	db := connection.InitDB(dbURL)
+	port := os.Getenv("PORT")
+
+	db := connection.InitDB(cfg.DatabaseURL)
 	defer db.Close()
 
 	// Profile
@@ -34,13 +34,13 @@ func main() {
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
 	// Contact
-	supportEmail := os.Getenv("CONTACT_EMAIL")
-	contactHdl := handler.NewContactHandlerWithEnv(supportEmail)
+	emailSender := handler.NewResendEmailSender(cfg.ResendAPIKey)
+	contactHdl := handler.NewContactHandler(cfg.ContactEmail, emailSender)
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
-	artworkSvc := service.NewArtworkService(artworkRepo)
-	artworkHdl := handler.NewArtworkHandler(artworkSvc)
+	artworkSvc := service.NewArtworkService(artworkRepo, cfg)
+	artworkHdl := handler.NewArtworkHandler(artworkSvc, cfg)
 
 	// Commission
 	commissionRepo := postgres.NewCommissionRepository(db)
@@ -50,7 +50,7 @@ func main() {
 	// Chat WebSocket
 	chatHub := handler.NewChatHub()
 	go chatHub.Run()
-	chatHdl := handler.NewChatHandler(chatHub, commissionSvc)
+	chatHdl := handler.NewChatHandler(commissionSvc, chatHub)
 
 	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl)
 

@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"stellart/backend/src/database/models"
+	"stellart/backend/src/dto"
 	"stellart/backend/src/service"
 
 	"github.com/gorilla/websocket"
@@ -79,62 +80,38 @@ func (h *ChatHub) Run() {
 
 		case message := <-h.broadcast:
 			h.mu.RLock()
-			clients := h.clients[message.CommissionID]
-			h.mu.RUnlock()
-
-			for client := range clients {
-				err := client.WriteMessage(websocket.TextMessage, message.Message)
-				if err != nil {
-					client.Close()
-					h.unregister <- UnregisterClient{
-						CommissionID: message.CommissionID,
-						Conn:         client,
+			if clients, ok := h.clients[message.CommissionID]; ok {
+				for conn := range clients {
+					err := conn.WriteMessage(websocket.TextMessage, message.Message)
+					if err != nil {
+						conn.Close()
+						delete(clients, conn)
 					}
 				}
 			}
+			h.mu.RUnlock()
 		}
 	}
 }
 
 func (h *ChatHub) RegisterClient(commissionID string, conn *websocket.Conn) {
-	h.register <- RegisterClient{
-		CommissionID: commissionID,
-		Conn:         conn,
-	}
+	h.register <- RegisterClient{CommissionID: commissionID, Conn: conn}
 }
 
 func (h *ChatHub) UnregisterClient(commissionID string, conn *websocket.Conn) {
-	h.unregister <- UnregisterClient{
-		CommissionID: commissionID,
-		Conn:         conn,
-	}
-}
-
-func (h *ChatHub) Broadcast(commissionID, senderID string, message []byte) {
-	h.broadcast <- BroadcastMessage{
-		CommissionID: commissionID,
-		Message:      message,
-		SenderID:     senderID,
-	}
+	h.unregister <- UnregisterClient{CommissionID: commissionID, Conn: conn}
 }
 
 type ChatHandler struct {
-	hub               *ChatHub
 	commissionService *service.CommissionService
+	hub               *ChatHub
 }
 
-func NewChatHandler(hub *ChatHub, cs *service.CommissionService) *ChatHandler {
-	return &ChatHandler{
-		hub:               hub,
+func NewChatHandler(cs *service.CommissionService, hub *ChatHub) ChatHandler {
+	return ChatHandler{
 		commissionService: cs,
+		hub:               hub,
 	}
-}
-
-type WSMessage struct {
-	Type      string `json:"type"`
-	SenderID  string `json:"sender_id"`
-	Content   string `json:"content"`
-	CreatedAt string `json:"created_at"`
 }
 
 func (h *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
@@ -157,7 +134,7 @@ func (h *ChatHandler) HandleWebSocket(w http.ResponseWriter, r *http.Request) {
 	messages, err := h.commissionService.GetMessages(commissionID)
 	if err == nil {
 		for _, msg := range messages {
-			msgBytes, _ := json.Marshal(WSMessage{
+			msgBytes, _ := json.Marshal(dto.WSMessage{
 				Type:      "message",
 				SenderID:  msg.SenderID,
 				Content:   msg.Content,
@@ -182,26 +159,31 @@ func (h *ChatHandler) readLoop(commissionID, userID string, conn *websocket.Conn
 			break
 		}
 
-		var wsMsg WSMessage
+		var wsMsg dto.WSMessage
 		if err := json.Unmarshal(messageBytes, &wsMsg); err != nil {
 			continue
 		}
 
-		chatMsg := &models.ChatMessage{
-			CommissionID: commissionID,
-			SenderID:     userID,
-			Content:      wsMsg.Content,
+		if wsMsg.Type == "message" && wsMsg.Content != "" {
+			dbMsg := &models.ChatMessage{
+				CommissionID: commissionID,
+				SenderID:     userID,
+				Content:      wsMsg.Content,
+			}
+
+			if err := h.commissionService.SendMessage(dbMsg); err != nil {
+				log.Printf("Error saving message: %v", err)
+				continue
+			}
+
+			wsMsg.SenderID = userID
+			broadcastBytes, _ := json.Marshal(wsMsg)
+
+			h.hub.broadcast <- BroadcastMessage{
+				CommissionID: commissionID,
+				Message:      broadcastBytes,
+				SenderID:     userID,
+			}
 		}
-
-		if err := h.commissionService.SendMessage(chatMsg); err != nil {
-			log.Printf("Error saving message: %v", err)
-			continue
-		}
-
-		wsMsg.CreatedAt = chatMsg.CreatedAt.String()
-		wsMsg.Type = "message"
-
-		broadcastBytes, _ := json.Marshal(wsMsg)
-		h.hub.Broadcast(commissionID, userID, broadcastBytes)
 	}
 }

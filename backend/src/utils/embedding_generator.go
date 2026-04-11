@@ -6,36 +6,15 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
+	"stellart/backend/src/dto"
 )
 
-type CohereRequest struct {
-	Model           string   `json:"model"`
-	Texts           []string `json:"texts"`
-	InputType       string   `json:"input_type"`
-	EmbeddingTypes  []string `json:"embedding_types"`
-	OutputDimension int      `json:"output_dimension,omitempty"`
-}
-
-type CohereEmbedding struct {
-	Float []float32 `json:"float"`
-}
-
-type CohereResponse struct {
-	Embeddings CohereEmbeddings `json:"embeddings"`
-}
-
-type CohereEmbeddings struct {
-	Float [][]float64 `json:"float"`
-}
-
-func GenerateTextEmbedding(text string) ([]float32, error) {
-	apiKey := os.Getenv("COHERE_API_KEY")
+func GenerateTextEmbedding(text string, apiKey string) ([]float32, error) {
 	if apiKey == "" {
-		return nil, fmt.Errorf("COHERE_API_KEY environment variable is not set")
+		return nil, fmt.Errorf("COHERE_API_KEY is not provided")
 	}
 
-	reqBody := CohereRequest{
+	reqBody := dto.CohereRequest{
 		Model:           "embed-english-v3.0",
 		Texts:           []string{text},
 		InputType:       "search_document",
@@ -69,7 +48,7 @@ func GenerateTextEmbedding(text string) ([]float32, error) {
 		return nil, fmt.Errorf("cohere API error (status %d): %s", resp.StatusCode, string(bodyBytes))
 	}
 
-	var cohereResp CohereResponse
+	var cohereResp dto.CohereResponse
 	if err := json.NewDecoder(resp.Body).Decode(&cohereResp); err != nil {
 		bodyBytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("error decoding response: %w, body: %s", err, string(bodyBytes))
