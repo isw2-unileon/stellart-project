@@ -22,9 +22,6 @@ func LoadConfig() *Config {
 	}
 
 	port := os.Getenv("PORT")
-	if port == "" {
-		port = "3001"
-	}
 
 	return &Config{
 		DatabaseURL:     dbURL,
