@@ -205,3 +205,19 @@ func (h *ArtworkHandler) UnlikeArtwork(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *ArtworkHandler) DeleteArtwork(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+	if id == "" {
+		http.Error(w, "Invalid artwork ID", http.StatusBadRequest)
+		return
+	}
+
+	err := h.artworkService.DeleteArtwork(id)
+	if err != nil {
+		http.Error(w, "Failed to delete artwork", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}

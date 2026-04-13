@@ -187,3 +187,13 @@ func (p *postgresArtWorkRepo) DecrementLikes(id string) error {
 	_, err := p.db.Exec(query, id)
 	return err
 }
+
+func (r *postgresArtWorkRepo) Delete(id string) error {
+	_, err := r.db.Exec("DELETE FROM wishlist WHERE artwork_id = $1", id)
+	if err != nil {
+		return err
+	}
+
+	_, err = r.db.Exec("DELETE FROM artworks WHERE id = $1", id)
+	return err
+}
