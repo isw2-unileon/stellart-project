@@ -561,3 +561,39 @@ export const unlikeArtwork = async (artworkId) => {
         throw error;
     }
 };
+
+export const getArtworksByArtist = async (artistId) => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/artworks/artist/${artistId}`);
+        if (!response.ok) {
+            throw new Error('Failed to fetch artist artworks');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error("Error fetching artist artworks:", error);
+        return [];
+    }
+};
+
+export const deleteArtworkImage = async (imageUrl) => {
+    
+    if (!imageUrl) return;
+
+    const fileName = imageUrl.split('/').pop();
+
+    const { data, error } = await supabase.storage
+        .from('artworks') 
+        .remove([fileName]);
+
+    if (error) {
+        throw error;
+    }
+    return data;
+};
+
+export const deleteArtwork = async (artworkId) => {
+    const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}`, {
+        method: 'DELETE',
+    });
+    if (!response.ok) throw new Error('Failed to delete artwork');
+};

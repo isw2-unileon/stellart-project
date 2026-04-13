@@ -10,4 +10,5 @@ type ArtworkInterface interface {
 	IncrementLikes(id string) error
 	DecrementLikes(id string) error
 	GetTrending() ([]models.Artwork, error)
+	Delete(id string) error
 }

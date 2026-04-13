@@ -38,12 +38,14 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 	r.Route("/artworks", func(r chi.Router) {
 		r.Get("/search", ah.SearchArtworks)
 		r.Post("/search", ah.SearchSimilar)
+		r.Get("/trending", ah.GetTrendingArtworks)
 		r.Get("/artist/{artistId}", ah.GetArtworksByArtist)
 		r.Get("/{id}", ah.GetArtwork)
 		r.Post("/{id}/like", ah.LikeArtwork)
 		r.Post("/{id}/unlike", ah.UnlikeArtwork)
 		r.Post("/", ah.CreateArtwork)
 		r.Post("/{id}/report", ah.ReportArtwork)
+		r.Delete("/{id}", ah.DeleteArtwork)
 	})
 
 	// Commissions - ALL routes in one place to avoid conflicts

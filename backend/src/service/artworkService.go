@@ -78,3 +78,7 @@ func (s *ArtworkService) GetTrendingArtworks() ([]models.Artwork, error) {
 func (s *ArtworkService) UnlikeArtwork(id string) error {
 	return s.repo.DecrementLikes(id)
 }
+
+func (s *ArtworkService) DeleteArtwork(id string) error {
+	return s.repo.Delete(id)
+}

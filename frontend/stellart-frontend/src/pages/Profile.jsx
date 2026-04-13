@@ -266,7 +266,7 @@ export default function Profile() {
                             <h2 className="text-2xl font-black tracking-tight text-slate-900">Gallery</h2>
                             <div className="h-1 flex-1 bg-slate-100 rounded-full" />
                         </div>
-                        <ProfileGallery />
+                        <ProfileGallery profileId={user?.id} />
                     </div>
                     <UploadArtworkLink />
                 </div>
