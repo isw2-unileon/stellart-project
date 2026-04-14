@@ -1,8 +1,12 @@
 package dto
 
-type WSMessage struct {
-	Type      string `json:"type"`
-	SenderID  string `json:"sender_id,omitempty"`
-	Content   string `json:"content,omitempty"`
-	CreatedAt string `json:"created_at,omitempty"`
+import "time"
+
+type ChatMessage struct {
+	ID           string     `json:"id"`
+	CommissionID string     `json:"commission_id"`
+	SenderID     string     `json:"sender_id"`
+	Content      string     `json:"content"`
+	CreatedAt    time.Time  `json:"created_at"`
+	ReadAt       *time.Time `json:"read_at,omitempty"`
 }

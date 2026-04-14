@@ -48,9 +48,9 @@ func main() {
 	commissionHdl := handler.NewCommissionHandler(commissionSvc)
 
 	// Chat WebSocket
-	chatHub := handler.NewChatHub()
-	go chatHub.Run()
-	chatHdl := handler.NewChatHandler(commissionSvc, chatHub)
+	chatRepo := postgres.NewChatRepository(db)
+	chatService := service.NewChatService(chatRepo)
+	chatHdl := handler.NewChatHandler(chatService)
 
 	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl)
 
