@@ -4,7 +4,8 @@ import { submitContact } from '../service/apiService';
 export default function Contact() {
     const [formData, setFormData] = useState({
         name: '',
-        title: '',
+        email: '',
+        subject: '',
         message: ''
     });
     const [status, setStatus] = useState('idle');
@@ -19,8 +20,9 @@ export default function Contact() {
         try {
             await submitContact(formData);
             setStatus('success');
-            setFormData({ name: '', title: '', message: '' });
-        } catch {
+            setFormData({ name: '', email: '', subject: '', message: '' });
+        } catch (error) {
+            console.error("Contact error:", error);
             setStatus('error');
         }
     };
@@ -69,10 +71,19 @@ export default function Contact() {
                             required
                         />
                         <input 
-                            name="title"
+                            name="email"
+                            type="email" 
+                            placeholder="Your Email" 
+                            value={formData.email}
+                            onChange={handleChange}
+                            className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 outline-none transition-all" 
+                            required
+                        />
+                        <input 
+                            name="subject"
                             type="text" 
-                            placeholder="Title" 
-                            value={formData.title}
+                            placeholder="Subject" 
+                            value={formData.subject}
                             onChange={handleChange}
                             className="w-full px-5 py-4 rounded-xl bg-slate-50 border border-transparent focus:border-slate-300 outline-none transition-all" 
                             required

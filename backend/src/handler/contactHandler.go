@@ -15,7 +15,7 @@ func NewContactHandler(s *service.ContactService) ContactHandler {
 	return ContactHandler{service: s}
 }
 
-func (h *ContactHandler) SubmitContact(w http.ResponseWriter, r *http.Request) {
+func (h ContactHandler) SubmitContact(w http.ResponseWriter, r *http.Request) {
 	var msg dto.ContactMessage
 
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
