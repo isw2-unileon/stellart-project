@@ -34,8 +34,9 @@ func main() {
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
 	// Contact
-	emailSender := handler.NewResendEmailSender(cfg.ResendAPIKey)
-	contactHdl := handler.NewContactHandler(cfg.ContactEmail, emailSender)
+	emailSender := service.NewResendEmailSender(cfg.ResendAPIKey)
+	contactSvc := service.NewContactService(cfg.ContactEmail, emailSender)
+	contactHdl := handler.NewContactHandler(contactSvc)
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
