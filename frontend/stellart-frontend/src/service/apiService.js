@@ -69,7 +69,7 @@ export const logoutUser = async () => {
     if (error) throw error;
 };
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
 export const submitContact = async ({ name, title, message }) => {
     const response = await fetch(`${BACKEND_URL}/contact`, {
@@ -594,4 +594,61 @@ export const deleteArtwork = async (artworkId) => {
         method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete artwork');
+};
+
+
+export const createAddress = async (addressData) => {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+        throw new Error('Failed to identified the user');
+    }
+
+    const payload = {
+        ...addressData,
+        artist_id: user.id
+    };
+
+    const response = await fetch(`${BACKEND_URL}/addresses`, {
+        method: 'POST',
+        headers: { 
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(payload),
+    });
+
+    if (!response.ok) {
+        const errorDetail = await response.text();
+        throw new Error(errorDetail || 'Error to save the address');
+    }
+    
+    return await response.json();
+};
+
+export const getAddresses = async (userId) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${userId}`);
+    if (!response.ok) throw new Error('Failed to fetch addresses');
+    return await response.json();
+};
+
+export const updateAddress = async (addressId, addressData) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${addressId}`, {
+        method: 'PUT',
+        headers: { 
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressData),
+    });
+
+    if (!response.ok) throw new Error('Failed to update address');
+    return await response.json();
+};
+
+export const deleteAddress = async (addressId) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${addressId}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) throw new Error('Failed to delete address');
+    return await response.json();
 };
