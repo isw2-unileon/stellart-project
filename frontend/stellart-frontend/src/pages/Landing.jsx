@@ -160,7 +160,7 @@ function CtaSection() {
                 </p>
                 <a href="/register">
                     <button className="bg-slate-900 text-white px-10 py-5 rounded-full font-black text-lg hover:bg-white hover:text-slate-900 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300">
-                        Get Started For Free
+                        Join For Free
                     </button>
                 </a>
             </div>
