@@ -22,3 +22,15 @@ func (s *AddressService) CreateAddress(address *models.Address) error {
 
 	return s.repo.Create(address)
 }
+
+func (s *AddressService) GetAddressesByProfile(profileID string) ([]models.Address, error) {
+	return s.repo.GetByProfileID(profileID)
+}
+
+func (s *AddressService) UpdateAddress(address *models.Address) error {
+	return s.repo.Update(address)
+}
+
+func (s *AddressService) DeleteAddress(id string) error {
+	return s.repo.Delete(id)
+}

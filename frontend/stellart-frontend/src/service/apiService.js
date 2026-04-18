@@ -626,3 +626,31 @@ export const createAddress = async (addressData) => {
     
     return await response.json();
 };
+
+export const getAddresses = async (userId) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${userId}`);
+    if (!response.ok) throw new Error('Failed to fetch addresses');
+    return await response.json();
+};
+
+export const updateAddress = async (addressId, addressData) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${addressId}`, {
+        method: 'PUT',
+        headers: { 
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(addressData),
+    });
+
+    if (!response.ok) throw new Error('Failed to update address');
+    return await response.json();
+};
+
+export const deleteAddress = async (addressId) => {
+    const response = await fetch(`${BACKEND_URL}/addresses/${addressId}`, {
+        method: 'DELETE',
+    });
+
+    if (!response.ok) throw new Error('Failed to delete address');
+    return await response.json();
+};

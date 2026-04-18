@@ -89,7 +89,12 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		})
 	})
 
-	r.Post("/addresses", addrh.CreateAddress)
+	r.Route("/addresses", func(r chi.Router) {
+		r.Post("/", addrh.CreateAddress)
+		r.Get("/{artistId}", addrh.GetAddresses)
+		r.Put("/{id}", addrh.UpdateAddress)
+		r.Delete("/{id}", addrh.DeleteAddress)
+	})
 
 	return r
 

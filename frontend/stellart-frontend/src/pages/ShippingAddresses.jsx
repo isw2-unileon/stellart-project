@@ -1,15 +1,24 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, createAddress } from "../service/apiService";
+import { 
+    getLoggedUser, 
+    createAddress, 
+    getAddresses, 
+    updateAddress, 
+    deleteAddress 
+} from "../service/apiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Plus, Trash2, Home, Briefcase, X } from "lucide-react";
+import { MapPin, Plus, Trash2, X, Edit2 } from "lucide-react"; 
 
 export default function ShippingAddresses() {
     const [addresses, setAddresses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [userId, setUserId] = useState(null);
+    
     const [formData, setFormData] = useState({ 
         address_label: '', 
         street: '', 
@@ -21,34 +30,87 @@ export default function ShippingAddresses() {
     const navigate = useNavigate();
 
     useEffect(() => {
-        async function checkSession() {
-            const loggedUser = await getLoggedUser();
-            if (!loggedUser) { 
-                navigate("/login"); 
-                return; 
+        async function loadData() {
+            try {
+                const loggedUser = await getLoggedUser();
+                if (!loggedUser) { 
+                    navigate("/login"); 
+                    return; 
+                }
+                setUserId(loggedUser.id);
+                const userAddresses = await getAddresses(loggedUser.id);
+                
+                const normalizedAddresses = userAddresses.map(addr => ({
+                    id: addr.ID || addr.id,
+                    address_label: addr.Label || addr.address_label,
+                    street: addr.Street || addr.street,
+                    city: addr.City || addr.city,
+                    postal_code: addr.PostalCode || addr.postal_code,
+                    country: addr.Country || addr.country
+                }));
+                
+                setAddresses(normalizedAddresses);
+            } catch (error) {
+                toast.error("Failed to load addresses");
+            } finally {
+                setIsLoading(false);
             }
-            setIsLoading(false);
         }
-        checkSession();
+        loadData();
     }, [navigate]);
 
-    const handleAdd = async (e) => {
+    const handleOpenModal = (addressToEdit = null) => {
+        if (addressToEdit) {
+            setEditingId(addressToEdit.id);
+            setFormData({
+                address_label: addressToEdit.address_label,
+                street: addressToEdit.street,
+                city: addressToEdit.city,
+                postal_code: addressToEdit.postal_code,
+                country: addressToEdit.country
+            });
+        } else {
+            setEditingId(null);
+            setFormData({ address_label: '', street: '', city: '', postal_code: '', country: '' });
+        }
+        setIsModalOpen(true);
+    };
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const savedAddress = await createAddress(formData);
-            
-            setAddresses(prev => [...prev, savedAddress]);
+            if (editingId) {
+                await updateAddress(editingId, formData);
+                setAddresses(prev => prev.map(a => 
+                    a.id === editingId ? { ...formData, id: editingId } : a
+                ));
+                toast.success("Address updated successfully");
+            } else {
+                const savedAddress = await createAddress(formData);
+                setAddresses(prev => [...prev, {
+                    id: savedAddress.ID || savedAddress.id,
+                    address_label: formData.address_label,
+                    street: formData.street,
+                    city: formData.city,
+                    postal_code: formData.postal_code,
+                    country: formData.country
+                }]);
+                toast.success("Address saved successfully");
+            }
             setIsModalOpen(false);
-            setFormData({ address_label: '', street: '', city: '', postal_code: '', country: '' });
-            toast.success("Address saved successfully");
         } catch (error) {
             toast.error(`Error: ${error.message}`);
         }
     };
 
-    const handleRemove = (id) => {
-        setAddresses(prev => prev.filter(a => a.id !== id));
-        toast.success("Address removed");
+    const handleRemove = async (id) => {
+        try {
+            await deleteAddress(id);
+            setAddresses(prev => prev.filter(a => a.id !== id));
+            toast.success("Address removed");
+        } catch (error) {
+            toast.error(`Failed to remove address: ${error.message}`);
+        }
     };
 
     if (isLoading) {
@@ -79,7 +141,7 @@ export default function ShippingAddresses() {
                     <p className="text-slate-400 text-sm">Manage your delivery points to ensure your artworks arrive safely.</p>
                 </div>
                 <Button 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={() => handleOpenModal()}
                     className="bg-yellow-500 text-black hover:bg-yellow-400 font-bold px-8 py-6 rounded-xl"
                 >
                     <Plus className="mr-2 h-5 w-5" strokeWidth={3} /> Add new address
@@ -97,13 +159,18 @@ export default function ShippingAddresses() {
                             <div className="flex items-center justify-between mb-4">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-slate-50 rounded-xl flex items-center justify-center text-slate-400 group-hover:text-yellow-500">
-                                        {addr.address_label?.toLowerCase() === 'home' ? <Home size={18} /> : <Briefcase size={18} />}
+                                        <MapPin size={18} />
                                     </div>
                                     <h3 className="font-bold text-slate-800">{addr.address_label}</h3>
                                 </div>
-                                <button onClick={() => handleRemove(addr.id)} className="text-slate-300 hover:text-red-500 transition-colors">
-                                    <Trash2 size={18} />
-                                </button>
+                                <div className="flex gap-2">
+                                    <button onClick={() => handleOpenModal(addr)} className="text-slate-300 hover:text-blue-500 transition-colors">
+                                        <Edit2 size={18} />
+                                    </button>
+                                    <button onClick={() => handleRemove(addr.id)} className="text-slate-300 hover:text-red-500 transition-colors">
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
                             </div>
                             <div className="space-y-1 text-sm text-slate-600 font-medium">
                                 <p className="text-slate-900 font-bold">{addr.street}</p>
@@ -121,8 +188,10 @@ export default function ShippingAddresses() {
                         <button onClick={() => setIsModalOpen(false)} className="absolute top-8 right-8 text-slate-300 hover:text-black transition-colors">
                             <X size={24} />
                         </button>
-                        <h2 className="text-2xl font-black mb-8 text-slate-900 tracking-tighter">New Destination</h2>
-                        <form onSubmit={handleAdd} className="space-y-4">
+                        <h2 className="text-2xl font-black mb-8 text-slate-900 tracking-tighter">
+                            {editingId ? "Edit Destination" : "New Destination"}
+                        </h2>
+                        <form onSubmit={handleSubmit} className="space-y-4">
                             <Input placeholder="Label (Home, Office...)" value={formData.address_label} onChange={e => setFormData({...formData, address_label: e.target.value})} required className="h-12 rounded-xl bg-slate-50 border-none" />
                             <Input placeholder="Street Address" value={formData.street} onChange={e => setFormData({...formData, street: e.target.value})} required className="h-12 rounded-xl bg-slate-50 border-none" />
                             <div className="grid grid-cols-2 gap-4">
@@ -131,7 +200,7 @@ export default function ShippingAddresses() {
                             </div>
                             <Input placeholder="Country" value={formData.country} onChange={e => setFormData({...formData, country: e.target.value})} required className="h-12 rounded-xl bg-slate-50 border-none" />
                             <Button type="submit" className="w-full bg-slate-900 text-white font-black py-7 rounded-2xl mt-4 hover:bg-yellow-500 hover:text-slate-900 transition-all">
-                                Save Address
+                                {editingId ? "Update Address" : "Save Address"}
                             </Button>
                         </form>
                     </div>
