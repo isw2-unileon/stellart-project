@@ -10,14 +10,13 @@ import {
 } from "../service/apiService";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { MapPin, Plus, Trash2, X, Edit2 } from "lucide-react"; 
+import { MapPin, Plus, Trash2, X, Edit2 } from "lucide-react";
 
 export default function ShippingAddresses() {
     const [addresses, setAddresses] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
-    const [userId, setUserId] = useState(null);
     
     const [formData, setFormData] = useState({ 
         address_label: '', 
@@ -37,7 +36,6 @@ export default function ShippingAddresses() {
                     navigate("/login"); 
                     return; 
                 }
-                setUserId(loggedUser.id);
                 const userAddresses = await getAddresses(loggedUser.id);
                 
                 const normalizedAddresses = userAddresses.map(addr => ({
@@ -50,7 +48,7 @@ export default function ShippingAddresses() {
                 }));
                 
                 setAddresses(normalizedAddresses);
-            } catch (error) {
+            } catch {
                 toast.error("Failed to load addresses");
             } finally {
                 setIsLoading(false);

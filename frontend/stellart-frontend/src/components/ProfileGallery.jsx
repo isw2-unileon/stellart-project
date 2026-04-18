@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getArtworksByArtist, deleteArtwork, deleteArtworkImage } from "../service/apiService";
 import { toast } from "sonner";
 
@@ -7,11 +7,7 @@ export default function ProfileGallery({ profileId }) {
     const [sortBy, setSortBy] = useState("latest");
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => {
-        fetchArtworks();
-    }, [profileId]);
-
-    async function fetchArtworks() {
+    const fetchArtworks = useCallback(async () => {
         if (!profileId) return;
         try {
             setIsLoading(true);
@@ -22,12 +18,15 @@ export default function ProfileGallery({ profileId }) {
         } finally {
             setIsLoading(false);
         }
-    }
+    }, [profileId]);
+
+    useEffect(() => {
+        fetchArtworks();
+    }, [fetchArtworks]);
 
     const handleDelete = async (artwork) => {
         try {
             const realId = artwork.id || artwork.ID || artwork.Id;
-            
             if (!realId) throw new Error("No ID found for artwork");
 
             try {
@@ -37,7 +36,6 @@ export default function ProfileGallery({ profileId }) {
             }
 
             await deleteArtwork(realId);
-            
             setArtworks((prev) => prev.filter((a) => (a.id || a.ID || a.Id) !== realId));
             toast.success("Artwork deleted successfully");
         } catch (error) {
