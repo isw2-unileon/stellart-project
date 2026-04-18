@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler) *chi.Mux {
+func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -48,14 +48,12 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Delete("/{id}", ah.DeleteArtwork)
 	})
 
-	// Commissions - ALL routes in one place to avoid conflicts
+	// Commissions
 	r.Route("/commissions", func(r chi.Router) {
-		// Base operations (must be first)
 		r.Post("/", comh.CreateCommission)
 		r.Get("/buyer", comh.GetBuyerCommissions)
 		r.Get("/artist", comh.GetArtistCommissions)
 
-		// Sub-resource creates (without commission ID)
 		r.Post("/payments", comh.CreateAdvancePayment)
 		r.Post("/remaining-payments", comh.CreateRemainingPayment)
 		r.Post("/work-uploads", comh.UploadWork)
@@ -63,7 +61,6 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Post("/refunds", comh.CreateRefund)
 		r.Post("/messages", comh.SendMessage)
 
-		// Commission by ID (must be last)
 		r.Route("/{id}", func(r chi.Router) {
 			r.Get("/", comh.GetCommission)
 			r.Post("/accept", comh.AcceptCommission)
@@ -85,7 +82,6 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 			r.Post("/refund/process", comh.ProcessRefund)
 		})
 
-		// Revision by revision ID
 		r.Route("/revisions/{revisionId}", func(r chi.Router) {
 			r.Post("/approve", comh.ApproveRevision)
 			r.Post("/reject", comh.RejectRevision)
@@ -93,7 +89,8 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		})
 	})
 
-	// WebSocket Chat - handled by ChatHandler separately in main.go
+	r.Post("/addresses", addrh.CreateAddress)
 
 	return r
+
 }
