@@ -71,12 +71,15 @@ export default function AvatarDropdown() {
                 </Button>
             </DropdownMenuTrigger>
             
-            <DropdownMenuContent className="w-40" align="end">
+            <DropdownMenuContent className="w-48" align="end">
                 {user ? (
                     <>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild className="cursor-pointer">
                                 <Link to="/profile">Profile</Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link to="/shipping">Shipping addresses</Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
                             <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
