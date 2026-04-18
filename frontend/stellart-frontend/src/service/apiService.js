@@ -11,22 +11,20 @@ export const getLoggedUser = async () => {
     return user;
 };
 
-export const registerUser = async (email, password, fullName,addressObj, bankObj) => {
+export const registerUser = async (email, password, fullName) => {
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
             data: {
                 full_name: fullName,
-                address: addressObj,
-                bank: bankObj,
             },
         },
     });
 
     if (error) throw error;
     return data;
-};
+}
 
 export const loginUser = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
