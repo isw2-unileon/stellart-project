@@ -17,24 +17,21 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		AllowCredentials: true,
 	}))
 
-	// Profiles
 	r.Route("/profiles", func(r chi.Router) {
+		r.Get("/ranking", ph.GetArtistRanking)
 		r.Get("/open-commissions", ph.GetOpenCommissionProfiles)
 		r.Get("/master-skills", ph.GetMasterSkills)
 		r.Get("/{id}/skills", ph.GetProfileSkills)
 		r.Get("/{id}", ph.GetProfile)
 		r.Put("/{id}/open-commissions", ph.UpdateOpenCommissions)
 		r.Put("/{id}", ph.UpdateProfile)
-		r.Get("/master-skills", ph.GetMasterSkills)
 		r.Get("/{id}/wishlist", ph.GetWishlist)
 		r.Post("/{id}/wishlist", ph.AddToWishlist)
 		r.Delete("/{id}/wishlist/{artworkId}", ph.RemoveFromWishlist)
 	})
 
-	// Contact
 	r.Post("/contact", ch.SubmitContact)
 
-	// Artworks
 	r.Route("/artworks", func(r chi.Router) {
 		r.Get("/search", ah.SearchArtworks)
 		r.Post("/search", ah.SearchSimilar)
@@ -48,7 +45,6 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Delete("/{id}", ah.DeleteArtwork)
 	})
 
-	// Commissions
 	r.Route("/commissions", func(r chi.Router) {
 		r.Post("/", comh.CreateCommission)
 		r.Get("/buyer", comh.GetBuyerCommissions)
@@ -97,5 +93,4 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 	})
 
 	return r
-
 }

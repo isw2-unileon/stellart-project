@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner'; //
+import { Toaster } from 'sonner';
 import Landing from './pages/Landing';
 import { Layout } from './components/layout/Layout';
 import Register from './pages/Register';
@@ -43,12 +43,12 @@ export default function App() {
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
                 <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />
                 <Route path="/commissions/settings" element={<Layout> <OpenCommissions /> </Layout>} />
-                <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
                 <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />
                 <Route path="/shipping" element={<Layout> <ShippingAddresses /> </Layout>} />
                 <Route path="/artwork-details/:id" element={<Layout> <ArtworkDetails /> </Layout>} />
+                <Route path="/find-artists" element={<Layout> <FindArtists /> </Layout>} />
             </Routes>
         </>
     )

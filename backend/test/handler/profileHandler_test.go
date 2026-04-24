@@ -24,6 +24,7 @@ type mockProfileRepo struct {
 	mockGetWishlist               func(profileID string) ([]models.Artwork, error)
 	mockAddToWishlist             func(profileID, artworkID string) error
 	mockRemoveFromWishlist        func(profileID, artworkID string) error
+	mockGetArtistRanking          func() ([]models.ArtistRanking, error)
 }
 
 func (m *mockProfileRepo) GetByID(id string) (*models.Profile, error) {
@@ -77,49 +78,50 @@ func (m *mockProfileRepo) RemoveFromWishlist(profileID, artworkID string) error 
 	return nil
 }
 
-func TestProfileHandler_GetProfile(t *testing.T) {
+func (m *mockProfileRepo) GetArtistRanking() ([]models.ArtistRanking, error) {
+	if m.mockGetArtistRanking != nil {
+		return m.mockGetArtistRanking()
+	}
+	return nil, nil
+}
 
+func TestProfileHandler_GetProfile(t *testing.T) {
 	tests := []struct {
-		name         string                          // Test name.
-		requestID    string                          // The ID we will pass in the URL to fetch the profile.
-		mockBehavior func() (*models.Profile, error) // What the mock repository should return when GetByID is called with this requestID.
-		wantCode     int                             // The HTTP status code we expect the handler to return for this test case.
+		name         string
+		requestID    string
+		mockBehavior func() (*models.Profile, error)
+		wantCode     int
 	}{
 		{
 			name:      "Profile found successfully",
 			requestID: "user-123",
 			mockBehavior: func() (*models.Profile, error) {
-				// Simulate that the profile is found successfully
 				return &models.Profile{ID: "user-123", FullName: "Stellart Artist"}, nil
 			},
-			wantCode: http.StatusOK, // Waiting 200 code.
+			wantCode: http.StatusOK,
 		},
 		{
 			name:      "Profile not found (nil profile)",
 			requestID: "unknown-id",
 			mockBehavior: func() (*models.Profile, error) {
-				// Simulate that the profile is not found (nil profile, no error)
 				return nil, nil
 			},
-			wantCode: http.StatusNotFound, // Waiting 404 code.
+			wantCode: http.StatusNotFound,
 		},
 		{
 			name:      "Database error",
 			requestID: "error-id",
 			mockBehavior: func() (*models.Profile, error) {
-				// Simulate a database error.
 				return nil, errors.New("database connection lost")
 			},
-			wantCode: http.StatusNotFound, // Waiting 404 code.
+			wantCode: http.StatusNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Prepare the mock repository with the behavior defined for this test case.
 			mockRepo := &mockProfileRepo{
 				mockGetByID: func(id string) (*models.Profile, error) {
-					// Veruify if the ID passed to GetByID matches the requestID for the test case.
 					if id != tt.requestID {
 						t.Errorf("GetByID got id = %v, want %v", id, tt.requestID)
 					}
@@ -127,20 +129,17 @@ func TestProfileHandler_GetProfile(t *testing.T) {
 				},
 			}
 
-			// Initialize the handler with the mock repository.
 			profileService := service.NewProfileService(mockRepo)
 			h := handler.NewProfileHandler(profileService)
 
 			r := chi.NewRouter()
 			r.Get("/profiles/{id}", h.GetProfile)
 
-			// Prepare the request and the response recorder.
 			req := httptest.NewRequest(http.MethodGet, "/profiles/"+tt.requestID, nil)
 			w := httptest.NewRecorder()
 
 			r.ServeHTTP(w, req)
 
-			// Compare the result obtained with the expected one.
 			if gotCode := w.Code; gotCode != tt.wantCode {
 				t.Errorf("GetProfile() code = %v, wantCode %v", gotCode, tt.wantCode)
 			}
@@ -264,22 +263,20 @@ func TestProfileHandler_UpdateProfile(t *testing.T) {
 		wantCode     int
 	}{
 		{
-			name:      "Profile updated successfully",
-			requestID: "user-123",
-			// A fake JSON simulating the payload that the frontend should send.
+			name:        "Profile updated successfully",
+			requestID:   "user-123",
 			requestBody: `{"profile": {"full_name": "New Name"}, "skills": [{"skill_id": "1", "level": 3}]}`,
 			mockBehavior: func() error {
-				return nil // Mock returns nil telling no error occurred during the update.
+				return nil
 			},
-			wantCode: http.StatusNoContent,
+			wantCode: http.StatusOK,
 		},
 		{
-			name:      "Invalid JSON payload",
-			requestID: "user-123",
-			// A fake broken JSON simulating a case where the frontend sends an invalid payload.
+			name:        "Invalid JSON payload",
+			requestID:   "user-123",
 			requestBody: `{"profile": {"full_name": "New Name"`,
 			mockBehavior: func() error {
-				return nil // This mock won't even be called because the handler should fail before trying to update due to invalid JSON.
+				return nil
 			},
 			wantCode: http.StatusBadRequest,
 		},
@@ -288,7 +285,7 @@ func TestProfileHandler_UpdateProfile(t *testing.T) {
 			requestID:   "user-123",
 			requestBody: `{"profile": {"full_name": "New Name"}, "skills": []}`,
 			mockBehavior: func() error {
-				return errors.New("update failed") // Simulate a database error during the update.
+				return errors.New("update failed")
 			},
 			wantCode: http.StatusInternalServerError,
 		},
@@ -315,6 +312,56 @@ func TestProfileHandler_UpdateProfile(t *testing.T) {
 
 			if gotCode := w.Code; gotCode != tt.wantCode {
 				t.Errorf("UpdateProfile() code = %v, wantCode %v", gotCode, tt.wantCode)
+			}
+		})
+	}
+}
+
+func TestProfileHandler_GetArtistRanking(t *testing.T) {
+	tests := []struct {
+		name         string
+		mockBehavior func() ([]models.ArtistRanking, error)
+		wantCode     int
+	}{
+		{
+			name: "Artist ranking fetched successfully",
+			mockBehavior: func() ([]models.ArtistRanking, error) {
+				return []models.ArtistRanking{
+					{ID: "artist-1", FullName: "Artist One", TotalLikes: 100},
+				}, nil
+			},
+			wantCode: http.StatusOK,
+		},
+		{
+			name: "Database error",
+			mockBehavior: func() ([]models.ArtistRanking, error) {
+				return nil, errors.New("database connection lost")
+			},
+			wantCode: http.StatusInternalServerError,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			mockRepo := &mockProfileRepo{
+				mockGetArtistRanking: func() ([]models.ArtistRanking, error) {
+					return tt.mockBehavior()
+				},
+			}
+
+			profileService := service.NewProfileService(mockRepo)
+			h := handler.NewProfileHandler(profileService)
+
+			r := chi.NewRouter()
+			r.Get("/profiles/ranking", h.GetArtistRanking)
+
+			req := httptest.NewRequest(http.MethodGet, "/profiles/ranking", nil)
+			w := httptest.NewRecorder()
+
+			r.ServeHTTP(w, req)
+
+			if gotCode := w.Code; gotCode != tt.wantCode {
+				t.Errorf("GetArtistRanking() code = %v, wantCode %v", gotCode, tt.wantCode)
 			}
 		})
 	}

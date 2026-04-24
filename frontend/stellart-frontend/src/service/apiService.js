@@ -651,3 +651,14 @@ export const deleteAddress = async (addressId) => {
     if (!response.ok) throw new Error('Failed to delete address');
     return await response.json();
 };
+
+export const getArtistRanking = async () => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/profiles/ranking`);
+        if (!response.ok) throw new Error('Failed to fetch ranking');
+        return await response.json();
+    } catch (error) {
+        return [];
+    }
+};
