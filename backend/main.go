@@ -48,12 +48,17 @@ func main() {
 	commissionSvc := service.NewCommissionService(commissionRepo)
 	commissionHdl := handler.NewCommissionHandler(commissionSvc)
 
+	// Address
+	addressRepo := postgres.NewAddressRepository(db)
+	addressSvc := service.NewAddressService(addressRepo, cfg)
+	addressHdl := handler.NewAddressHandler(addressSvc, cfg)
+
 	// Chat WebSocket
 	chatRepo := postgres.NewChatRepository(db)
 	chatService := service.NewChatService(chatRepo)
 	chatHdl := handler.NewChatHandler(chatService)
 
-	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl)
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl)
 
 	// Mount WebSocket handler
 	http.HandleFunc("/ws/chat", chatHdl.HandleWebSocket)

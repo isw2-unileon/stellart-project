@@ -14,6 +14,8 @@ import StartCommission from './pages/StartCommission';
 import Commissions from './pages/Commissions';
 import CommissionDetail from './pages/CommissionDetail';
 import Wishlist from './pages/Wishlist';
+import ShippingAddresses from "./pages/ShippingAddresses";
+import ArtworkDetails from './pages/ArtworkDetails';
 
 export default function App() {
     return (
@@ -45,6 +47,8 @@ export default function App() {
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
                 <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />
+                <Route path="/shipping" element={<Layout> <ShippingAddresses /> </Layout>} />
+                <Route path="/artwork-details/:id" element={<Layout> <ArtworkDetails /> </Layout>} />
             </Routes>
         </>
     )

@@ -73,8 +73,6 @@ func (r *postgresProfileRepo) Update(profile *models.Profile, skills []models.Pr
 		return err
 	}
 
-	// Only replace skills if the caller explicitly sends them.
-	// This prevents the login sync (which sends skills: []) from wiping existing skills.
 	if len(skills) > 0 {
 		_, err = tx.Exec(`DELETE FROM public.profile_skills WHERE profile_id = $1`, profile.ID)
 		if err != nil {

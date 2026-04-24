@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { toast } from 'sonner';
 import PaymentModal from './PaymentModal';
 import { getProfile, getLoggedUser, getWishlist, addToWishlist, removeFromWishlist, reportArtwork, likeArtwork, unlikeArtwork, getTrendingArtworks } from '../service/apiService';
@@ -405,9 +406,17 @@ export default function ExploreGallery({ artworks = [] }) {
                             </div>
 
                             <div>
-                                <h2 className="text-2xl font-black tracking-tight text-slate-900">
-                                    {selectedArtwork.title}
-                                </h2>
+                                <div>
+                                    <h2 className="text-2xl font-black tracking-tight text-slate-900 w-fit">
+                                        <Link 
+                                            to={`/artwork-details/${selectedArtwork.id}`}
+                                            className="transition-colors duration-200 ease-in-out hover:text-yellow-500 hover:underline decoration-yellow-500 underline-offset-4 decoration-2"
+                                        >
+                                            {selectedArtwork.title}
+                                        </Link>
+                                    </h2>
+                                    <p className="text-[12px] text-slate-400 font-normal">Click on the title to see the artwork details</p>
+                                </div>
                                 
                                 <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mt-1">
                                     By <span className="text-slate-900">{selectedArtwork.artist}</span> <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{selectedArtwork.productType}</span>
