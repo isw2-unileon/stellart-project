@@ -11,20 +11,22 @@ export const getLoggedUser = async () => {
     return user;
 };
 
-export const registerUser = async (email, password, fullName) => {
+export const registerUser = async (email, password, fullName, addressObj, bankObj) => {
     const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
             data: {
                 full_name: fullName,
+                address: addressObj,
+                bank: bankObj,
             },
         },
     });
 
     if (error) throw error;
     return data;
-}
+};
 
 export const loginUser = async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({
@@ -69,7 +71,7 @@ export const logoutUser = async () => {
     if (error) throw error;
 };
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
 export const submitContact = async ({ name, email, subject, message }) => {
     const response = await fetch(`${BACKEND_URL}/contact`, {
@@ -145,8 +147,7 @@ export const getMasterSkills = async() => {
 
     if (!response.ok) throw new Error('Failed to get master skills');
     return response.json();
-}
-
+};
 
 export const getProfileSkills = async (userId) => {
     const response = await fetch(`${BACKEND_URL}/profiles/${userId}/skills`, {
@@ -209,7 +210,6 @@ export const removeFromWishlist = async (userId, artworkId) => {
 
 export const searchArtworks = async (query) => {
     try {
-        
         const response = await fetch(`${BACKEND_URL}/artworks/search?q=${encodeURIComponent(query)}`);
         
         if (!response.ok) {
@@ -224,7 +224,6 @@ export const searchArtworks = async (query) => {
     }
 };
 
-// Commission APIs
 export const createCommission = async (commissionData) => {
     const response = await fetch(`${BACKEND_URL}/commissions`, {
         method: 'POST',
@@ -304,7 +303,6 @@ export const cancelCommission = async (id) => {
     if (!response.ok) throw new Error('Failed to cancel commission');
 };
 
-// Payments
 export const createAdvancePayment = async (paymentData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/payments`, {
         method: 'POST',
@@ -364,7 +362,6 @@ export const markRemainingPaymentPaid = async (commissionId) => {
     if (!response.ok) throw new Error('Failed to mark remaining payment as paid');
 };
 
-// Work Uploads
 export const uploadWork = async (uploadData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/work-uploads`, {
         method: 'POST',
@@ -384,7 +381,6 @@ export const getWorkUploads = async (commissionId) => {
     return response.json();
 };
 
-// Revisions
 export const requestRevision = async (revisionData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/revisions`, {
         method: 'POST',
@@ -427,7 +423,6 @@ export const respondToRevision = async (revisionId, responseNotes) => {
     if (!response.ok) throw new Error('Failed to respond to revision');
 };
 
-// Refunds
 export const createRefund = async (refundData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/refunds`, {
         method: 'POST',
@@ -454,7 +449,6 @@ export const processRefund = async (commissionId) => {
     if (!response.ok) throw new Error('Failed to process refund');
 };
 
-// Chat Messages
 export const sendMessage = async (messageData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/messages`, {
         method: 'POST',
@@ -481,7 +475,6 @@ export const markMessagesRead = async (commissionId, userId) => {
     if (!response.ok) throw new Error('Failed to mark messages as read');
 };
 
-// Profile with open commissions
 export const getArtistsWithOpenCommissions = async () => {
     const response = await fetch(`${BACKEND_URL}/profiles/open-commissions`, {
         method: 'GET',
@@ -574,7 +567,6 @@ export const getArtworksByArtist = async (artistId) => {
 };
 
 export const deleteArtworkImage = async (imageUrl) => {
-    
     if (!imageUrl) return;
 
     const fileName = imageUrl.split('/').pop();
@@ -594,10 +586,7 @@ export const deleteArtwork = async (artworkId) => {
         method: 'DELETE',
     });
     if (!response.ok) throw new Error('Failed to delete artwork');
-<<<<<<< HEAD
-=======
 };
-
 
 export const createAddress = async (addressData) => {
     const { data: { user }, error } = await supabase.auth.getUser();
@@ -653,5 +642,4 @@ export const deleteAddress = async (addressId) => {
 
     if (!response.ok) throw new Error('Failed to delete address');
     return await response.json();
->>>>>>> origin/main
 };
