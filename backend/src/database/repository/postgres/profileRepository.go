@@ -142,7 +142,7 @@ func (r *postgresProfileRepo) RemoveFromWishlist(profileID, artworkID string) er
 
 func (r *postgresProfileRepo) GetWishlist(profileID string) ([]models.Artwork, error) {
 	query := `
-		SELECT a.id, a.title, a.description, a.image_url, a.artist_id, a.tags, a.created_at, a.price, a.likes_count, a.product_type
+		SELECT a.id, a.title, a.description, a.image_url, a.artist_id, a.tags, a.created_at, a.price, a.product_type
 		FROM public.wishlist w
 		JOIN public.artworks a ON w.artwork_id = a.id
 		WHERE w.profile_id = $1
@@ -157,7 +157,7 @@ func (r *postgresProfileRepo) GetWishlist(profileID string) ([]models.Artwork, e
 	var artworks []models.Artwork
 	for rows.Next() {
 		var a models.Artwork
-		err := rows.Scan(&a.ID, &a.Title, &a.Description, &a.ImageURL, &a.ArtistID, pq.Array(&a.Tags), &a.CreatedAt, &a.Price, &a.LikesCount, &a.ProductType)
+		err := rows.Scan(&a.ID, &a.Title, &a.Description, &a.ImageURL, &a.ArtistID, pq.Array(&a.Tags), &a.CreatedAt, &a.Price, &a.ProductType)
 		if err != nil {
 			return nil, err
 		}

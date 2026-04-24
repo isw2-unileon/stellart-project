@@ -20,8 +20,8 @@ func NewArtworkRepository(db *sql.DB) uis.ArtworkInterface {
 
 func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 	query := `
-        INSERT INTO public.artworks (title, description, image_url, artist_id, tags, embedding, price, likes_count, product_type)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        INSERT INTO public.artworks (title, description, image_url, artist_id, tags, embedding, price, product_type)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING id, created_at`
 
 	err := p.db.QueryRow(query,
@@ -32,7 +32,6 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 		pq.Array(artwork.Tags),
 		formatVector(artwork.Embedding),
 		artwork.Price,
-		artwork.LikesCount,
 		artwork.ProductType,
 	).Scan(&artwork.ID, &artwork.CreatedAt)
 
@@ -41,7 +40,7 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 
 func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]models.Artwork, error) {
 	query := `
-        SELECT id, title, description, image_url, artist_id, tags, created_at, price, likes_count, product_type
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type
         FROM public.artworks
         ORDER BY embedding <=> $1
         LIMIT $2`
@@ -64,7 +63,6 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 			pq.Array(&artwork.Tags),
 			&artwork.CreatedAt,
 			&artwork.Price,
-			&artwork.LikesCount,
 			&artwork.ProductType,
 		)
 		if err != nil {
@@ -77,7 +75,7 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 
 func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, error) {
 	query := `
-        SELECT id, title, description, image_url, artist_id, tags, created_at, price, likes_count, product_type 
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type 
         FROM public.artworks 
         WHERE artist_id = $1`
 
@@ -99,7 +97,6 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 			pq.Array(&artwork.Tags),
 			&artwork.CreatedAt,
 			&artwork.Price,
-			&artwork.LikesCount,
 			&artwork.ProductType,
 		)
 		if err != nil {
@@ -111,7 +108,7 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 }
 
 func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
-	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price, likes_count, product_type 
+	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type 
               FROM public.artworks WHERE id = $1`
 	var artwork models.Artwork
 	err := p.db.QueryRow(query, id).Scan(
@@ -123,7 +120,6 @@ func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
 		pq.Array(&artwork.Tags),
 		&artwork.CreatedAt,
 		&artwork.Price,
-		&artwork.LikesCount,
 		&artwork.ProductType,
 	)
 	if err != nil {
@@ -140,17 +136,27 @@ func formatVector(v []float32) string {
 	return "[" + strings.Join(strValues, ",") + "]"
 }
 
-func (p *postgresArtWorkRepo) IncrementLikes(id string) error {
-	query := `UPDATE artworks SET likes_count = COALESCE(likes_count, 0) + 1 WHERE id = $1`
-	_, err := p.db.Exec(query, id)
+func (p *postgresArtWorkRepo) IncrementLikes(artworkID string, profileID string) error {
+	// Comprobar si ya le ha dado like
+	checkQuery := `SELECT id FROM likes WHERE artwork_id = $1 AND profile_id = $2`
+	var temp string
+	err := p.db.QueryRow(checkQuery, artworkID, profileID).Scan(&temp)
+
+	if err == sql.ErrNoRows {
+		query := `INSERT INTO likes (artwork_id, profile_id) VALUES ($1, $2)`
+		_, err = p.db.Exec(query, artworkID, profileID)
+		return err
+	}
 	return err
 }
 
 func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 	query := `
-		SELECT id, artist_id, title, description, image_url, tags, price, likes_count, product_type, created_at 
-		FROM artworks 
-		ORDER BY likes_count DESC NULLS LAST, created_at DESC 
+		SELECT a.id, a.artist_id, a.title, a.description, a.image_url, a.tags, a.price, a.product_type, a.created_at 
+		FROM artworks a
+		LEFT JOIN likes l ON a.id = l.artwork_id
+		GROUP BY a.id
+		ORDER BY COUNT(l.id) DESC, a.created_at DESC 
 		LIMIT 10
 	`
 	rows, err := p.db.Query(query)
@@ -170,7 +176,6 @@ func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 			&a.ImageURL,
 			pq.Array(&a.Tags),
 			&a.Price,
-			&a.LikesCount,
 			&a.ProductType,
 			&a.CreatedAt,
 		)
@@ -182,18 +187,15 @@ func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 	return artworks, nil
 }
 
-func (p *postgresArtWorkRepo) DecrementLikes(id string) error {
-	query := `UPDATE artworks SET likes_count = GREATEST(COALESCE(likes_count, 0) - 1, 0) WHERE id = $1`
-	_, err := p.db.Exec(query, id)
+func (p *postgresArtWorkRepo) DecrementLikes(artworkID string, profileID string) error {
+	query := `DELETE FROM likes WHERE artwork_id = $1 AND profile_id = $2`
+	_, err := p.db.Exec(query, artworkID, profileID)
 	return err
 }
 
 func (r *postgresArtWorkRepo) Delete(id string) error {
-	_, err := r.db.Exec("DELETE FROM wishlist WHERE artwork_id = $1", id)
-	if err != nil {
-		return err
-	}
-
-	_, err = r.db.Exec("DELETE FROM artworks WHERE id = $1", id)
+	_, _ = r.db.Exec("DELETE FROM likes WHERE artwork_id = $1", id)
+	_, _ = r.db.Exec("DELETE FROM wishlist WHERE artwork_id = $1", id)
+	_, err := r.db.Exec("DELETE FROM artworks WHERE id = $1", id)
 	return err
 }

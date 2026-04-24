@@ -7,8 +7,8 @@ type ArtworkInterface interface {
 	SearchSimilar(vector []float32, limit int) ([]models.Artwork, error)
 	GetByArtistID(artistID string) ([]models.Artwork, error)
 	GetById(id string) *models.Artwork
-	IncrementLikes(id string) error
-	DecrementLikes(id string) error
+	IncrementLikes(artworkID string, profileID string) error
+	DecrementLikes(artworkID string, profileID string) error
 	GetTrending() ([]models.Artwork, error)
 	Delete(id string) error
 }

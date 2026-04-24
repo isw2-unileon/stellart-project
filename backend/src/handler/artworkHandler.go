@@ -169,7 +169,15 @@ func (h *ArtworkHandler) LikeArtwork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.artworkService.LikeArtwork(id)
+	var reqBody struct {
+		ProfileID string `json:"profile_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil || reqBody.ProfileID == "" {
+		http.Error(w, "Profile ID is required in request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.artworkService.LikeArtwork(id, reqBody.ProfileID)
 	if err != nil {
 		http.Error(w, "Failed to like artwork", http.StatusInternalServerError)
 		return
@@ -197,7 +205,15 @@ func (h *ArtworkHandler) UnlikeArtwork(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.artworkService.UnlikeArtwork(id)
+	var reqBody struct {
+		ProfileID string `json:"profile_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&reqBody); err != nil || reqBody.ProfileID == "" {
+		http.Error(w, "Profile ID is required in request body", http.StatusBadRequest)
+		return
+	}
+
+	err := h.artworkService.UnlikeArtwork(id, reqBody.ProfileID)
 	if err != nil {
 		http.Error(w, "Failed to unlike artwork", http.StatusInternalServerError)
 		return
