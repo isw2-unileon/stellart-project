@@ -34,8 +34,9 @@ func main() {
 	profileHdl := handler.NewProfileHandler(profileSvc)
 
 	// Contact
-	emailSender := handler.NewResendEmailSender(cfg.ResendAPIKey)
-	contactHdl := handler.NewContactHandler(cfg.ContactEmail, emailSender)
+	emailSender := service.NewResendEmailSender(cfg.ResendAPIKey)
+	contactSvc := service.NewContactService(cfg.ContactEmail, emailSender)
+	contactHdl := handler.NewContactHandler(contactSvc)
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
@@ -53,9 +54,9 @@ func main() {
 	addressHdl := handler.NewAddressHandler(addressSvc, cfg)
 
 	// Chat WebSocket
-	chatHub := handler.NewChatHub()
-	go chatHub.Run()
-	chatHdl := handler.NewChatHandler(commissionSvc, chatHub)
+	chatRepo := postgres.NewChatRepository(db)
+	chatService := service.NewChatService(chatRepo)
+	chatHdl := handler.NewChatHandler(chatService)
 
 	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl)
 
