@@ -13,4 +13,5 @@ type Artwork struct {
 	Embedding   []float32 `json:"embedding"`
 	CreatedAt   time.Time `json:"created_at"`
 	ProductType string    `json:"product_type"`
+	LikesCount  int       `json:"likes_count"`
 }

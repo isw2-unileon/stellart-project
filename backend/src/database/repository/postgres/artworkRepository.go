@@ -35,12 +35,14 @@ func (p *postgresArtWorkRepo) Create(artwork *models.Artwork) error {
 		artwork.ProductType,
 	).Scan(&artwork.ID, &artwork.CreatedAt)
 
+	artwork.LikesCount = 0
 	return err
 }
 
 func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]models.Artwork, error) {
 	query := `
-        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type,
+               (SELECT COUNT(*) FROM public.likes WHERE artwork_id = artworks.id) as likes_count
         FROM public.artworks
         ORDER BY embedding <=> $1
         LIMIT $2`
@@ -64,6 +66,7 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 			&artwork.CreatedAt,
 			&artwork.Price,
 			&artwork.ProductType,
+			&artwork.LikesCount,
 		)
 		if err != nil {
 			return nil, err
@@ -75,7 +78,8 @@ func (p *postgresArtWorkRepo) SearchSimilar(vector []float32, limit int) ([]mode
 
 func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, error) {
 	query := `
-        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type 
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type,
+               (SELECT COUNT(*) FROM public.likes WHERE artwork_id = artworks.id) as likes_count
         FROM public.artworks 
         WHERE artist_id = $1`
 
@@ -98,6 +102,7 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 			&artwork.CreatedAt,
 			&artwork.Price,
 			&artwork.ProductType,
+			&artwork.LikesCount,
 		)
 		if err != nil {
 			return nil, err
@@ -108,8 +113,10 @@ func (p *postgresArtWorkRepo) GetByArtistID(artistID string) ([]models.Artwork, 
 }
 
 func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
-	query := `SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type 
-              FROM public.artworks WHERE id = $1`
+	query := `
+        SELECT id, title, description, image_url, artist_id, tags, created_at, price, product_type,
+               (SELECT COUNT(*) FROM public.likes WHERE artwork_id = artworks.id) as likes_count
+        FROM public.artworks WHERE id = $1`
 	var artwork models.Artwork
 	err := p.db.QueryRow(query, id).Scan(
 		&artwork.ID,
@@ -121,6 +128,7 @@ func (p *postgresArtWorkRepo) GetById(id string) *models.Artwork {
 		&artwork.CreatedAt,
 		&artwork.Price,
 		&artwork.ProductType,
+		&artwork.LikesCount,
 	)
 	if err != nil {
 		return nil
@@ -137,13 +145,12 @@ func formatVector(v []float32) string {
 }
 
 func (p *postgresArtWorkRepo) IncrementLikes(artworkID string, profileID string) error {
-	// Comprobar si ya le ha dado like
-	checkQuery := `SELECT id FROM likes WHERE artwork_id = $1 AND profile_id = $2`
+	checkQuery := `SELECT id FROM public.likes WHERE artwork_id = $1 AND profile_id = $2`
 	var temp string
 	err := p.db.QueryRow(checkQuery, artworkID, profileID).Scan(&temp)
 
 	if err == sql.ErrNoRows {
-		query := `INSERT INTO likes (artwork_id, profile_id) VALUES ($1, $2)`
+		query := `INSERT INTO public.likes (artwork_id, profile_id) VALUES ($1, $2)`
 		_, err = p.db.Exec(query, artworkID, profileID)
 		return err
 	}
@@ -152,11 +159,12 @@ func (p *postgresArtWorkRepo) IncrementLikes(artworkID string, profileID string)
 
 func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 	query := `
-		SELECT a.id, a.artist_id, a.title, a.description, a.image_url, a.tags, a.price, a.product_type, a.created_at 
-		FROM artworks a
-		LEFT JOIN likes l ON a.id = l.artwork_id
+		SELECT a.id, a.artist_id, a.title, a.description, a.image_url, a.tags, a.price, a.product_type, a.created_at,
+		       COUNT(l.id) as likes_count
+		FROM public.artworks a
+		LEFT JOIN public.likes l ON a.id = l.artwork_id
 		GROUP BY a.id
-		ORDER BY COUNT(l.id) DESC, a.created_at DESC 
+		ORDER BY likes_count DESC, a.created_at DESC 
 		LIMIT 10
 	`
 	rows, err := p.db.Query(query)
@@ -178,6 +186,7 @@ func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 			&a.Price,
 			&a.ProductType,
 			&a.CreatedAt,
+			&a.LikesCount,
 		)
 		if err != nil {
 			return nil, err
@@ -188,14 +197,14 @@ func (p *postgresArtWorkRepo) GetTrending() ([]models.Artwork, error) {
 }
 
 func (p *postgresArtWorkRepo) DecrementLikes(artworkID string, profileID string) error {
-	query := `DELETE FROM likes WHERE artwork_id = $1 AND profile_id = $2`
+	query := `DELETE FROM public.likes WHERE artwork_id = $1 AND profile_id = $2`
 	_, err := p.db.Exec(query, artworkID, profileID)
 	return err
 }
 
 func (r *postgresArtWorkRepo) Delete(id string) error {
-	_, _ = r.db.Exec("DELETE FROM likes WHERE artwork_id = $1", id)
-	_, _ = r.db.Exec("DELETE FROM wishlist WHERE artwork_id = $1", id)
-	_, err := r.db.Exec("DELETE FROM artworks WHERE id = $1", id)
+	_, _ = r.db.Exec("DELETE FROM public.likes WHERE artwork_id = $1", id)
+	_, _ = r.db.Exec("DELETE FROM public.wishlist WHERE artwork_id = $1", id)
+	_, err := r.db.Exec("DELETE FROM public.artworks WHERE id = $1", id)
 	return err
 }
