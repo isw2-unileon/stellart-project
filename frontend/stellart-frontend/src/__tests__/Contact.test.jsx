@@ -16,7 +16,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         expect(screen.getByPlaceholderText('Name')).toBeDefined();
-        expect(screen.getByPlaceholderText('Title')).toBeDefined();
+        expect(screen.getByPlaceholderText('Your Email')).toBeDefined();
+        expect(screen.getByPlaceholderText('Subject')).toBeDefined();
         expect(screen.getByPlaceholderText('How can we help?')).toBeDefined();
         expect(screen.getByText('Send message')).toBeDefined();
     });
@@ -32,15 +33,18 @@ describe('Contact', () => {
         render(<Contact />);
         
         const nameInput = screen.getByPlaceholderText('Name');
-        const titleInput = screen.getByPlaceholderText('Title');
+        const emailInput = screen.getByPlaceholderText('Your Email');
+        const subjectInput = screen.getByPlaceholderText('Subject');
         const messageInput = screen.getByPlaceholderText('How can we help?');
         
         fireEvent.change(nameInput, { target: { value: 'John Doe' } });
-        fireEvent.change(titleInput, { target: { value: 'Test Title' } });
+        fireEvent.change(emailInput, { target: { value: 'john@example.com' } });
+        fireEvent.change(subjectInput, { target: { value: 'Test Subject' } });
         fireEvent.change(messageInput, { target: { value: 'Test message content' } });
         
         expect(nameInput.value).toBe('John Doe');
-        expect(titleInput.value).toBe('Test Title');
+        expect(emailInput.value).toBe('john@example.com');
+        expect(subjectInput.value).toBe('Test Subject');
         expect(messageInput.value).toBe('Test message content');
     });
 
@@ -49,7 +53,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'John Doe' } });
-        fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Bug Report' } });
+        fireEvent.change(screen.getByPlaceholderText('Your Email'), { target: { value: 'john@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Subject'), { target: { value: 'Bug Report' } });
         fireEvent.change(screen.getByPlaceholderText('How can we help?'), { target: { value: 'Found a bug' } });
         
         fireEvent.click(screen.getByText('Send message'));
@@ -57,7 +62,8 @@ describe('Contact', () => {
         await waitFor(() => {
             expect(apiService.submitContact).toHaveBeenCalledWith({
                 name: 'John Doe',
-                title: 'Bug Report',
+                email: 'john@example.com',
+                subject: 'Bug Report',
                 message: 'Found a bug'
             });
         });
@@ -68,7 +74,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Title' } });
+        fireEvent.change(screen.getByPlaceholderText('Your Email'), { target: { value: 'john@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Subject'), { target: { value: 'Subject' } });
         fireEvent.change(screen.getByPlaceholderText('How can we help?'), { target: { value: 'Message' } });
         
         fireEvent.click(screen.getByText('Send message'));
@@ -84,7 +91,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Title' } });
+        fireEvent.change(screen.getByPlaceholderText('Your Email'), { target: { value: 'john@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Subject'), { target: { value: 'Subject' } });
         fireEvent.change(screen.getByPlaceholderText('How can we help?'), { target: { value: 'Message' } });
         
         fireEvent.click(screen.getByText('Send message'));
@@ -97,7 +105,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Title' } });
+        fireEvent.change(screen.getByPlaceholderText('Your Email'), { target: { value: 'john@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Subject'), { target: { value: 'Subject' } });
         fireEvent.change(screen.getByPlaceholderText('How can we help?'), { target: { value: 'Message' } });
         
         fireEvent.click(screen.getByText('Send message'));
@@ -112,7 +121,8 @@ describe('Contact', () => {
         render(<Contact />);
         
         fireEvent.change(screen.getByPlaceholderText('Name'), { target: { value: 'John' } });
-        fireEvent.change(screen.getByPlaceholderText('Title'), { target: { value: 'Title' } });
+        fireEvent.change(screen.getByPlaceholderText('Your Email'), { target: { value: 'john@example.com' } });
+        fireEvent.change(screen.getByPlaceholderText('Subject'), { target: { value: 'Subject' } });
         fireEvent.change(screen.getByPlaceholderText('How can we help?'), { target: { value: 'Message' } });
         
         fireEvent.click(screen.getByText('Send message'));
@@ -131,11 +141,13 @@ describe('Contact', () => {
         render(<Contact />);
         
         const nameInput = screen.getByPlaceholderText('Name');
-        const titleInput = screen.getByPlaceholderText('Title');
+        const emailInput = screen.getByPlaceholderText('Your Email');
+        const subjectInput = screen.getByPlaceholderText('Subject');
         const messageInput = screen.getByPlaceholderText('How can we help?');
         
         expect(nameInput.required).toBe(true);
-        expect(titleInput.required).toBe(true);
+        expect(emailInput.required).toBe(true);
+        expect(subjectInput.required).toBe(true);
         expect(messageInput.required).toBe(true);
     });
 });
