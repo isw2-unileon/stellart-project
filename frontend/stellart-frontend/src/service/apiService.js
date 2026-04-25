@@ -39,8 +39,6 @@ export const loginUser = async (email, password) => {
         const fullName = data.user.user_metadata?.full_name;
         if (fullName) {
             try {
-                // Only create profile if it doesn't exist yet.
-                // Avoids overwriting avatar_url/biography with null on every login.
                 const existing = await getProfile(data.user.id);
                 if (!existing) {
                     await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
@@ -658,7 +656,7 @@ export const getArtistRanking = async () => {
         const response = await fetch(`${BACKEND_URL}/profiles/ranking`);
         if (!response.ok) throw new Error('Failed to fetch ranking');
         return await response.json();
-    } catch (error) {
+    } catch {
         return [];
     }
 };
@@ -669,7 +667,7 @@ export const getProfileSkillsAPI = async (id) => {
         const response = await fetch(`${BACKEND_URL}/profiles/${id}/skills`);
         if (!response.ok) throw new Error('Failed to fetch skills');
         return await response.json();
-    } catch (error) {
+    } catch {
         return [];
     }
 };
@@ -680,7 +678,7 @@ export const getArtwork = async (id) => {
         const response = await fetch(`${BACKEND_URL}/artworks/${id}`);
         if (!response.ok) throw new Error('Failed to fetch artwork');
         return await response.json();
-    } catch (error) {
+    } catch {
         return null;
     }
 };
