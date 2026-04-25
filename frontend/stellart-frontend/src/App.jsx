@@ -16,6 +16,7 @@ import CommissionDetail from './pages/CommissionDetail';
 import Wishlist from './pages/Wishlist';
 import ShippingAddresses from "./pages/ShippingAddresses";
 import ArtworkDetails from './pages/ArtworkDetails';
+import ArtistProfile from './pages/ArtistProfile';
 
 export default function App() {
     return (
@@ -39,6 +40,7 @@ export default function App() {
                 <Route path="/login" element={<Layout> <Login /> </Layout>} />
                 <Route path="/profile" element={<Layout> <Profile /> </Layout>} />
                 <Route path="/profile/upload" element={<Layout> <UploadArtwork /> </Layout>} />
+                <Route path="/profile/:id" element={<Layout> <ArtistProfile /> </Layout>} />
                 <Route path="/explore" element={<Layout> <Explore /> </Layout>} />
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
                 <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />

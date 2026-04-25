@@ -205,7 +205,6 @@ export default function ExploreGallery({ artworks = [] }) {
         };
 
         fetchProfiles();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
     }, [activeArtworks, isRealData]);
 
     const displayArtworks = activeArtworks.map((art, index) => {
@@ -213,6 +212,7 @@ export default function ExploreGallery({ artworks = [] }) {
             return {
                 ...art,
                 artist: art.artist,
+                artist_id: null,
                 likes_count: 0,
                 on_sale: false,
                 price: null,
@@ -228,6 +228,7 @@ export default function ExploreGallery({ artworks = [] }) {
             id,
             title: art.title || "Untitled Artwork",
             artist: artistNames[art.artist_id] || "Loading artist...",
+            artist_id: art.artist_id,
             productType: art.product_type || "Standard", 
             img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop", 
             description: art.description || "No description provided for this artwork.",
@@ -293,7 +294,18 @@ export default function ExploreGallery({ artworks = [] }) {
                                             <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
                                             
                                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">
-                                                {art.artist} <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.productType}</span>
+                                                {isRealData && art.artist_id ? (
+                                                    <Link 
+                                                        to={`/profile/${art.artist_id}`}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                        className="hover:text-yellow-500 transition-colors"
+                                                    >
+                                                        {art.artist}
+                                                    </Link>
+                                                ) : (
+                                                    <span>{art.artist}</span>
+                                                )}
+                                                <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.productType}</span>
                                             </p>
                                             
                                             {art.price && (
@@ -415,18 +427,32 @@ export default function ExploreGallery({ artworks = [] }) {
                             <div>
                                 <div>
                                     <h2 className="text-2xl font-black tracking-tight text-slate-900 w-fit">
-                                        <Link 
-                                            to={`/artwork-details/${selectedArtwork.id}`}
-                                            className="transition-colors duration-200 ease-in-out hover:text-yellow-500 hover:underline decoration-yellow-500 underline-offset-4 decoration-2"
-                                        >
-                                            {selectedArtwork.title}
-                                        </Link>
+                                        {isRealData ? (
+                                            <Link 
+                                                to={`/artwork-details/${selectedArtwork.id}`}
+                                                className="transition-colors duration-200 ease-in-out hover:text-yellow-500 hover:underline decoration-yellow-500 underline-offset-4 decoration-2"
+                                            >
+                                                {selectedArtwork.title}
+                                            </Link>
+                                        ) : (
+                                            <span>{selectedArtwork.title}</span>
+                                        )}
                                     </h2>
-                                    <p className="text-[12px] text-slate-400 font-normal">Click on the title to see the artwork details</p>
+                                    {isRealData && <p className="text-[12px] text-slate-400 font-normal">Click on the title to see the artwork details</p>}
                                 </div>
                                 
                                 <p className="text-slate-500 font-bold uppercase tracking-widest text-sm mt-1">
-                                    By <span className="text-slate-900">{selectedArtwork.artist}</span> <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{selectedArtwork.productType}</span>
+                                    By {isRealData && selectedArtwork.artist_id ? (
+                                        <Link 
+                                            to={`/profile/${selectedArtwork.artist_id}`}
+                                            className="text-slate-900 hover:text-yellow-500 transition-colors"
+                                        >
+                                            {selectedArtwork.artist}
+                                        </Link>
+                                    ) : (
+                                        <span className="text-slate-900">{selectedArtwork.artist}</span>
+                                    )} 
+                                    <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{selectedArtwork.productType}</span>
                                 </p>
                                 
                                 <div className="flex items-center gap-2 mt-2">
@@ -459,8 +485,7 @@ export default function ExploreGallery({ artworks = [] }) {
                                     </button>
                                 )}
                             </div>
-                        </
-                        >
+                        </>
                     )}
                 </aside>
             </div>

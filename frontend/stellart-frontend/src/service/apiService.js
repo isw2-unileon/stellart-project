@@ -662,3 +662,25 @@ export const getArtistRanking = async () => {
         return [];
     }
 };
+
+export const getProfileSkillsAPI = async (id) => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/profiles/${id}/skills`);
+        if (!response.ok) throw new Error('Failed to fetch skills');
+        return await response.json();
+    } catch (error) {
+        return [];
+    }
+};
+
+export const getArtwork = async (id) => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/artworks/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch artwork');
+        return await response.json();
+    } catch (error) {
+        return null;
+    }
+};
