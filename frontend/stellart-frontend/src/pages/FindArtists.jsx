@@ -1,114 +1,100 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
-import { getLoggedUser, getArtistsWithOpenCommissions } from "../service/apiService";
+import { Link } from "react-router-dom";
+import { getArtistRanking } from "../service/apiService";
 
 export default function FindArtists() {
     const [artists, setArtists] = useState([]);
+    const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const navigate = useNavigate();
 
     useEffect(() => {
-        async function fetchArtists() {
+        async function fetchRanking() {
             try {
-                const loggedUser = await getLoggedUser();
-                if (!loggedUser) {
-                    navigate("/login");
-                    return;
-                }
-
-                const artistList = await getArtistsWithOpenCommissions();
-                artistList?.forEach((a, i) => console.log(`Artist ${i}:`, JSON.stringify(a)));
-                setArtists(artistList || []);
+                const data = await getArtistRanking();
+                setArtists(data || []);
             } catch (error) {
-                console.error("Error:", error);
-                toast.error("Error loading artists");
+                console.error(error);
             } finally {
                 setIsLoading(false);
             }
         }
-        fetchArtists();
-    }, [navigate]);
+        fetchRanking();
+    }, []);
+
+    const filteredArtists = searchQuery.trim() === "" 
+        ? artists.slice(0, 10) 
+        : artists.filter(a => (a.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
-                <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-yellow-500 animate-spin" />
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin w-8 h-8 border-4 border-yellow-400 border-t-transparent rounded-full"></div>
             </div>
         );
     }
 
     return (
-        <div className="max-w-6xl mx-auto px-6 py-12">
-            <h1 className="text-3xl font-black tracking-tight text-slate-900 mb-2">
-                Find Artists
-            </h1>
-            <p className="text-slate-500 mb-8">
-                Artists open for commission work
-            </p>
-
-            {artists.length === 0 ? (
-                <div className="text-center py-16 bg-slate-50 rounded-3xl">
-                    <p className="text-slate-500">No artists open for commissions right now.</p>
-                    <Link to="/explore" className="text-yellow-600 font-medium hover:underline mt-2 inline-block">
-                        Explore artworks instead
-                    </Link>
-                </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {artists.map((artist) => (
-                        <ArtistCard key={artist.id} artist={artist} />
-                    ))}
-                </div>
-            )}
-        </div>
-    );
-}
-
-function ArtistCard({ artist }) {
-    const navigate = useNavigate();
-
-    const handleStartCommission = () => {
-        navigate(`/commission/start/${artist.id}`);
-    };
-
-    const displayName = artist.full_name || artist.email?.split('@')[0] || "Artist";
-    const initial = displayName.charAt(0).toUpperCase();
-
-    return (
-        <div className="bg-white rounded-3xl border border-slate-100 shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-            <div className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 rounded-full bg-slate-100 overflow-hidden flex items-center justify-center">
-                        {artist.avatar_url ? (
-                            <img src={artist.avatar_url} alt={displayName} className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-2xl font-black text-yellow-500 uppercase">
-                                {initial}
-                            </span>
-                        )}
-                    </div>
+        <main className="min-h-screen bg-slate-50 pt-24 pb-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100 mb-8 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <div>
-                        <h3 className="text-lg font-bold text-slate-900">{displayName}</h3>
-                        <span className="px-2 py-0.5 bg-yellow-50 text-yellow-600 text-xs font-bold rounded-full">
-                            Open for commissions
-                        </span>
+                        <h1 className="text-3xl font-black text-slate-900 tracking-tight">Find Artists</h1>
+                    </div>
+                    <div className="flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-2xl border border-slate-200 w-full md:w-auto">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <input 
+                            type="text" 
+                            placeholder="Search artists..."
+                            value={searchQuery}
+                            onChange={(e) => setSearchQuery(e.target.value)}
+                            className="bg-transparent text-sm font-bold text-slate-700 outline-none w-full md:w-48 placeholder:text-slate-400"
+                        />
                     </div>
                 </div>
-                
-                {artist.biography && (
-                    <p className="text-slate-500 text-sm mb-4 line-clamp-2">
-                        {artist.biography}
-                    </p>
-                )}
 
-                <button
-                    onClick={handleStartCommission}
-                    className="w-full py-3 bg-yellow-500 hover:bg-yellow-600 text-slate-900 font-bold rounded-xl transition-colors"
-                >
-                    Request Commission
-                </button>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    {filteredArtists.map((artist, index) => {
+                        return (
+                            <Link 
+                                to={`/profile/${artist.id}`} 
+                                key={artist.id}
+                                className="group bg-white rounded-2xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all duration-300 hover:-translate-y-1 relative flex flex-col items-center text-center"
+                            >
+                                {searchQuery.trim() === "" && (
+                                    <div className={`absolute -top-3 -left-3 w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-sm ${index === 0 ? 'bg-yellow-400 text-yellow-900' : index === 1 ? 'bg-slate-300 text-slate-800' : index === 2 ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-500'}`}>
+                                        #{index + 1}
+                                    </div>
+                                )}
+                                <div className="w-24 h-24 rounded-full overflow-hidden mb-4 border-4 border-slate-50 shadow-inner group-hover:border-yellow-100 transition-colors">
+                                    {artist.avatar_url ? (
+                                        <img src={artist.avatar_url} alt={artist.full_name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl font-black text-slate-300 uppercase">
+                                            {(artist.full_name || "U")[0]}
+                                        </div>
+                                    )}
+                                </div>
+                                <h3 className="font-bold text-slate-900 text-lg group-hover:text-yellow-500 transition-colors truncate w-full">
+                                    {artist.full_name || "Unknown Artist"}
+                                </h3>
+                                <div className="flex items-center gap-1.5 mt-2 bg-red-50 text-red-500 px-3 py-1 rounded-lg">
+                                    <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                                    </svg>
+                                    <span className="text-sm font-bold">{artist.total_likes || 0}</span>
+                                </div>
+                            </Link>
+                        );
+                    })}
+                </div>
+                {filteredArtists.length === 0 && (
+                    <div className="py-20 text-center bg-white rounded-3xl border border-slate-100 shadow-sm">
+                        <p className="text-slate-400 font-bold">No artists found.</p>
+                    </div>
+                )}
             </div>
-        </div>
+        </main>
     );
 }

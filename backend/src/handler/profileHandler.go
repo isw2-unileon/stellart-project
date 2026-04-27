@@ -135,3 +135,14 @@ func (h *ProfileHandler) RemoveFromWishlist(w http.ResponseWriter, r *http.Reque
 
 	w.WriteHeader(http.StatusOK)
 }
+
+func (h *ProfileHandler) GetArtistRanking(w http.ResponseWriter, r *http.Request) {
+	ranking, err := h.profileService.GetArtistRanking()
+	if err != nil {
+		http.Error(w, "Failed to fetch ranking", http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(ranking)
+}

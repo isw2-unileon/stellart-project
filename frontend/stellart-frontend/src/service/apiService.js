@@ -39,8 +39,6 @@ export const loginUser = async (email, password) => {
         const fullName = data.user.user_metadata?.full_name;
         if (fullName) {
             try {
-                // Only create profile if it doesn't exist yet.
-                // Avoids overwriting avatar_url/biography with null on every login.
                 const existing = await getProfile(data.user.id);
                 if (!existing) {
                     await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
@@ -650,4 +648,37 @@ export const deleteAddress = async (addressId) => {
 
     if (!response.ok) throw new Error('Failed to delete address');
     return await response.json();
+};
+
+export const getArtistRanking = async () => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/profiles/ranking`);
+        if (!response.ok) throw new Error('Failed to fetch ranking');
+        return await response.json();
+    } catch {
+        return [];
+    }
+};
+
+export const getProfileSkillsAPI = async (id) => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/profiles/${id}/skills`);
+        if (!response.ok) throw new Error('Failed to fetch skills');
+        return await response.json();
+    } catch {
+        return [];
+    }
+};
+
+export const getArtwork = async (id) => {
+    try {
+        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+        const response = await fetch(`${BACKEND_URL}/artworks/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch artwork');
+        return await response.json();
+    } catch {
+        return null;
+    }
 };

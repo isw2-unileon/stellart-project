@@ -12,4 +12,5 @@ type ProfileRepository interface {
 	AddToWishlist(profileID, artworkID string) error
 	RemoveFromWishlist(profileID, artworkID string) error
 	GetWishlist(profileID string) ([]models.Artwork, error)
+	GetArtistRanking() ([]models.ArtistRanking, error)
 }

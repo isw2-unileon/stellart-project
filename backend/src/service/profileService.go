@@ -48,3 +48,7 @@ func (s *ProfileService) RemoveFromWishlist(profileID, artworkID string) error {
 func (s *ProfileService) GetWishlist(profileID string) ([]models.Artwork, error) {
 	return s.repo.GetWishlist(profileID)
 }
+
+func (s *ProfileService) GetArtistRanking() ([]models.ArtistRanking, error) {
+	return s.repo.GetArtistRanking()
+}

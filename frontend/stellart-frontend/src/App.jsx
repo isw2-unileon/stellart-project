@@ -1,5 +1,5 @@
 import { Routes, Route } from 'react-router-dom';
-import { Toaster } from 'sonner'; //
+import { Toaster } from 'sonner';
 import Landing from './pages/Landing';
 import { Layout } from './components/layout/Layout';
 import Register from './pages/Register';
@@ -16,6 +16,7 @@ import CommissionDetail from './pages/CommissionDetail';
 import Wishlist from './pages/Wishlist';
 import ShippingAddresses from "./pages/ShippingAddresses";
 import ArtworkDetails from './pages/ArtworkDetails';
+import ArtistProfile from './pages/ArtistProfile';
 
 export default function App() {
     return (
@@ -39,16 +40,17 @@ export default function App() {
                 <Route path="/login" element={<Layout> <Login /> </Layout>} />
                 <Route path="/profile" element={<Layout> <Profile /> </Layout>} />
                 <Route path="/profile/upload" element={<Layout> <UploadArtwork /> </Layout>} />
+                <Route path="/profile/:id" element={<Layout> <ArtistProfile /> </Layout>} />
                 <Route path="/explore" element={<Layout> <Explore /> </Layout>} />
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
                 <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />
                 <Route path="/commissions/settings" element={<Layout> <OpenCommissions /> </Layout>} />
-                <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
                 <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />
                 <Route path="/shipping" element={<Layout> <ShippingAddresses /> </Layout>} />
                 <Route path="/artwork-details/:id" element={<Layout> <ArtworkDetails /> </Layout>} />
+                <Route path="/find-artists" element={<Layout> <FindArtists /> </Layout>} />
             </Routes>
         </>
     )

@@ -222,7 +222,10 @@ export default function Wishlist() {
                                                 </h3>
                                             </Link>
                                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">
-                                                {artistNames[art.artist_id] || "Loading..."} <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.product_type}</span>
+                                                <Link to={`/profile/${art.artist_id}`} className="hover:text-yellow-500 transition-colors">
+                                                    {artistNames[art.artist_id] || "Loading..."}
+                                                </Link>
+                                                <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.product_type}</span>
                                             </p>
                                             {art.price && (
                                                 <p className="text-yellow-600 font-bold text-sm mt-1">${art.price.toFixed(2)}</p>

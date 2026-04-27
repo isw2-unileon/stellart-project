@@ -229,3 +229,30 @@ func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error 
 	_, err := r.db.Exec(query, open, id)
 	return err
 }
+
+func (r *postgresProfileRepo) GetArtistRanking() ([]models.ArtistRanking, error) {
+	query := `
+		SELECT p.id, COALESCE(p.full_name, 'Unknown'), COALESCE(p.avatar_url, ''), COUNT(l.id) as total_likes
+		FROM public.profiles p
+		LEFT JOIN public.artworks a ON p.id = a.artist_id
+		LEFT JOIN public.likes l ON a.id = l.artwork_id
+		GROUP BY p.id
+		ORDER BY total_likes DESC`
+
+	rows, err := r.db.Query(query)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var ranking []models.ArtistRanking
+	for rows.Next() {
+		var a models.ArtistRanking
+		err := rows.Scan(&a.ID, &a.FullName, &a.AvatarURL, &a.TotalLikes)
+		if err != nil {
+			return nil, err
+		}
+		ranking = append(ranking, a)
+	}
+	return ranking, nil
+}
