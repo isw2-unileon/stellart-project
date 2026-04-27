@@ -15,7 +15,8 @@ export default function ExploreGallery({ artworks = [] }) {
     const [isLoadingTrending, setIsLoadingTrending] = useState(true);
 
     const [trendingData, setTrendingData] = useState([]);
-    const [likedIds, setLikedIds] = useState(() => new Set(JSON.parse(localStorage.getItem('stellart_likes') || '[]')));
+    
+    const [likedIds, setLikedIds] = useState(new Set());
     const [localLikes, setLocalLikes] = useState({});
 
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
@@ -41,6 +42,11 @@ export default function ExploreGallery({ artworks = [] }) {
                 setUser(loggedUser);
                 const items = await getWishlist(loggedUser.id);
                 setWishlistIds(new Set((items || []).map(a => a.id)));
+                
+                const userLikes = JSON.parse(localStorage.getItem(`stellart_likes_${loggedUser.id}`) || '[]');
+                setLikedIds(new Set(userLikes));
+            } else {
+                setLikedIds(new Set());
             }
 
             if (!artworks || artworks.length === 0) {
@@ -82,6 +88,7 @@ export default function ExploreGallery({ artworks = [] }) {
 
     const toggleLike = async (e, artworkId, currentLikes = 0) => {
         e.stopPropagation();
+        if (!user) { toast.error('Log in to like artworks'); return; }
         const isLiked = likedIds.has(artworkId);
         const newLiked = new Set(likedIds);
         let newCount = currentLikes;
@@ -90,13 +97,13 @@ export default function ExploreGallery({ artworks = [] }) {
             newLiked.delete(artworkId);
             newCount = Math.max(0, currentLikes - 1);
             setLikedIds(newLiked);
-            localStorage.setItem('stellart_likes', JSON.stringify([...newLiked]));
+            localStorage.setItem(`stellart_likes_${user.id}`, JSON.stringify([...newLiked]));
             setLocalLikes(prev => ({ ...prev, [artworkId]: newCount }));
             if (selectedArtwork && selectedArtwork.id === artworkId) {
                 setSelectedArtwork(prev => ({ ...prev, likes_count: newCount }));
             }
             try {
-                await unlikeArtwork(artworkId);
+                await unlikeArtwork(artworkId, user.id);
             } catch {
                 toast.error('Failed to remove like');
             }
@@ -104,13 +111,13 @@ export default function ExploreGallery({ artworks = [] }) {
             newLiked.add(artworkId);
             newCount = currentLikes + 1;
             setLikedIds(newLiked);
-            localStorage.setItem('stellart_likes', JSON.stringify([...newLiked]));
+            localStorage.setItem(`stellart_likes_${user.id}`, JSON.stringify([...newLiked]));
             setLocalLikes(prev => ({ ...prev, [artworkId]: newCount }));
             if (selectedArtwork && selectedArtwork.id === artworkId) {
                 setSelectedArtwork(prev => ({ ...prev, likes_count: newCount }));
             }
             try {
-                await likeArtwork(artworkId);
+                await likeArtwork(artworkId, user.id);
                 toast.success('Artwork liked');
             } catch {
                 toast.error('Failed to send like');

@@ -67,16 +67,16 @@ func (s *ArtworkService) SearchArtworks(query string) ([]models.Artwork, error) 
 	return s.repo.SearchSimilar(embedding, 10)
 }
 
-func (s *ArtworkService) LikeArtwork(id string) error {
-	return s.repo.IncrementLikes(id)
+func (s *ArtworkService) LikeArtwork(artworkID string, profileID string) error {
+	return s.repo.IncrementLikes(artworkID, profileID)
 }
 
 func (s *ArtworkService) GetTrendingArtworks() ([]models.Artwork, error) {
 	return s.repo.GetTrending()
 }
 
-func (s *ArtworkService) UnlikeArtwork(id string) error {
-	return s.repo.DecrementLikes(id)
+func (s *ArtworkService) UnlikeArtwork(artworkID string, profileID string) error {
+	return s.repo.DecrementLikes(artworkID, profileID)
 }
 
 func (s *ArtworkService) DeleteArtwork(id string) error {

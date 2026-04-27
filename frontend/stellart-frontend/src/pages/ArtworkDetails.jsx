@@ -47,10 +47,12 @@ const ArtworkDetails = () => {
             if (loggedUser) {
                 const wishlist = await getWishlist(loggedUser.id);
                 setIsWishlisted((wishlist || []).some(item => item.id === id));
+                
+                const localLikes = JSON.parse(localStorage.getItem(`stellart_likes_${loggedUser.id}`) || '[]');
+                setIsLiked(localLikes.includes(id));
+            } else {
+                setIsLiked(false);
             }
-
-            const localLikes = JSON.parse(localStorage.getItem('stellart_likes') || '[]');
-            setIsLiked(localLikes.includes(id));
 
             setError(null);
         } catch (err) {
@@ -82,26 +84,27 @@ const ArtworkDetails = () => {
     };
 
     const toggleLike = async () => {
+        if (!user) { toast.error('Log in to like artworks'); return; }
         const newLikedStatus = !isLiked;
         const newCount = newLikedStatus ? likesCount + 1 : Math.max(0, likesCount - 1);
         
         setIsLiked(newLikedStatus);
         setLikesCount(newCount);
         
-        const storedLikes = new Set(JSON.parse(localStorage.getItem('stellart_likes') || '[]'));
+        const storedLikes = new Set(JSON.parse(localStorage.getItem(`stellart_likes_${user.id}`) || '[]'));
         if (newLikedStatus) {
             storedLikes.add(artwork.id);
         } else {
             storedLikes.delete(artwork.id);
         }
-        localStorage.setItem('stellart_likes', JSON.stringify([...storedLikes]));
+        localStorage.setItem(`stellart_likes_${user.id}`, JSON.stringify([...storedLikes]));
 
         try {
             if (newLikedStatus) {
-                await likeArtwork(artwork.id);
+                await likeArtwork(artwork.id, user.id);
                 toast.success('Artwork liked');
             } else {
-                await unlikeArtwork(artwork.id);
+                await unlikeArtwork(artwork.id, user.id);
             }
         } catch {
             setIsLiked(!newLikedStatus);

@@ -516,15 +516,36 @@ export const reportArtwork = async (artworkId, reporterId, reason) => {
     }
 };
 
-export const likeArtwork = async (artworkId) => {
+export const likeArtwork = async (artworkId, profileId) => {
     try {
         const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/like`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ profile_id: profileId })
         });
         if (!response.ok) throw new Error('Failed to like artwork');
         return await response.json();
     } catch (error) {
         console.error("Error liking artwork:", error);
+        throw error;
+    }
+};
+
+export const unlikeArtwork = async (artworkId, profileId) => {
+    try {
+        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/unlike`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ profile_id: profileId })
+        });
+        if (!response.ok) throw new Error('Failed to unlike artwork');
+        return true;
+    } catch (error) {
+        console.error("Error unliking artwork:", error);
         throw error;
     }
 };
@@ -537,19 +558,6 @@ export const getTrendingArtworks = async () => {
     } catch (error) {
         console.error("Error fetching trending artworks:", error);
         return [];
-    }
-};
-
-export const unlikeArtwork = async (artworkId) => {
-    try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/unlike`, {
-            method: 'POST',
-        });
-        if (!response.ok) throw new Error('Failed to unlike artwork');
-        return true;
-    } catch (error) {
-        console.error("Error unliking artwork:", error);
-        throw error;
     }
 };
 
