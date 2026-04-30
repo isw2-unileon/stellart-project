@@ -17,6 +17,7 @@ import Wishlist from './pages/Wishlist';
 import ShippingAddresses from "./pages/ShippingAddresses";
 import ArtworkDetails from './pages/ArtworkDetails';
 import ArtistProfile from './pages/ArtistProfile';
+import Orders from './pages/Orders';
 
 export default function App() {
     return (
@@ -51,6 +52,7 @@ export default function App() {
                 <Route path="/shipping" element={<Layout> <ShippingAddresses /> </Layout>} />
                 <Route path="/artwork-details/:id" element={<Layout> <ArtworkDetails /> </Layout>} />
                 <Route path="/find-artists" element={<Layout> <FindArtists /> </Layout>} />
+                <Route path="/orders" element={<Layout> <Orders /> </Layout>} />
             </Routes>
         </>
     )

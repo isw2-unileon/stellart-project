@@ -1,932 +1,270 @@
-import { useState, useEffect, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, denyCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
+import { 
+    getOrders, 
+    shipOrder, 
+    deliverOrder, 
+    getArtwork, 
+    getAddresses,
+    getLoggedUser 
+} from "../service/apiService";
 import { Button } from "../components/ui/button";
-import PaymentModal from "../components/PaymentModal";
-import ConfirmDialog from "../components/ConfirmDialog";
+import { Input } from "../components/ui/input";
+import { Package, Truck, CheckCircle, MapPin, Search } from "lucide-react";
 
-export default function CommissionDetail() {
-    const { id } = useParams();
-    const [user, setUser] = useState(null);
-    const [commission, setCommission] = useState(null);
-    const [artist, setArtist] = useState(null);
-    const [buyer, setBuyer] = useState(null);
-    const [workUploads, setWorkUploads] = useState([]);
-    const [messages, setMessages] = useState([]);
-    const [payment, setPayment] = useState(null);
-    const [remainingPayment, setRemainingPayment] = useState(null);
-    const [revisions, setRevisions] = useState([]);
+export default function Orders() {
+    const [view, setView] = useState("buyer");
+    const [orders, setOrders] = useState([]);
+    const [enrichedData, setEnrichedData] = useState({});
+    const [trackingCodes, setTrackingCodes] = useState({});
     const [isLoading, setIsLoading] = useState(true);
-    const [newMessage, setNewMessage] = useState("");
-    const [isUploading, setIsUploading] = useState(false);
-    const [uploadFile, setUploadFile] = useState(null);
-    const [uploadNotes, setUploadNotes] = useState("");
-    const [revisionNotes, setRevisionNotes] = useState("");
-    const [selectedImage, setSelectedImage] = useState(null);
-    const [showPaymentModal, setShowPaymentModal] = useState(false);
-    const [paymentAction, setPaymentAction] = useState(null);
-    const [finalUploadFile, setFinalUploadFile] = useState(null);
-    const [showDenyDialog, setShowDenyDialog] = useState(false);
-    const chatContainerRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
-        async function fetchData() {
-            try {
-                const loggedUser = await getLoggedUser();
-                if (!loggedUser) {
-                    navigate("/login");
-                    return;
-                }
-                setUser(loggedUser);
+        const checkUser = async () => {
+            const user = await getLoggedUser();
+            if (!user) navigate("/login");
+        };
+        checkUser();
+        fetchOrders();
+    }, [view, navigate]);
 
-                const comm = await getCommission(id);
-                if (!comm) {
-                    toast.error("Commission not found");
-                    navigate("/commissions");
-                    return;
-                }
-                setCommission(comm);
-
-                const [artistProfile, buyerProfile, uploads, msgs, pay, revs, remPay] = await Promise.all([
-                    getProfile(comm.artist_id).catch(() => null),
-                    getProfile(comm.buyer_id).catch(() => null),
-                    getWorkUploads(id).catch(() => []),
-                    getMessages(id).catch(() => []),
-                    getAdvancePayment(id).catch(() => null),
-                    getRevisions(id).catch(() => []),
-                    getRemainingPayment(id).catch(() => null)
-                ]);
-
-                setArtist(artistProfile);
-                setBuyer(buyerProfile);
-                setWorkUploads(uploads || []);
-                setMessages(msgs || []);
-                setPayment(pay);
-                setRevisions(revs || []);
-                setRemainingPayment(remPay);
-
-                await markMessagesRead(id, loggedUser.id);
-        } catch {
-                toast.error("Error loading commission");
-            } finally {
-                setIsLoading(false);
-            }
-        }
-        fetchData();
-    }, [id, navigate]);
-
-    useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
-    }, [messages]);
-
-    const handleSendMessage = async (e) => {
-        e.preventDefault();
-        if (!newMessage.trim()) return;
-
+    const fetchOrders = async () => {
+        setIsLoading(true);
         try {
-            const msg = {
-                message_id: `msg_${Date.now()}`,
-                commission_id: id,
-                sender_id: user.id,
-                content: newMessage
-            };
-            await sendMessage(msg);
-            setMessages([...messages, { ...msg, created_at: new Date().toISOString() }]);
-            setNewMessage("");
-        } catch {
-            toast.error("Failed to send message");
-        }
-    };
+            const data = await getOrders(view);
+            const ordersList = data || [];
+            setOrders(ordersList);
 
-    const handleFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const maxSize = 100 * 1024 * 1024;
-            if (file.size > maxSize) {
-                toast.error("File size must be less than 100MB");
-                return;
-            }
-            setUploadFile(file);
-        }
-    };
-
-    const handleUploadWork = async () => {
-        if (!uploadFile) {
-            toast.error("Please select an image");
-            return;
-        }
-
-        setIsUploading(true);
-        try {
-            const watermarkedUrl = await createWatermarkedImage(uploadFile);
-            const cleanUrl = await uploadImage(uploadFile);
-            
-            const uploadData = {
-                upload_id: `upload_${Date.now()}`,
-                commission_id: id,
-                image_url: watermarkedUrl,
-                clean_image_url: cleanUrl,
-                watermarked: true,
-                is_final: false,
-                notes: uploadNotes
-            };
-
-            await uploadWork(uploadData);
-            
-            const uploads = await getWorkUploads(id).catch(() => []);
-            setWorkUploads(uploads || []);
-            
-            setUploadFile(null);
-            setUploadNotes("");
-            toast.success("Preview uploaded! Buyer needs to approve for final version.");
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-        } catch (e) {
-            toast.error(e.message || "Failed to upload work");
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const createWatermarkedImage = async (file) => {
-        return new Promise((resolve, reject) => {
-            const img = new Image();
-            const url = URL.createObjectURL(file);
-            
-            img.onload = () => {
-                const canvas = document.createElement('canvas');
-                canvas.width = img.width;
-                canvas.height = img.height;
-                
-                const ctx = canvas.getContext('2d');
-                ctx.drawImage(img, 0, 0);
-                
-                const fontSize = Math.max(img.width / 10, 40);
-                ctx.font = `bold ${fontSize}px Arial`;
-                ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-                ctx.textAlign = 'center';
-                ctx.textBaseline = 'middle';
-                
-                ctx.save();
-                ctx.translate(img.width / 2, img.height / 2);
-                ctx.rotate(-Math.PI / 4);
-                ctx.fillText('PREVIEW', 0, 0);
-                ctx.fillText('PREVIEW', 0, fontSize * 1.5);
-                ctx.fillText('PREVIEW', 0, -fontSize * 1.5);
-                ctx.restore();
-                
-                canvas.toBlob(async (blob) => {
-                    URL.revokeObjectURL(url);
-                    try {
-                        const watermarkedFile = new File([blob], file.name, { type: 'image/jpeg' });
-                        const imageUrl = await uploadImage(watermarkedFile);
-                        resolve(imageUrl);
-                    } catch (err) {
-                        reject(err);
-                    }
-                }, 'image/jpeg', 0.9);
-            };
-            
-            img.onerror = () => {
-                URL.revokeObjectURL(url);
-                reject(new Error('Failed to load image'));
-            };
-            
-            img.src = url;
-        });
-    };
-
-    const handleCreatePayment = () => {
-        setPaymentAction('create');
-        setShowPaymentModal(true);
-    };
-
-    const handlePayAdvance = () => {
-        setPaymentAction('advance');
-        setShowPaymentModal(true);
-    };
-
-    const handleFinalUpload = async () => {
-        if (!finalUploadFile) {
-            toast.error("Please select an image");
-            return;
-        }
-
-        setIsUploading(true);
-        try {
-            const imageUrl = await uploadImage(finalUploadFile);
-            
-            const uploadData = {
-                upload_id: `final_${Date.now()}`,
-                commission_id: id,
-                image_url: imageUrl,
-                watermarked: false,
-                is_final: true,
-                notes: "Final version"
-            };
-
-            await uploadWork(uploadData);
-            
-            const uploads = await getWorkUploads(id).catch(() => []);
-            setWorkUploads(uploads || []);
-            
-            setFinalUploadFile(null);
-            toast.success("Final version uploaded!");
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-        } catch (e) {
-            toast.error(e.message || "Failed to upload final version");
-        } finally {
-            setIsUploading(false);
-        }
-    };
-
-    const handleFinalFileChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const maxSize = 100 * 1024 * 1024;
-            if (file.size > maxSize) {
-                toast.error("File size must be less than 100MB");
-                return;
-            }
-            setFinalUploadFile(file);
-        }
-    };
-
-    const handleDownload = async (imageUrl, filename) => {
-        try {
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = filename;
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        } catch {
-            window.open(imageUrl, '_blank');
-        }
-    };
-
-    const handlePaymentSuccess = async () => {
-        try {
-            if (paymentAction === 'create' || paymentAction === 'advance') {
-                if (!payment) {
-                    const advanceAmount = commission.price * 0.5;
-                    const paymentData = {
-                        payment_id: `pay_${Date.now()}`,
-                        commission_id: id,
-                        amount: advanceAmount,
-                        payment_intent: `pi_${Date.now()}`
+            // Cargar títulos, imágenes y direcciones para cada pedido
+            const extraData = {};
+            await Promise.all(ordersList.map(async (order) => {
+                try {
+                    const [artwork, addresses] = await Promise.all([
+                        getArtwork(order.artwork_id).catch(() => null),
+                        getAddresses(order.buyer_id).catch(() => [])
+                    ]);
+                    
+                    const address = addresses.find(a => (a.ID || a.id) === order.shipping_address_id);
+                    
+                    extraData[order.id] = {
+                        artworkTitle: artwork?.title || "Untitled Artwork",
+                        artworkImage: artwork?.image_url,
+                        addressFull: address ? `${address.Street || address.street}, ${address.City || address.city}` : "Address not available"
                     };
-                    await createAdvancePayment(paymentData);
+                } catch (e) {
+                    console.error("Enrichment error:", e);
                 }
-                await markPaymentPaid(id);
-                toast.success("Advance payment successful!");
-            } else if (paymentAction === 'remaining' || paymentAction === 'remaining_approve') {
-                if (!remainingPayment) {
-                    const remainingAmount = commission.price * 0.5;
-                    const paymentData = {
-                        payment_id: `rem_${Date.now()}`,
-                        commission_id: id,
-                        amount: remainingAmount,
-                        payment_intent: `pi_${Date.now()}`
-                    };
-                    await createRemainingPayment(paymentData);
-                }
-                await markRemainingPaymentPaid(id);
-                toast.success("Remaining payment successful!");
-                
-                if (paymentAction === 'remaining_approve') {
-                    await approveWork(id);
-                    setCommission({ ...commission, status: "completed" });
-                    toast.success("Work approved! Final version now available.");
-                }
-            }
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-            const pay = await getAdvancePayment(id).catch(() => null);
-            const remPay = await getRemainingPayment(id).catch(() => null);
-            setPayment(pay);
-            setRemainingPayment(remPay);
-        } catch {
-            toast.error("Failed to process payment");
-        }
-        setShowPaymentModal(false);
-        setPaymentAction(null);
-    };
-
-    const handleReleasePayment = async () => {
-        try {
-            await releasePayment(id);
-            toast.success("Payment released to artist!");
-            
-            const pay = await getAdvancePayment(id).catch(() => null);
-            setPayment(pay);
-        } catch {
-            toast.error("Failed to release payment");
+            }));
+            setEnrichedData(extraData);
+        } catch (error) {
+            toast.error("Failed to load orders");
+        } finally {
+            setIsLoading(false);
         }
     };
 
-    const handleRequestRevision = async () => {
-        if (!revisionNotes.trim()) {
-            toast.error("Please add revision notes");
+    const handleShip = async (orderId) => {
+        const code = trackingCodes[orderId];
+        if (!code) {
+            toast.error("Please provide a tracking code");
             return;
         }
-
-        const lastUpload = workUploads[0];
-        if (!lastUpload) {
-            toast.error("No work to request revision for");
-            return;
-        }
-
         try {
-            const revisionData = {
-                revision_id: `rev_${Date.now()}`,
-                commission_id: id,
-                work_upload_id: lastUpload.id,
-                request_notes: revisionNotes
-            };
-            await requestRevision(revisionData);
-            toast.success("Revision requested!");
-            setRevisionNotes("");
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-            
-            const revs = await getRevisions(id).catch(() => []);
-            setRevisions(revs || []);
-        } catch {
-            toast.error("Failed to request revision");
+            await shipOrder(orderId, code);
+            toast.success("Order marked as shipped!");
+            fetchOrders();
+        } catch (error) {
+            toast.error("Failed to update status");
         }
     };
 
-    const handleAccept = async () => {
+    const handleDeliver = async (orderId) => {
         try {
-            await acceptCommission(id);
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-            
-            toast.success("Commission accepted!");
-        } catch {
-            toast.error("Failed to accept");
+            await deliverOrder(orderId);
+            toast.success("Order confirmed as delivered!");
+            fetchOrders(); 
+        } catch (error) {
+            toast.error("Failed to confirm delivery");
         }
     };
 
-    const handleDeny = async () => {
-        setShowDenyDialog(true);
-    };
-
-    const handleConfirmDeny = async () => {
-        try {
-            await denyCommission(id);
-            
-            const updated = await getCommission(id);
-            setCommission(updated);
-            
-            toast.success("Commission denied. Advance payment will be refunded.");
-        } catch {
-            toast.error("Failed to deny commission");
-        }
-    };
-
-    const handleStart = async () => {
-        try {
-            await startCommission(id);
-            setCommission({ ...commission, status: "in_progress" });
-            toast.success("Commission started!");
-        } catch {
-            toast.error("Failed to start");
-        }
-    };
-
-    const handleSubmitForReview = async () => {
-        try {
-            await submitForReview(id);
-            setCommission({ ...commission, status: "review" });
-            toast.success("Submitted for review!");
-        } catch {
-            toast.error("Failed to submit");
-        }
-    };
-
-    const handleApprove = async () => {
-        if (!isAdvancePaid && isBuyer) {
-            setPaymentAction('advance');
-            setShowPaymentModal(true);
-            return;
-        }
-
-        if (!isRemainingPaid && isBuyer) {
-            setPaymentAction('remaining_approve');
-            setShowPaymentModal(true);
-            return;
-        }
-
-        try {
-            await approveWork(id);
-            setCommission({ ...commission, status: "completed" });
-            toast.success("Work approved! Final version now available.");
-        } catch {
-            toast.error("Failed to approve");
-        }
-    };
+    // Filtrar para mostrar solo pedidos activos en la vista principal
+    const activeOrders = orders.filter(order => order.status !== "delivered");
 
     if (isLoading) {
         return (
-            <div className="flex items-center justify-center min-h-[60vh]">
+            <div className="flex items-center justify-center min-h-screen bg-slate-50">
                 <div className="w-12 h-12 rounded-full border-4 border-slate-200 border-t-yellow-500 animate-spin" />
             </div>
         );
     }
 
-    const isBuyer = user?.id === commission?.buyer_id;
-    const isArtist = user?.id === commission?.artist_id;
-    const advanceAmount = commission?.price * 0.5;
-    const isAdvancePaid = payment?.status === "paid";
-    const isRemainingPaid = remainingPayment?.status === "paid";
-    const hasUploadedWork = workUploads.length > 0;
-    const isApproved = commission?.status === "completed";
-    const lastRevision = revisions[0];
-
     return (
-        <div className="max-w-6xl mx-auto px-6 py-12">
-            {selectedImage && (
-                <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
-                    <button className="absolute top-4 right-4 text-white p-2" onClick={() => setSelectedImage(null)}>
-                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                        </svg>
-                    </button>
-                    {!isApproved && (
-                        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                            <span className="text-white/20 text-9xl font-black rotate-45">PREVIEW</span>
+        <div className="min-h-screen bg-slate-50 pb-20">
+            <div className="max-w-6xl mx-auto px-6 pt-12">
+                {/* Header de la sección */}
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
+                    <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                            <Package className="w-10 h-10 text-yellow-500" />
+                            <h1 className="text-4xl font-black tracking-tighter text-slate-900">Order Center</h1>
                         </div>
-                    )}
-                    <img src={selectedImage} alt="Full view" className="max-w-full max-h-full object-contain" />
+                        <p className="text-slate-500 font-medium">Track your art purchases and sales in real-time.</p>
+                    </div>
+
+                    <div className="flex gap-1 bg-slate-200 p-1 rounded-2xl w-fit h-fit shadow-inner">
+                        <button
+                            onClick={() => setView("buyer")}
+                            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all ${
+                                view === "buyer" ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"
+                            }`}
+                        >
+                            My Purchases
+                        </button>
+                        <button
+                            onClick={() => setView("seller")}
+                            className={`px-8 py-3 rounded-xl font-bold text-sm transition-all ${
+                                view === "seller" ? "bg-white text-slate-900 shadow-md" : "text-slate-500 hover:text-slate-700"
+                            }`}
+                        >
+                            My Sales
+                        </button>
+                    </div>
                 </div>
-            )}
 
-            <Link to="/commissions" className="text-slate-500 hover:text-slate-700 text-sm mb-4 inline-block">
-                ← Back to commissions
-            </Link>
-
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-4">
-                                {isArtist ? (
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
-                                        {buyer?.avatar_url ? (
-                                            <img src={buyer.avatar_url} alt="Buyer" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {buyer?.full_name?.charAt(0) || "?"}
-                                            </div>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <div className="w-12 h-12 rounded-full bg-slate-100 overflow-hidden">
-                                        {artist?.avatar_url ? (
-                                            <img src={artist.avatar_url} alt="Artist" className="w-full h-full object-cover" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {artist?.full_name?.charAt(0) || "?"}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                                <div>
-                                    <h1 className="text-xl font-black text-slate-900">{commission.title}</h1>
-                                    <p className="text-sm text-slate-500">
-                                        {isArtist ? `From: ${buyer?.full_name || 'Buyer'}` : `Artist: ${artist?.full_name || 'Artist'}`}
-                                    </p>
-                                </div>
+                {/* Listado de pedidos */}
+                <div className="space-y-6">
+                    {activeOrders.length === 0 ? (
+                        <div className="bg-white rounded-[2.5rem] border border-slate-100 p-20 text-center shadow-sm">
+                            <div className="w-20 h-20 bg-slate-50 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                <Search className="w-10 h-10 text-slate-200" />
                             </div>
-                            <StatusBadge status={commission.status} />
+                            <h3 className="text-xl font-bold text-slate-900 mb-2">No active orders</h3>
+                            <p className="text-slate-400 max-w-xs mx-auto">You don't have any pending orders in this section at the moment.</p>
                         </div>
-                        <p className="text-slate-600 mb-4">{commission.description}</p>
-                        <div className="flex items-center justify-between pt-4 border-t border-slate-100">
-                            <div>
-                                <p className="text-sm text-slate-500">Total Budget</p>
-                                <p className="text-xl font-bold text-slate-900">${commission.price}</p>
-                            </div>
-                            {commission.deadline && (
-                                <div className="text-right">
-                                    <p className="text-sm text-slate-500">Deadline</p>
-                                    <p className="font-bold text-slate-900">
-                                        {new Date(commission.deadline).toLocaleDateString()}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        <div className="mt-6 flex flex-wrap gap-3">
-                            {commission.status === "pending" && isBuyer && payment && payment.status === "paid" && (
-                                <span className="text-blue-600 font-medium">Waiting for artist to accept...</span>
-                            )}
-                            
-                            {commission.status === "pending" && isArtist && payment && payment.status === "paid" && (
-                                <>
-                                    <Button onClick={handleAccept}>Accept Commission</Button>
-                                    <Button onClick={handleDeny} variant="destructive">Deny & Refund</Button>
-                                </>
-                            )}
-                            
-                            {commission.status === "accepted" && isArtist && (
-                                <Button onClick={handleStart}>Start Work</Button>
-                            )}
-                            
-                            {commission.status === "in_progress" && isArtist && (
-                                <Button onClick={handleSubmitForReview} disabled={!hasUploadedWork}>
-                                    Submit for Review {!hasUploadedWork && "(Upload preview first)"}
-                                </Button>
-                            )}
-                            
-                            {(commission.status === "review" || commission.status === "revised") && isBuyer && (
-                                <>
-                                    <Button onClick={handleApprove}>
-                                        {!isAdvancePaid ? `Pay Advance ($${advanceAmount})` : !isRemainingPaid ? `Approve & Pay Remaining ($${advanceAmount})` : "Approve Work"}
-                                    </Button>
-                                    <Button variant="outline" onClick={handleRequestRevision} disabled={!revisionNotes.trim()}>
-                                        Request Revision
-                                    </Button>
-                                </>
-                            )}
-                            
-                            {commission.status === "completed" && (
-                                <span className="text-green-600 font-bold">✓ Commission Complete!</span>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <h2 className="text-lg font-bold text-slate-900 mb-4">Payment</h2>
-                        
-                        <div className="space-y-3">
-                            <div className="flex items-center justify-between p-3 bg-yellow-50 rounded-xl">
-                                <div>
-                                    <p className="font-bold text-slate-900">Advance (50%)</p>
-                                    <p className="text-sm text-slate-500">${advanceAmount}</p>
-                                </div>
-                                <PaymentStatusBadge status={payment?.status} />
-                            </div>
-
-                            <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
-                                <div>
-                                    <p className="font-bold text-slate-900">Remaining (50%)</p>
-                                    <p className="text-sm text-slate-500">${advanceAmount}</p>
-                                </div>
-                                {isRemainingPaid ? (
-                                    <span className="text-green-600 font-bold text-sm">Paid</span>
-                                ) : (
-                                    <span className="text-slate-400 text-sm">Pending</span>
-                                )}
-                            </div>
-                        </div>
-
-                        <div className="mt-4 flex flex-wrap gap-2">
-                            {commission.status === "pending" && isBuyer && payment && payment.status !== "paid" && (
-                                <Button onClick={handleCreatePayment} size="sm">
-                                    Pay Advance (${advanceAmount})
-                                </Button>
-                            )}
-                            
-                            {(commission.status === "accepted" || commission.status === "in_progress") && isBuyer && payment && payment.status !== "paid" && (
-                                <Button onClick={handlePayAdvance} size="sm">
-                                    Pay Advance (${advanceAmount})
-                                </Button>
-                            )}
-                            
-                            {isArtist && payment?.status === "paid" && remainingPayment?.status === "paid" && (
-                                <Button onClick={handleReleasePayment} size="sm">
-                                    Release Payment
-                                </Button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <h2 className="text-lg font-bold text-slate-900 mb-4">Work Uploads</h2>
-                        
-                        {(commission.status === "revised" || commission.status === "review") && lastRevision && (
-                            <div className="mb-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
-                                <p className="font-bold text-orange-800">Revision Requested:</p>
-                                <p className="text-sm text-orange-700 mt-1">{lastRevision.request_notes}</p>
-                            </div>
-                        )}
-
-                        {isArtist && (commission.status === "accepted" || commission.status === "in_progress" || commission.status === "revised") && (
-                            <div className="mb-6 p-4 bg-slate-50 rounded-xl">
-                                <p className="text-sm font-medium text-slate-700 mb-3">Upload a preview (will be watermarked)</p>
-                                <label className="block cursor-pointer">
-                                    <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center hover:border-yellow-500 hover:bg-yellow-50 transition-colors">
-                                        {uploadFile ? (
-                                            <div className="flex flex-col items-center">
-                                                <svg className="w-10 h-10 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                </svg>
-                                                <p className="text-sm font-medium text-slate-700">{uploadFile.name}</p>
-                                                <p className="text-xs text-slate-500 mt-1">Click to change</p>
-                                            </div>
-                                        ) : (
-                                            <div className="flex flex-col items-center">
-                                                <svg className="w-10 h-10 text-slate-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                </svg>
-                                                <p className="text-sm font-medium text-slate-700">Click to upload</p>
-                                                <p className="text-xs text-slate-500 mt-1">PNG, JPG up to 100MB</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                    <input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        className="hidden"
-                                    />
-                                </label>
-
-                                <textarea
-                                    value={uploadNotes}
-                                    onChange={(e) => setUploadNotes(e.target.value)}
-                                    placeholder="Notes about this preview..."
-                                    className="w-full px-3 py-2 rounded-lg border border-slate-200 text-sm mt-3"
-                                    rows={2}
-                                />
-                                <Button 
-                                    onClick={handleUploadWork} 
-                                    disabled={!uploadFile || isUploading}
-                                    className="w-full mt-3"
-                                >
-                                    {isUploading ? "Uploading..." : "Upload Preview"}
-                                </Button>
-                            </div>
-                        )}
-
-                        {workUploads.length === 0 ? (
-                            <p className="text-slate-500 text-sm">No work uploaded yet.</p>
-                        ) : (
-                            <div className="grid grid-cols-2 gap-4">
-                                {workUploads.map((upload) => (
-                                    <div key={upload.id}>
-                                        <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
-                                            <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
-                                            
-                                            {!upload.is_final && !upload.watermarked && (
-                                                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                                    <span className="text-white/40 text-4xl font-black rotate-45">PREVIEW</span>
+                    ) : (
+                        activeOrders.map(order => {
+                            const info = enrichedData[order.id] || {};
+                            return (
+                                <div key={order.id} className="group bg-white rounded-[2.5rem] border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-slate-200/50 transition-all overflow-hidden">
+                                    <div className="flex flex-col lg:flex-row">
+                                        {/* Imagen y Estado */}
+                                        <div className="w-full lg:w-64 h-64 lg:h-auto bg-slate-100 relative shrink-0">
+                                            {info.artworkImage ? (
+                                                <img src={info.artworkImage} alt={info.artworkTitle} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-400">
+                                                    <Package size={48} strokeWidth={1} />
                                                 </div>
                                             )}
-                                            
-                                            <div className="absolute top-2 right-2">
-                                                {upload.is_final ? (
-                                                    <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
-                                                        Final
-                                                    </span>
-                                                ) : (
-                                                    <span className="px-2 py-1 bg-yellow-500 text-black text-xs font-bold rounded-full">
-                                                        Preview
-                                                    </span>
-                                                )}
-                                            </div>
-                                            
-                                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                                {upload.is_final ? (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            const url = upload.clean_image_url || upload.image_url;
-                                                            handleDownload(url, `commission-${id}-final.jpg`);
-                                                        }}
-                                                        className="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Download Full
-                                                    </button>
-                                                ) : upload.clean_image_url ? (
-                                                    <button 
-                                                        onClick={(e) => {
-                                                            e.stopPropagation();
-                                                            handleDownload(upload.clean_image_url, `commission-${id}-preview.jpg`);
-                                                        }}
-                                                        className="bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg font-medium flex items-center gap-2"
-                                                    >
-                                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                                                        </svg>
-                                                        Download
-                                                    </button>
-                                                ) : isApproved ? (
-                                                    <span className="text-yellow-500 font-medium">Waiting for final version</span>
-                                                ) : (
-                                                    <span className="text-white font-medium">Click to view</span>
-                                                )}
+                                            <div className="absolute top-4 left-4">
+                                                <StatusBadge status={order.status} />
                                             </div>
                                         </div>
-                                        
-                                        {upload.notes && (
-                                            <div className="mt-3 p-4 bg-gradient-to-r from-slate-50 to-yellow-50 rounded-xl border border-slate-200">
-                                                <div className="flex items-start gap-3">
-                                                    <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || "A"}</span>
-                                                    </div>
+
+                                        {/* Contenido principal */}
+                                        <div className="flex-1 p-8 flex flex-col justify-between">
+                                            <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                                                <div className="space-y-4">
                                                     <div>
-                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || "Artist"}</p>
-                                                        <p className="text-sm text-slate-700 mt-1">{upload.notes}</p>
-                                                        <p className="text-xs text-slate-400 mt-1">
-                                                            {new Date(upload.created_at).toLocaleDateString()} at {new Date(upload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                        </p>
+                                                        <h2 className="text-2xl font-black text-slate-900 tracking-tight leading-none mb-2">
+                                                            {info.artworkTitle}
+                                                        </h2>
+                                                        <div className="flex items-center gap-3 text-xs font-bold text-slate-300 uppercase tracking-widest">
+                                                            <span>ID: {order.id.slice(0, 8)}</span>
+                                                            <span className="w-1 h-1 bg-slate-200 rounded-full" />
+                                                            <span>{new Date(order.created_at).toLocaleDateString()}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex items-start gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                                                        <MapPin className="w-5 h-5 text-slate-400 mt-1" />
+                                                        <div>
+                                                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Shipping Destination</p>
+                                                            <p className="text-sm text-slate-700 font-bold leading-tight">{info.addressFull}</p>
+                                                        </div>
                                                     </div>
                                                 </div>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                        
-                        {isApproved && (
-                            <>
-                                <p className="text-green-600 text-sm mt-3 font-medium">✓ Final version approved - You can view and download in full resolution</p>
-                                
-                                {isArtist && (
-                                    <div className="mt-4 p-4 bg-green-50 rounded-xl border border-green-200">
-                                        <p className="text-sm font-medium text-green-800 mb-3">Upload Final Version (without watermark)</p>
-                                        <label className="block cursor-pointer">
-                                            <div className="border-2 border-dashed border-green-300 rounded-xl p-4 text-center hover:border-green-500 hover:bg-green-100 transition-colors">
-                                                {finalUploadFile ? (
-                                                    <div className="flex flex-col items-center">
-                                                        <svg className="w-8 h-8 text-green-500 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                                                        </svg>
-                                                        <p className="text-sm font-medium text-slate-700">{finalUploadFile.name}</p>
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col items-center">
-                                                        <svg className="w-8 h-8 text-green-400 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                                                        </svg>
-                                                        <p className="text-sm font-medium text-slate-700">Click to upload clean final</p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <input
-                                                type="file"
-                                                accept="image/*"
-                                                onChange={handleFinalFileChange}
-                                                className="hidden"
-                                            />
-                                        </label>
-                                        <Button 
-                                            onClick={handleFinalUpload} 
-                                            disabled={!finalUploadFile || isUploading}
-                                            className="w-full mt-3 bg-green-600 hover:bg-green-700"
-                                        >
-                                            {isUploading ? "Uploading..." : "Upload Final Version"}
-                                        </Button>
-                                    </div>
-                                )}
-                            </>
-                        )}
-                    </div>
 
-                    {isBuyer && (commission.status === "review" || commission.status === "revised") && (
-                        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                            <h2 className="text-lg font-bold text-slate-900 mb-4">Request Revision</h2>
-                            <textarea
-                                value={revisionNotes}
-                                onChange={(e) => setRevisionNotes(e.target.value)}
-                                placeholder="Describe what changes you want..."
-                                className="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-yellow-500 outline-none"
-                                rows={3}
-                            />
-                        </div>
-                    )}
-                </div>
+                                                <div className="bg-yellow-50 px-6 py-4 rounded-2xl text-right self-start md:self-auto border border-yellow-100">
+                                                    <p className="text-[10px] font-black text-yellow-600 uppercase tracking-widest mb-1">Total Amount</p>
+                                                    <p className="text-3xl font-black text-slate-900">${order.amount}</p>
+                                                </div>
+                                            </div>
 
-                <div className="space-y-6">
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
-                        <h2 className="text-lg font-bold text-slate-900 mb-4">Chat</h2>
-                        <div ref={chatContainerRef} className="h-80 overflow-y-auto space-y-3 mb-4">
-                            {messages.map((msg) => (
-                                <div
-                                    key={msg.id || msg.message_id}
-                                    className={`flex ${msg.sender_id === user?.id ? "justify-end" : "justify-start"}`}
-                                >
-                                    <div
-                                        className={`max-w-[80%] px-4 py-2 rounded-2xl ${
-                                            msg.sender_id === user?.id
-                                                ? "bg-yellow-500 text-slate-900"
-                                                : "bg-slate-100 text-slate-700"
-                                        }`}
-                                    >
-                                        <p className="text-sm">{msg.content}</p>
-                                        <p className="text-xs opacity-60 mt-1">
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </p>
+                                            {/* Footer de la tarjeta: Acciones */}
+                                            <div className="mt-8 pt-8 border-t border-slate-50 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                                <div className="w-full sm:w-auto">
+                                                    {order.tracking_code ? (
+                                                        <div className="flex items-center gap-3 text-blue-600">
+                                                            <Truck className="w-5 h-5" />
+                                                            <div>
+                                                                <p className="text-[10px] font-black uppercase tracking-widest opacity-60">Tracking Code</p>
+                                                                <p className="font-mono font-bold text-sm">{order.tracking_code}</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-2 text-slate-300 italic text-sm">
+                                                            <div className="w-2 h-2 bg-slate-200 rounded-full animate-pulse" />
+                                                            Awaiting shipment details
+                                                        </div>
+                                                    )}
+                                                </div>
+
+                                                <div className="w-full sm:w-auto flex gap-3">
+                                                    {view === "seller" && order.status === "pending" && (
+                                                        <div className="flex items-center gap-2 w-full bg-slate-50 p-2 rounded-2xl border border-slate-100">
+                                                            <Input 
+                                                                placeholder="Enter tracking ID..." 
+                                                                value={trackingCodes[order.id] || ""}
+                                                                onChange={(e) => setTrackingCodes({...trackingCodes, [order.id]: e.target.value})}
+                                                                className="h-12 border-none bg-transparent shadow-none focus-visible:ring-0 w-48 font-bold"
+                                                            />
+                                                            <Button 
+                                                                onClick={() => handleShip(order.id)} 
+                                                                className="bg-slate-900 text-white hover:bg-yellow-500 hover:text-slate-900 px-8 h-12 rounded-xl font-black transition-all"
+                                                            >
+                                                                SHIP NOW
+                                                            </Button>
+                                                        </div>
+                                                    )}
+
+                                                    {view === "buyer" && order.status === "shipped" && (
+                                                        <Button 
+                                                            onClick={() => handleDeliver(order.id)} 
+                                                            className="bg-green-500 hover:bg-green-600 text-white font-black px-10 py-7 rounded-2xl shadow-xl shadow-green-100 flex gap-2 items-center"
+                                                        >
+                                                            <CheckCircle className="w-5 h-5" />
+                                                            CONFIRM DELIVERY
+                                                        </Button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
-                            ))}
-                        </div>
-                        <form onSubmit={handleSendMessage} className="flex gap-2">
-                            <input
-                                type="text"
-                                value={newMessage}
-                                onChange={(e) => setNewMessage(e.target.value)}
-                                placeholder="Type a message..."
-                                className="flex-1 px-4 py-2 rounded-xl border border-slate-200 focus:border-yellow-500 outline-none text-sm"
-                            />
-                            <Button type="submit" size="sm">Send</Button>
-                        </form>
-                    </div>
+                            );
+                        })
+                    )}
                 </div>
             </div>
-
-            <PaymentModal 
-                isOpen={showPaymentModal} 
-                onClose={() => {
-                    setShowPaymentModal(false);
-                    setPaymentAction(null);
-                }}
-                amount={advanceAmount}
-                paymentType={paymentAction === 'remaining' || paymentAction === 'remaining_approve' ? 'remaining' : 'advance'}
-                onSuccess={handlePaymentSuccess}
-                onFailure={() => toast.error('Payment failed')}
-            />
-
-            <ConfirmDialog
-                open={showDenyDialog}
-                onOpenChange={setShowDenyDialog}
-                title="Deny Commission"
-                description="Are you sure you want to deny this commission? The advance payment will be refunded to the buyer."
-                confirmText="Deny & Refund"
-                cancelText="Cancel"
-                onConfirm={handleConfirmDeny}
-            />
         </div>
     );
 }
 
 function StatusBadge({ status }) {
-    const statusColors = {
-        pending: "bg-slate-100 text-slate-600",
-        accepted: "bg-blue-50 text-blue-600",
-        in_progress: "bg-yellow-50 text-yellow-600",
-        review: "bg-purple-50 text-purple-600",
-        revised: "bg-orange-50 text-orange-600",
-        completed: "bg-green-50 text-green-600",
-        refunded: "bg-red-50 text-red-600",
-        cancelled: "bg-slate-100 text-slate-400"
-    };
-
-    const statusLabels = {
-        pending: "Pending",
-        accepted: "Accepted",
-        in_progress: "In Progress",
-        review: "In Review",
-        revised: "Revised",
-        completed: "Completed",
-        refunded: "Refunded",
-        cancelled: "Cancelled"
-    };
-
-    return (
-        <span className={`px-3 py-1 rounded-full text-xs font-bold ${statusColors[status] || statusColors.pending}`}>
-            {statusLabels[status] || "Pending"}
-        </span>
-    );
-}
-
-function PaymentStatusBadge({ status }) {
-    if (!status) {
-        return <span className="text-orange-500 text-sm font-bold">Required</span>;
-    }
-    
     const styles = {
-        pending: "bg-orange-100 text-orange-600",
-        paid: "bg-green-50 text-green-600",
-        released: "bg-blue-50 text-blue-600",
-        refunded: "bg-red-50 text-red-600",
-        failed: "bg-red-50 text-red-600"
+        pending: "bg-yellow-400 text-slate-900",
+        shipped: "bg-blue-500 text-white",
+        delivered: "bg-green-500 text-white",
     };
-
+    
     return (
-        <span className={`px-2 py-1 rounded-full text-xs font-bold ${styles[status] || styles.pending}`}>
-            {status.toUpperCase()}
+        <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-1.5 ${styles[status] || styles.pending}`}>
+            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-50" />
+            {status}
         </span>
     );
 }
