@@ -47,6 +47,15 @@ export default function Footer() {
                             <li><Link to="/contact" className="text-sm text-slate-400 hover:text-yellow-500 transition-colors">Contact Us</Link></li>
                         </ul>
                     </div>
+
+                    {/* Orders */}
+                    <div>
+                        <h4 className="text-xs font-bold uppercase tracking-widest text-slate-900 mb-4">Support</h4>
+                        <ul className="space-y-2.5">
+                            <li><Link to="/orders" className="text-sm text-slate-400 hover:text-yellow-500 transition-colors">Contact Us</Link></li>
+                        </ul>
+                    </div>
+
                 </div>
 
                 {/* Bottom bar */}

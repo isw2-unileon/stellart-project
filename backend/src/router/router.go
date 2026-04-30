@@ -93,6 +93,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 	})
 
 	r.Route("/orders", func(r chi.Router) {
+		r.Post("/", oh.CreateOrder)
 		r.Get("/", oh.GetOrders)
 		r.Put("/{id}/ship", oh.ShipOrder)
 		r.Put("/{id}/deliver", oh.DeliverOrder)

@@ -4,16 +4,22 @@ import (
 	"encoding/json"
 	"net/http"
 	"stellart/backend/src/dto"
-	"stellart/backend/src/service"
 
 	"github.com/go-chi/chi/v5"
 )
 
-type OrderHandler struct {
-	Service *service.OrderService
+type OrderServiceInterface interface {
+	CreateOrder(buyerID string, req dto.CreateOrderDTO) (interface{}, error)
+	MarkAsShipped(orderID, sellerID, trackingCode, carrier string) error
+	GetOrdersByUser(userID, role string) (interface{}, error)
+	MarkAsDelivered(orderID, buyerID string) error
 }
 
-func NewOrderHandler(service *service.OrderService) *OrderHandler {
+type OrderHandler struct {
+	Service OrderServiceInterface
+}
+
+func NewOrderHandler(service OrderServiceInterface) *OrderHandler {
 	return &OrderHandler{Service: service}
 }
 

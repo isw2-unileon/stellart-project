@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL; 
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
+
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const getLoggedUser = async () => {
@@ -680,5 +681,64 @@ export const getArtwork = async (id) => {
         return await response.json();
     } catch {
         return null;
+    }
+};
+
+export const getUserAddresses = async (userId) => {
+    try {
+        const response = await fetch(`${BACKEND_URL}/addresses/${userId}`);
+        if (!response.ok) throw new Error('Failed to fetch addresses');
+        return await response.json();
+    } catch {
+        return [];
+    }
+};
+
+export const createOrder = async (orderData) => {
+    const user = await getLoggedUser();
+    const response = await fetch(`${BACKEND_URL}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...orderData, buyer_id: user.id }),
+    });
+    if (!response.ok) throw new Error('Failed to create order');
+    return await response.json();
+};
+
+export const shipOrder = async (orderId, trackingCode, carrier) => {
+    const user = await getLoggedUser();
+    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/ship`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+            tracking_code: trackingCode, 
+            carrier: carrier, 
+            seller_id: user.id 
+        }),
+    });
+    return response.ok;
+};
+
+export const deliverOrder = async (orderId) => {
+    const user = await getLoggedUser();
+    const response = await fetch(`${BACKEND_URL}/orders/${orderId}/deliver?user_id=${user.id}`, {
+        method: 'PUT',
+    });
+    if (!response.ok) throw new Error('Failed to deliver order');
+    return true;
+};
+
+export const getOrders = async (role) => {
+    try {
+        const user = await getLoggedUser();
+        if (!user) return [];
+        const response = await fetch(`${BACKEND_URL}/orders?role=${role}&userId=${user.id}`);
+        
+        if (!response.ok) throw new Error('Failed to fetch orders');
+        
+        return await response.json()
+    } catch (error) {
+        console.error("getOrders error:", error);
+        return [];
     }
 };
