@@ -1,4 +1,3 @@
-// backend/main.go
 package main
 
 import (
@@ -58,9 +57,13 @@ func main() {
 	chatService := service.NewChatService(chatRepo)
 	chatHdl := handler.NewChatHandler(chatService)
 
-	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl)
+	// Orders
+	orderRepo := postgres.NewOrderRepository(db)
+	orderSvc := service.NewOrderService(orderRepo)
+	orderHdl := handler.NewOrderHandler(orderSvc)
 
-	// Mount WebSocket handler
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl, orderHdl)
+
 	http.HandleFunc("/ws/chat", chatHdl.HandleWebSocket)
 
 	log.Printf("Server listening on: http://localhost:%s", port)
