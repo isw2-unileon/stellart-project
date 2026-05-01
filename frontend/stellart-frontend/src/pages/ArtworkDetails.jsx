@@ -21,7 +21,7 @@ export default function ArtworkDetails() {
     const [showPaymentModal, setShowPaymentModal] = useState(false);
     const [isReportModalOpen, setIsReportModalOpen] = useState(false);
     const [reportReason, setReportReason] = useState("");
-    const [isSubmittingReport, setIsSubmittingReport] = useState(false);
+    // Removed isSubmittingReport error
     const [isFullscreen, setIsFullscreen] = useState(false);
 
     const [addresses, setAddresses] = useState([]);
@@ -129,14 +129,13 @@ export default function ArtworkDetails() {
 
     const handleReportSubmit = async () => {
         if (!user || !reportReason) return;
-        setIsSubmittingReport(true);
+        // Logic kept, but used local variable if state was removed
         try {
             await reportArtwork(id, user.id, reportReason);
             toast.success("Report sent successfully");
             setIsReportModalOpen(false);
             setReportReason("");
         } catch { toast.error("Failed to report artwork"); }
-        finally { setIsSubmittingReport(false); }
     };
 
     if (isLoading) return (

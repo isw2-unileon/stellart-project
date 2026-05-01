@@ -122,16 +122,6 @@ export default function ExploreGallery({ artworks = [] }) {
         }
     };
 
-    const handleFullscreenRequest = (e) => {
-        e.stopPropagation();
-        const elem = document.getElementById("expanded-artwork");
-        if (elem) {
-            if (elem.requestFullscreen) elem.requestFullscreen();
-            else if (elem.webkitRequestFullscreen) elem.webkitRequestFullscreen();
-            else if (elem.msRequestFullscreen) elem.msRequestFullscreen();
-        }
-    };
-
     const handleReportSubmit = async () => {
         if (!user) { toast.error('Log in to report artworks'); return; }
         if (!reportReason) { toast.error('Please select a reason'); return; }
@@ -159,7 +149,7 @@ export default function ExploreGallery({ artworks = [] }) {
             setShowPaymentModal(false);
             setSelectedArtwork(null);
             navigate("/orders");
-        } catch (error) { toast.error("Payment successful but failed to create order."); } finally { setIsSubmittingOrder(false); }
+        } catch { toast.error("Payment successful but failed to create order."); } finally { setIsSubmittingOrder(false); }
     };
 
     const isSearching = artworks && artworks.length > 0;
@@ -181,7 +171,7 @@ export default function ExploreGallery({ artworks = [] }) {
                             newNames[id] = profileData.full_name || profileData.name || profileData.username || "Unknown Artist";
                             stateNeedsUpdate = true;
                         }
-                    } catch (error) {
+                    } catch {
                         newNames[id] = "Unknown Artist";
                         stateNeedsUpdate = true;
                     }
@@ -190,7 +180,7 @@ export default function ExploreGallery({ artworks = [] }) {
             if (stateNeedsUpdate) setArtistNames(newNames);
         };
         fetchProfiles();
-    }, [activeArtworks, isRealData]);
+    }, [activeArtworks, isRealData, artistNames]);
 
     const displayArtworks = activeArtworks.map((art, index) => {
         if (art.isPlaceholder) return { ...art, artist_id: null, likes_count: 0, on_sale: false, price: null, description: "Placeholder." };
