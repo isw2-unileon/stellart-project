@@ -3,6 +3,8 @@ import { Link } from "react-router-dom"
 import { getLoggedUser, getProfile, logoutUser } from "@/service/apiService"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { User, MapPin, Bookmark, LogOut } from "lucide-react";
+
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -76,19 +78,35 @@ export default function AvatarDropdown() {
                     <>
                         <DropdownMenuGroup>
                             <DropdownMenuItem asChild className="cursor-pointer">
-                                <Link to="/profile">Profile</Link>
+                                <Link to="/profile" className="flex items-center gap-2 w-full">
+                                    <User className="w-4 h-4 text-slate-500" />
+                                    <span>Profile</span>
+                                </Link>
                             </DropdownMenuItem>
+
                             <DropdownMenuItem asChild className="cursor-pointer">
-                                <Link to="/shipping">Shipping addresses</Link>
+                                <Link to="/wishlist" className="flex items-center gap-2 w-full">
+                                    <Bookmark className="w-4 h-4 text-slate-500" />
+                                    <span>Wishlist</span>
+                                </Link>
                             </DropdownMenuItem>
+                            
+                            <DropdownMenuItem asChild className="cursor-pointer">
+                                <Link to="/shipping" className="flex items-center gap-2 w-full">
+                                    <MapPin className="w-4 h-4 text-slate-500" />
+                                    <span>Shipping addresses</span>
+                                </Link>
+                            </DropdownMenuItem>
+
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>
                             <DropdownMenuItem 
-                                className="text-red-600 font-medium cursor-pointer"
+                                className="text-red-600 font-medium cursor-pointer flex items-center gap-2 w-full"
                                 onClick={handleLogout}
                             >
-                                Log out
+                                <LogOut className="w-4 h-4" />
+                                <span>Log out</span>
                             </DropdownMenuItem>
                         </DropdownMenuGroup>
                     </>

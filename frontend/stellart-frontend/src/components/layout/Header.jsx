@@ -39,7 +39,6 @@ function GeneralHeader() {
         <header className="sticky top-0 z-50 w-full border-b border-slate-100 bg-white/80 backdrop-blur-md">
             <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between gap-4">
                 
-                {/* IZQUIERDA: Logo */}
                 <Link to="/" className="flex items-center gap-2 shrink-0">
                     <div className="w-8 h-8 bg-yellow-400 rounded-full flex items-center justify-center shadow-sm shadow-yellow-200">
                         <span className="text-black text-xs font-black">S</span>
@@ -49,14 +48,12 @@ function GeneralHeader() {
                     </div>
                 </Link>
 
-                {/* CENTRO: Menú (Usa flex-1 para tomar el espacio central sin pisar los lados) */}
                 <nav className="hidden lg:flex flex-1 items-center justify-center gap-8">
                     <Link to="/explore" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Explore</Link>
                     <Link to="/find-artists" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Find Artists</Link>
                     <Link to="/contact" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Support</Link>
                 </nav>
 
-                {/* DERECHA: Acciones de usuario */}
                 <div className="flex items-center justify-end shrink-0">
                     {user ? (
                         <div className="flex items-center gap-6">
@@ -75,13 +72,6 @@ function GeneralHeader() {
                                 <span className="text-xs font-bold uppercase tracking-widest">Orders</span>
                             </Link>
 
-                            <Link to="/wishlist" className="hidden lg:flex items-center gap-1.5 text-slate-500 hover:text-yellow-500 transition-colors">
-                                <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                                    <path strokeLinecap="round" strokeLinejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0 1 11.186 0Z" />
-                                </svg>
-                                <span className="text-xs font-bold uppercase tracking-widest">Wishlist</span>
-                            </Link>
-                            
                             <div className="flex items-center gap-3 pl-4 lg:pl-6 border-l border-slate-200">
                                 <AvatarDropdown />
                                 <span className="hidden md:block text-sm font-bold text-slate-700">
