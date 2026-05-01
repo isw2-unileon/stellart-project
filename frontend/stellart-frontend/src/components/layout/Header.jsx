@@ -50,7 +50,7 @@ function GeneralHeader() {
 
                 <nav className="hidden lg:flex flex-1 items-center justify-center gap-8">
                     <Link to="/explore" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Explore</Link>
-                    <Link to="/find-artists" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Find Artists</Link>
+                    <Link to="/find-artists" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Artists</Link>
                     <Link to="/contact" className="text-xs font-bold uppercase tracking-widest text-slate-500 hover:text-yellow-500 transition-colors">Support</Link>
                 </nav>
 

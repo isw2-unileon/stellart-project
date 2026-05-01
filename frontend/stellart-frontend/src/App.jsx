@@ -46,6 +46,7 @@ export default function App() {
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
                 <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />
                 <Route path="/commissions/settings" element={<Layout> <OpenCommissions /> </Layout>} />
+                <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
                 <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />

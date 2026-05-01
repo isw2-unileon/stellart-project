@@ -213,11 +213,11 @@ export default function ArtworkDetails() {
 
                         <div className="flex items-center gap-4 mb-8 pb-8 border-b border-slate-100">
                             <Link to={`/profile/${artist?.id}`} className="w-14 h-14 rounded-full overflow-hidden border-2 border-slate-100 bg-slate-50 flex items-center justify-center shrink-0">
-                                {artist?.avatar_url ? <img src={artist.avatar_url} className="w-full h-full object-cover" /> : <span className="text-lg font-black text-slate-300">{(artist?.full_name || "U")[0]}</span>}
+                                {artist?.avatar_url ? <img src={artist.avatar_url} className="w-full h-full object-cover" /> : <span className="text-lg font-black text-slate-300">{(artist?.full_name || artist?.name || artist?.username || "U")[0]}</span>}
                             </Link>
                             <div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Created by</p>
-                                <Link to={`/profile/${artist?.id}`} className="text-lg font-bold text-slate-900 hover:text-yellow-500 transition-colors">{artist?.full_name || "Unknown Artist"}</Link>
+                                <Link to={`/profile/${artist?.id}`} className="text-lg font-bold text-slate-900 hover:text-yellow-500 transition-colors">{artist?.full_name || artist?.name || artist?.username || "Unknown Artist"}</Link>
                             </div>
                         </div>
 

@@ -8,6 +8,7 @@ type CreateProfile struct {
 }
 
 type UpdateProfile struct {
+	ID              *string `json:"id"`
 	FullName        *string `json:"full_name"`
 	AvatarURL       *string `json:"avatar_url"`
 	Biography       *string `json:"biography"`
@@ -15,7 +16,7 @@ type UpdateProfile struct {
 }
 
 type UpdateProfileRequest struct {
-	Profile models.Profile        `json:"profile"`
+	Profile UpdateProfile          `json:"profile"`
 	Skills  []models.ProfileSkill `json:"skills"`
 }
 

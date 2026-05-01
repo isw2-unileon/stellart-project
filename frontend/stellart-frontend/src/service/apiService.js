@@ -165,7 +165,8 @@ export const updateProfileAndSkills = async (userId, profileData, skillsData) =>
             full_name: profileData.fullName,
             email: profileData.email || "",
             biography: profileData.biography,
-            avatar_url: profileData.avatarUrl
+            avatar_url: profileData.avatarUrl,
+            open_commissions: profileData.openCommissions
         },
         skills: skillsData
     };
@@ -484,9 +485,15 @@ export const getArtistsWithOpenCommissions = async () => {
 };
 
 export const updateOpenCommissions = async (userId, openCommissions) => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    
     const response = await fetch(`${BACKEND_URL}/profiles/${userId}/open-commissions`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+            'Content-Type': 'application/json',
+            ...(token && { 'Authorization': `Bearer ${token}` })
+        },
         body: JSON.stringify({ open_commissions: openCommissions }),
     });
     
