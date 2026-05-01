@@ -448,6 +448,14 @@ export default function CommissionDetail() {
         );
     }
 
+    if (!commission) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <p className="text-slate-500">Commission not found</p>
+            </div>
+        );
+    }
+
     const isBuyer = user?.id === commission?.buyer_id;
     const isArtist = user?.id === commission?.artist_id;
     const advanceAmount = commission?.price * 0.5;

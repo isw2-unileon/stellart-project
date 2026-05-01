@@ -86,7 +86,7 @@ export default function Commissions() {
                         </button>
                     </div>
                     <Link to="/commissions/find">
-                        <Button variant="outline">Find Artists</Button>
+                        <Button variant="outline">Find Artists for Commission</Button>
                     </Link>
                 </div>
             </div>
@@ -122,7 +122,7 @@ export default function Commissions() {
                             : "You don't have any commission requests."}
                     </p>
                     {activeTab === "buyer" && (
-                        <Link to="/find-artists" className="text-yellow-500 font-bold hover:underline">
+                        <Link to="/commissions/find" className="text-yellow-500 font-bold hover:underline">
                             Find artists to commission
                         </Link>
                     )}
