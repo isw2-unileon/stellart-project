@@ -184,12 +184,19 @@ export default function ExploreGallery({ artworks = [] }) {
 
     const displayArtworks = activeArtworks.map((art, index) => {
         if (art.isPlaceholder) return { ...art, artist_id: null, likes_count: 0, on_sale: false, price: null, description: "Placeholder." };
+        
         const id = art.id || `art-${index}`;
         const currentLikes = localLikes[id] !== undefined ? localLikes[id] : (art.likes_count || 0);
+        
         return {
-            ...art, id, title: art.title || "Untitled", artist: artistNames[art.artist_id] || "Loading...",
-            productType: art.product_type || "Standard", img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop",
-            likes_count: currentLikes, on_sale: art.on_sale || art.price != null
+            ...art, 
+            id, 
+            title: art.title || "Untitled", 
+            artist: artistNames[art.artist_id] || "Loading...",
+            productType: art.product_type || "Standard", 
+            img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop",
+            likes_count: currentLikes, 
+            on_sale: art.on_sale === true && art.price > 0 
         };
     });
 
@@ -213,18 +220,20 @@ export default function ExploreGallery({ artworks = [] }) {
                                     </div>
                                     <div className="flex justify-between items-start px-1">
                                         <div className="flex-1 min-w-0 pr-2">
-                                            <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
+                                            <h3 className="font-bold text-slate-900 text-base leading-tight truncate group-hover:text-yellow-600 transition-colors">
+                                                {art.title}
+                                            </h3>
                                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">
                                                 {isRealData && art.artist_id ? <Link to={`/profile/${art.artist_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-yellow-500">{art.artist}</Link> : <span>{art.artist}</span>}
                                                 <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.productType}</span>
                                             </p>
                                             
-                                            {art.price && (
+                                            {art.price > 0 && (
                                                 <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-50 border border-yellow-200/60 rounded-md">
                                                     <span className="text-yellow-700 font-bold text-[11px]">${art.price.toFixed(2)}</span>
                                                 </div>
                                             )}
-                                        </div>
+                                                                                    </div>
                                         <div className="flex items-center gap-2 shrink-0">
                                             {isRealData && (
                                                 <>
@@ -267,10 +276,29 @@ export default function ExploreGallery({ artworks = [] }) {
                                 <div className="absolute inset-0 bg-black/20 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-10 h-10 text-white"><path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" /></svg></div>
                             </div>
                             <div>
-                                <h2 className="text-2xl font-black text-slate-900">
-                                    {isRealData ? <Link to={`/artwork-details/${selectedArtwork.id}`} className="transition-colors hover:text-yellow-500 hover:underline underline-offset-8 decoration-2">{selectedArtwork.title}</Link> : <span>{selectedArtwork.title}</span>}
+                                <h2 className="text-2xl font-black text-slate-900 group/title">
+                                    {isRealData ? (
+                                        <Link 
+                                            to={`/artwork-details/${selectedArtwork.id}`} 
+                                            className="inline-flex items-center gap-2 transition-colors hover:text-yellow-500"
+                                        >
+                                            {selectedArtwork.title}
+                                            <svg 
+                                                xmlns="http://www.w3.org/2000/svg" 
+                                                fill="none" 
+                                                viewBox="0 0 24 24" 
+                                                strokeWidth={2.5} 
+                                                stroke="currentColor" 
+                                                className="w-5 h-5 opacity-40 group-hover/title:translate-x-1 group-hover/title:opacity-100 transition-all"
+                                            >
+                                                <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                            </svg>
+                                        </Link>
+                                    ) : (
+                                        <span>{selectedArtwork.title}</span>
+                                    )}
                                 </h2>
-                                
+                                                               
                                 <div className="flex items-start justify-between mt-2">
                                     <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">
                                         By {isRealData && selectedArtwork.artist_id ? <Link to={`/profile/${selectedArtwork.artist_id}`} className="text-slate-900 hover:text-yellow-500">{selectedArtwork.artist}</Link> : <span className="text-slate-900">{selectedArtwork.artist}</span>}
@@ -321,6 +349,9 @@ export default function ExploreGallery({ artworks = [] }) {
                                 )}
 
                                 <div className="mt-6 pt-6 border-t border-slate-200">
+                                    <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">
+                                        Description
+                                    </h3>
                                     <p className="text-slate-600 text-sm leading-relaxed">{selectedArtwork.description}</p>
                                 </div>
                                 {isRealData && selectedArtwork.on_sale && selectedArtwork.price && (

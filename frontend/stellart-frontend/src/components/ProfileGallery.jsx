@@ -1,11 +1,15 @@
 import { useState, useEffect, useCallback } from "react";
 import { getArtworksByArtist, deleteArtwork, deleteArtworkImage } from "../service/apiService";
 import { toast } from "sonner";
+import ConfirmDialog from "../components/ConfirmDialog";
 
 export default function ProfileGallery({ profileId }) {
     const [artworks, setArtworks] = useState([]);
     const [sortBy, setSortBy] = useState("latest");
     const [isLoading, setIsLoading] = useState(true);
+    
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+    const [artworkToDelete, setArtworkToDelete] = useState(null);
 
     const fetchArtworks = useCallback(async () => {
         if (!profileId) return;
@@ -24,23 +28,25 @@ export default function ProfileGallery({ profileId }) {
         fetchArtworks();
     }, [fetchArtworks]);
 
-    const handleDelete = async (artwork) => {
+    const handleConfirmDelete = async () => {
+        if (!artworkToDelete) return;
+        
         try {
-            const realId = artwork.id || artwork.ID || artwork.Id;
-            if (!realId) throw new Error("No ID found for artwork");
-
+            const realId = artworkToDelete.id || artworkToDelete.ID || artworkToDelete.Id;
+            
             try {
-                await deleteArtworkImage(artwork.image_url);
+                await deleteArtworkImage(artworkToDelete.image_url);
             } catch (storageError) {
                 console.error(storageError);
             }
 
             await deleteArtwork(realId);
             setArtworks((prev) => prev.filter((a) => (a.id || a.ID || a.Id) !== realId));
-            toast.success("Artwork deleted successfully");
         } catch (error) {
             console.error(error);
             toast.error("Failed to delete artwork");
+        } finally {
+            setArtworkToDelete(null);
         }
     };
 
@@ -99,7 +105,7 @@ export default function ProfileGallery({ profileId }) {
                                 className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                             />
                             
-                            <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
+                            <div className="absolute inset-0 bg-linear-to-t from-slate-900/80 via-slate-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-300 flex flex-col justify-end p-4 pointer-events-none">
                                 <h3 className="text-white font-bold truncate text-sm md:text-base">
                                     {artwork.title}
                                 </h3>
@@ -115,9 +121,8 @@ export default function ProfileGallery({ profileId }) {
                                 onClick={(e) => {
                                     e.preventDefault();
                                     e.stopPropagation();
-                                    if (window.confirm("Are you sure you want to delete this artwork?")) {
-                                        handleDelete(artwork);
-                                    }
+                                    setArtworkToDelete(artwork);
+                                    setIsDeleteDialogOpen(true);
                                 }}
                                 className="absolute top-3 right-3 p-2 bg-red-500/90 hover:bg-red-600 text-white rounded-xl shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-300 z-50 scale-95 hover:scale-105 cursor-pointer pointer-events-auto"
                             >
@@ -129,6 +134,16 @@ export default function ProfileGallery({ profileId }) {
                     ))}
                 </div>
             )}
+
+            <ConfirmDialog 
+                open={isDeleteDialogOpen}
+                onOpenChange={setIsDeleteDialogOpen}
+                title="Delete Artwork"
+                description="Are you sure you want to delete this artwork? This action cannot be undone."
+                confirmText="Delete"
+                cancelText="Cancel"
+                onConfirm={handleConfirmDelete}
+            />
         </div>
     );
 }
