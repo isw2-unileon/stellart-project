@@ -61,7 +61,6 @@ export default function Wishlist() {
             if (updated) setArtistNames(newNames);
         };
         fetchArtistNames();
-    /* eslint-disable-next-line react-hooks/exhaustive-deps */
     }, [artworks]);
 
     const handleRemove = async (e, artworkId) => {
@@ -123,13 +122,9 @@ export default function Wishlist() {
         setShowPaymentModal(false);
     };
 
-    // Dynamic product types from actual artworks
     const dynamicTypes = ['All', ...new Set(artworks.map(a => a.product_type).filter(Boolean))];
-
-    // Dynamic tags from actual artworks
     const allTags = [...new Set(artworks.flatMap(a => a.tags || []))];
 
-    // Filter artworks
     const filteredArtworks = artworks.filter(art => {
         const matchesType = filterType === 'All' || art.product_type === filterType;
         const matchesTag = !filterTag || (art.tags || []).includes(filterTag);
@@ -149,7 +144,6 @@ export default function Wishlist() {
 
     return (
         <div className="max-w-7xl mx-auto px-6 py-12">
-            {/* Header */}
             <div className="flex items-center gap-3 mb-10">
                 <div className="flex items-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8 text-yellow-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -161,8 +155,7 @@ export default function Wishlist() {
                 <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">{artworks.length} saved</span>
             </div>
 
-            {/* CTA Banner */}
-            <div className="relative bg-gradient-to-r from-slate-900 to-slate-800 rounded-3xl overflow-hidden mb-10">
+            <div className="relative bg-linear-to-r from-slate-900 to-slate-800 rounded-3xl overflow-hidden mb-10">
                 <div className="absolute inset-0 opacity-10">
                     <div className="absolute top-4 left-8 w-20 h-20 border-2 border-yellow-400 rounded-xl rotate-12" />
                     <div className="absolute top-6 right-16 w-14 h-14 border-2 border-sky-400 rounded-full" />
@@ -193,11 +186,8 @@ export default function Wishlist() {
                 </div>
             </div>
 
-            {/* Main content: sidebar + grid */}
             <div className="flex gap-8">
-                {/* Sidebar */}
                 <aside className="hidden lg:flex flex-col gap-6 w-64 shrink-0">
-                    {/* Quick stats */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-4">Overview</h3>
                         <div className="space-y-4">
@@ -219,7 +209,6 @@ export default function Wishlist() {
                         </div>
                     </div>
 
-                    {/* Filter by type */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Product Type</h3>
                         <div className="space-y-2">
@@ -239,7 +228,6 @@ export default function Wishlist() {
                         </div>
                     </div>
 
-                    {/* Filter by tags */}
                     {allTags.length > 0 && (
                         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
                             <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Tags</h3>
@@ -260,26 +248,8 @@ export default function Wishlist() {
                             </div>
                         </div>
                     )}
-
-                    {/* How it works */}
-                    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-                        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">How it works</h3>
-                        <div className="space-y-3">
-                            {[
-                                { step: "1", text: "Explore the gallery", color: "bg-yellow-50 text-yellow-600" },
-                                { step: "2", text: "Bookmark what you love", color: "bg-sky-50 text-sky-600" },
-                                { step: "3", text: "Revisit anytime", color: "bg-violet-50 text-violet-600" },
-                            ].map(s => (
-                                <div key={s.step} className="flex items-center gap-3">
-                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black ${s.color}`}>{s.step}</div>
-                                    <p className="text-xs text-slate-500 font-medium">{s.text}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
                 </aside>
 
-                {/* Artwork grid */}
                 <div className="flex-1">
                     {filteredArtworks.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -304,7 +274,6 @@ export default function Wishlist() {
                                             <Link to={`/artwork-details/${art.id}`}>
                                                 <img src={art.image_url} alt={art.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
                                             </Link>
-                                            {/* Remove button */}
                                             <button
                                                 onClick={(e) => handleRemove(e, art.id)}
                                                 className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50"
@@ -313,7 +282,6 @@ export default function Wishlist() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                                                 </svg>
                                             </button>
-                                            {/* Like button */}
                                             <button
                                                 onClick={(e) => toggleLike(e, art.id, currentLikes)}
                                                 className={`absolute top-3 left-12 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center shadow-sm transition-opacity ${likedIds.has(art.id) ? 'text-red-500 opacity-0 group-hover:opacity-100' : 'text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100'}`}
@@ -322,7 +290,6 @@ export default function Wishlist() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
                                                 </svg>
                                             </button>
-                                            {/* Report button */}
                                             <button
                                                 onClick={(e) => {
                                                     e.preventDefault(); e.stopPropagation();
@@ -335,7 +302,6 @@ export default function Wishlist() {
                                                     <path strokeLinecap="round" strokeLinejoin="round" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
                                                 </svg>
                                             </button>
-                                            {/* Product type badge */}
                                             {art.product_type && (
                                                 <div className="absolute bottom-3 left-3 px-2.5 py-1 bg-black/40 backdrop-blur-sm rounded-full text-[10px] font-bold text-white uppercase tracking-wider">
                                                     {art.product_type}
@@ -366,25 +332,6 @@ export default function Wishlist() {
                                                 ))}
                                             </div>
                                         </div>
-                                        {/* Purchase / Not for sale */}
-                                        <div className="px-1 mt-2">
-                                            {(art.on_sale || art.price) ? (
-                                                <button
-                                                    onClick={(e) => {
-                                                        e.preventDefault(); e.stopPropagation();
-                                                        setSelectedArtwork(art);
-                                                        setShowPaymentModal(true);
-                                                    }}
-                                                    className="w-full py-2 bg-yellow-400 text-slate-900 font-bold text-xs uppercase tracking-widest rounded-xl shadow-sm border border-yellow-500 hover:bg-yellow-300 hover:shadow-md hover:-translate-y-0.5 active:scale-95 transition-all duration-300"
-                                                >
-                                                    Purchase Now
-                                                </button>
-                                            ) : (
-                                                <div className="w-full py-2 bg-slate-100 text-slate-400 font-bold text-xs uppercase tracking-widest rounded-xl text-center">
-                                                    Not for sale
-                                                </div>
-                                            )}
-                                        </div>
                                     </div>
                                 );
                             })}
@@ -393,9 +340,8 @@ export default function Wishlist() {
                 </div>
             </div>
 
-            {/* Report Modal */}
             {isReportModalOpen && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+                <div className="fixed inset-0 z-200 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
                     <div className="bg-white rounded-2xl p-6 w-full max-w-sm shadow-xl">
                         <h3 className="text-xl font-bold text-slate-900 mb-2">Report Artwork</h3>
                         <p className="text-sm text-slate-500 mb-6">Why are you reporting this artwork?</p>
