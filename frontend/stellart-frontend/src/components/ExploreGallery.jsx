@@ -187,9 +187,14 @@ export default function ExploreGallery({ artworks = [] }) {
         const id = art.id || `art-${index}`;
         const currentLikes = localLikes[id] !== undefined ? localLikes[id] : (art.likes_count || 0);
         return {
-            ...art, id, title: art.title || "Untitled", artist: artistNames[art.artist_id] || "Loading...",
-            productType: art.product_type || "Standard", img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop",
-            likes_count: currentLikes, on_sale: art.on_sale || art.price != null
+            ...art, 
+            id, 
+            title: art.title || "Untitled", 
+            artist: artistNames[art.artist_id] || "Loading...",
+            productType: art.product_type || "Standard", 
+            img: art.image_url || "https://images.unsplash.com/photo-1561214115-f2f114ce1437?q=80&w=2000&auto=format&fit=crop",
+            likes_count: currentLikes, 
+            on_sale: art.on_sale === true && art.price > 0 
         };
     });
 
@@ -213,13 +218,14 @@ export default function ExploreGallery({ artworks = [] }) {
                                     </div>
                                     <div className="flex justify-between items-start px-1">
                                         <div className="flex-1 min-w-0 pr-2">
-                                            <h3 className="font-bold text-slate-900 text-base leading-tight truncate">{art.title}</h3>
+                                            <h3 className="font-bold text-slate-900 text-base leading-tight truncate group-hover:text-yellow-600 transition-colors">
+                                                {art.title}
+                                            </h3>
                                             <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest mt-1 truncate">
                                                 {isRealData && art.artist_id ? <Link to={`/profile/${art.artist_id}`} onClick={(e) => e.stopPropagation()} className="hover:text-yellow-500">{art.artist}</Link> : <span>{art.artist}</span>}
                                                 <span className="text-slate-300 mx-1">•</span> <span className="text-yellow-600">{art.productType}</span>
                                             </p>
-                                            
-                                            {art.price && (
+                                            {art.price > 0 && (
                                                 <div className="mt-2 inline-flex items-center gap-1 px-2.5 py-1 bg-yellow-50 border border-yellow-200/60 rounded-md">
                                                     <span className="text-yellow-700 font-bold text-[11px]">${art.price.toFixed(2)}</span>
                                                 </div>
@@ -268,9 +274,9 @@ export default function ExploreGallery({ artworks = [] }) {
                             </div>
                             <div>
                                 <h2 className="text-2xl font-black text-slate-900">
-                                    {isRealData ? <Link to={`/artwork-details/${selectedArtwork.id}`} className="transition-colors hover:text-yellow-500 hover:underline underline-offset-8 decoration-2">{selectedArtwork.title}</Link> : <span>{selectedArtwork.title}</span>}
+                                    {selectedArtwork.title}
                                 </h2>
-                                
+                                               
                                 <div className="flex items-start justify-between mt-2">
                                     <p className="text-slate-500 font-bold uppercase tracking-widest text-xs mt-1">
                                         By {isRealData && selectedArtwork.artist_id ? <Link to={`/profile/${selectedArtwork.artist_id}`} className="text-slate-900 hover:text-yellow-500">{selectedArtwork.artist}</Link> : <span className="text-slate-900">{selectedArtwork.artist}</span>}
@@ -297,11 +303,31 @@ export default function ExploreGallery({ artworks = [] }) {
                                     )}
                                 </div>
 
+                                {/* BOTÓN DE NAVEGACIÓN PRINCIPAL */}
+                                {isRealData && (
+                                    <Link 
+                                        to={`/artwork-details/${selectedArtwork.id}`}
+                                        className="mt-6 flex items-center justify-center gap-3 w-full py-4 bg-slate-900 text-white font-bold text-sm uppercase tracking-widest rounded-xl hover:bg-slate-800 shadow-md hover:-translate-y-0.5 transition-all group"
+                                    >
+                                        Full Details & Purchase
+                                        <svg 
+                                            xmlns="http://www.w3.org/2000/svg" 
+                                            fill="none" 
+                                            viewBox="0 0 24 24" 
+                                            strokeWidth={2.5} 
+                                            stroke="currentColor" 
+                                            className="w-5 h-5 group-hover:translate-x-1 transition-transform"
+                                        >
+                                            <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                                        </svg>
+                                    </Link>
+                                )}
+
                                 {isRealData && selectedArtwork.on_sale && (
-                                    <div className="mt-6">
+                                    <div className="mt-8 pt-6 border-t border-slate-200">
                                         <h3 className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-3 flex items-center gap-2">
                                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="w-4 h-4"><path strokeLinecap="round" strokeLinejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" /></svg>
-                                            Shipping Destination
+                                            Quick Ship to:
                                         </h3>
                                         {addresses.length > 0 ? (
                                             <div className="relative">
@@ -320,12 +346,9 @@ export default function ExploreGallery({ artworks = [] }) {
                                     </div>
                                 )}
 
-                                <div className="mt-6 pt-6 border-t border-slate-200">
-                                    <p className="text-slate-600 text-sm leading-relaxed">{selectedArtwork.description}</p>
-                                </div>
                                 {isRealData && selectedArtwork.on_sale && selectedArtwork.price && (
                                     <button onClick={() => (user && selectedAddressId) ? setShowPaymentModal(true) : toast.error("Check login and address")} disabled={isSubmittingOrder} className="w-full mt-6 py-4 bg-yellow-400 text-slate-900 font-bold text-sm uppercase tracking-widest rounded-xl hover:bg-yellow-300 shadow-sm border border-yellow-500 hover:-translate-y-0.5 active:scale-95 transition-all">
-                                        {isSubmittingOrder ? "Processing..." : `Purchase`}
+                                        {isSubmittingOrder ? "Processing..." : `Quick Purchase`}
                                     </button>
                                 )}
                             </div>
