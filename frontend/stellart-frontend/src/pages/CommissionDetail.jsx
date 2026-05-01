@@ -500,7 +500,7 @@ export default function CommissionDetail() {
                                             <img src={buyer.avatar_url} alt="Buyer" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {buyer?.full_name?.charAt(0) || "?"}
+                                                {buyer?.full_name?.charAt(0) || buyer?.name?.charAt(0) || buyer?.username?.charAt(0) || "?"}
                                             </div>
                                         )}
                                     </div>
@@ -510,7 +510,7 @@ export default function CommissionDetail() {
                                             <img src={artist.avatar_url} alt="Artist" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {artist?.full_name?.charAt(0) || "?"}
+                                                {artist?.full_name?.charAt(0) || artist?.name?.charAt(0) || artist?.username?.charAt(0) || "?"}
                                             </div>
                                         )}
                                     </div>
@@ -518,7 +518,7 @@ export default function CommissionDetail() {
                                 <div>
                                     <h1 className="text-xl font-black text-slate-900">{commission.title}</h1>
                                     <p className="text-sm text-slate-500">
-                                        {isArtist ? `From: ${buyer?.full_name || 'Buyer'}` : `Artist: ${artist?.full_name || 'Artist'}`}
+                                        {isArtist ? `From: ${buyer?.full_name || buyer?.name || buyer?.username || 'Buyer'}` : `Artist: ${artist?.full_name || artist?.name || artist?.username || 'Unknown Artist'}`}
                                     </p>
                                 </div>
                             </div>
@@ -765,10 +765,10 @@ export default function CommissionDetail() {
                                             <div className="mt-3 p-4 bg-gradient-to-r from-slate-50 to-yellow-50 rounded-xl border border-slate-200">
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || "A"}</span>
+                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || artist?.name?.charAt(0) || artist?.username?.charAt(0) || "A"}</span>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || "Artist"}</p>
+                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || artist?.name || artist?.username || "Artist"}</p>
                                                         <p className="text-sm text-slate-700 mt-1">{upload.notes}</p>
                                                         <p className="text-xs text-slate-400 mt-1">
                                                             {new Date(upload.created_at).toLocaleDateString()} at {new Date(upload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

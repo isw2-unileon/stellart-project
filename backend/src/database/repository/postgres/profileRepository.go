@@ -225,14 +225,19 @@ func (r *postgresProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, err
 }
 
 func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error {
-	query := `UPDATE public.profiles SET open_commissions = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
-	_, err := r.db.Exec(query, open, id)
+	query := `
+		INSERT INTO public.profiles (id, full_name, email, open_commissions, updated_at, created_at)
+		VALUES ($1, '', '', $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+		ON CONFLICT (id) DO UPDATE
+		SET open_commissions = EXCLUDED.open_commissions,
+			updated_at = CURRENT_TIMESTAMP`
+	_, err := r.db.Exec(query, id, open)
 	return err
 }
 
 func (r *postgresProfileRepo) GetArtistRanking() ([]models.ArtistRanking, error) {
 	query := `
-		SELECT p.id, COALESCE(p.full_name, 'Unknown'), COALESCE(p.avatar_url, ''), COUNT(l.id) as total_likes
+		SELECT p.id, COALESCE(p.full_name, p.name, p.username, 'Unknown'), COALESCE(p.avatar_url, ''), COUNT(l.id) as total_likes
 		FROM public.profiles p
 		LEFT JOIN public.artworks a ON p.id = a.artist_id
 		LEFT JOIN public.likes l ON a.id = l.artwork_id

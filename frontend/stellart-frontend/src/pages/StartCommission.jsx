@@ -38,6 +38,11 @@ export default function StartCommission() {
                     navigate("/commissions/find");
                     return;
                 }
+                if (artistId === loggedUser.id) {
+                    toast.error("You cannot commission yourself");
+                    navigate("/commissions/find");
+                    return;
+                }
                 setArtist(artistProfile);
             } catch (error) {
                 console.error("Error:", error);

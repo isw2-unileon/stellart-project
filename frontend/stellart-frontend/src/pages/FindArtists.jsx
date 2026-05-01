@@ -1,20 +1,25 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { getArtistRanking, getArtistsWithOpenCommissions } from "../service/apiService";
+import { getLoggedUser, getArtistRanking, getArtistsWithOpenCommissions } from "../service/apiService";
 
 export default function FindArtists() {
     const location = useLocation();
     const isCommissionPage = location.pathname === "/commissions/find";
     const [artists, setArtists] = useState([]);
+    const [user, setUser] = useState(null);
     const [searchQuery, setSearchQuery] = useState("");
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         async function fetchArtists() {
             try {
-                const data = isCommissionPage 
-                    ? await getArtistsWithOpenCommissions() 
-                    : await getArtistRanking();
+                const [userData, data] = await Promise.all([
+                    getLoggedUser(),
+                    isCommissionPage 
+                        ? getArtistsWithOpenCommissions() 
+                        : getArtistRanking()
+                ]);
+                setUser(userData);
                 setArtists(data || []);
             } catch (error) {
                 console.error(error);
@@ -25,9 +30,9 @@ export default function FindArtists() {
         fetchArtists();
     }, [isCommissionPage]);
 
-    const filteredArtists = searchQuery.trim() === "" 
-        ? artists 
-        : artists.filter(a => (a.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()));
+    const filteredArtists = artists
+        .filter(a => !user || a.id !== user.id)
+        .filter(a => searchQuery.trim() === "" || (a.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (isLoading) {
         return (
@@ -85,12 +90,12 @@ export default function FindArtists() {
                                         <img src={artist.avatar_url} alt={artist.full_name} className="w-full h-full object-cover" />
                                     ) : (
                                         <div className="w-full h-full bg-slate-100 flex items-center justify-center text-3xl font-black text-slate-300 uppercase">
-                                            {(artist.full_name || "U")[0]}
+                                            {(artist.full_name || artist.name || artist.username || "U")[0]}
                                         </div>
                                     )}
                                 </div>
                                 <h3 className="font-bold text-slate-900 text-lg group-hover:text-yellow-500 transition-colors truncate w-full">
-                                    {artist.full_name || "Unknown Artist"}
+                                    {artist.full_name || artist.name || artist.username || "Unknown Artist"}
                                 </h3>
                                 {isCommissionPage ? (
                                     <div className="mt-2 px-3 py-1 bg-green-50 text-green-600 rounded-lg text-sm font-bold">

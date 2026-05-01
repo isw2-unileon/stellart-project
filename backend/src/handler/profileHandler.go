@@ -64,10 +64,15 @@ func (h *ProfileHandler) GetProfileSkills(w http.ResponseWriter, r *http.Request
 }
 
 func (h *ProfileHandler) UpdateProfile(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
 	var req dto.UpdateProfileRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
+	}
+	
+	if req.Profile.ID == nil {
+		req.Profile.ID = &id
 	}
 
 	if err := h.profileService.UpdateProfile(&req.Profile, req.Skills); err != nil {
