@@ -75,7 +75,7 @@ export default function Orders() {
                 }
             }));
             setEnrichedData(extraData);
-        } catch (error) {
+        } catch {
             toast.error("Failed to load orders");
         } finally {
             setIsLoading(false);
@@ -93,7 +93,7 @@ export default function Orders() {
             await shipOrder(orderId, code, carrier);
             toast.success("Order marked as shipped!");
             fetchOrders();
-        } catch (error) {
+        } catch {
             toast.error("Failed to update status");
         }
     };
@@ -103,7 +103,7 @@ export default function Orders() {
             await deliverOrder(orderId);
             toast.success("Order confirmed as delivered!");
             fetchOrders(); 
-        } catch (error) {
+        } catch {
             toast.error("Failed to confirm delivery");
         }
     };
