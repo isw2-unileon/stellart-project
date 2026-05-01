@@ -81,6 +81,8 @@ export default function AvatarDropdown() {
                             <DropdownMenuItem asChild className="cursor-pointer">
                                 <Link to="/shipping">Shipping addresses</Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">Billing</DropdownMenuItem>
+                            <DropdownMenuItem className="cursor-pointer">Settings</DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>

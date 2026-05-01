@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler, oh *handler.OrderHandler) *chi.Mux {
+func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -90,13 +90,6 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Get("/{artistId}", addrh.GetAddresses)
 		r.Put("/{id}", addrh.UpdateAddress)
 		r.Delete("/{id}", addrh.DeleteAddress)
-	})
-
-	r.Route("/orders", func(r chi.Router) {
-		r.Post("/", oh.CreateOrder)
-		r.Get("/", oh.GetOrders)
-		r.Put("/{id}/ship", oh.ShipOrder)
-		r.Put("/{id}/deliver", oh.DeliverOrder)
 	})
 
 	return r

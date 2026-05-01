@@ -122,7 +122,7 @@ export default function Commissions() {
                             : "You don't have any commission requests."}
                     </p>
                     {activeTab === "buyer" && (
-                        <Link to="/find-artists" className="text-yellow-500 font-bold hover:underline">
+                        <Link to="/commissions/find" className="text-yellow-600 font-medium hover:underline mt-2 inline-block">
                             Find artists to commission
                         </Link>
                     )}
