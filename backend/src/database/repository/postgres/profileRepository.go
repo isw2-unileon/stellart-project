@@ -237,7 +237,7 @@ func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error 
 
 func (r *postgresProfileRepo) GetArtistRanking() ([]models.ArtistRanking, error) {
 	query := `
-		SELECT p.id, COALESCE(p.full_name, p.name, p.username, 'Unknown'), COALESCE(p.avatar_url, ''), COUNT(l.id) as total_likes
+		SELECT p.id, COALESCE(p.full_name, 'Unknown'), COALESCE(p.avatar_url, ''), COUNT(l.id) as total_likes
 		FROM public.profiles p
 		LEFT JOIN public.artworks a ON p.id = a.artist_id
 		LEFT JOIN public.likes l ON a.id = l.artwork_id

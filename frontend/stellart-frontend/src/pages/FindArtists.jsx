@@ -31,7 +31,7 @@ export default function FindArtists() {
     }, [isCommissionPage]);
 
     const filteredArtists = artists
-        .filter(a => !user || a.id !== user.id)
+        .filter(a => !isCommissionPage || !user || a.id !== user.id)
         .filter(a => searchQuery.trim() === "" || (a.full_name || "").toLowerCase().includes(searchQuery.toLowerCase()));
 
     if (isLoading) {
