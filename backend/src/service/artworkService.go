@@ -1,21 +1,28 @@
 package service
 
 import (
+	"errors"
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/database/repository/uis"
 	"stellart/backend/src/settings"
 	"stellart/backend/src/utils"
 )
 
+type IAIService interface {
+	IsAIGenerated(imageURL string) (bool, error)
+}
+
 type ArtworkService struct {
 	repo   uis.ArtworkInterface
 	config *settings.Config
+	ai     IAIService
 }
 
-func NewArtworkService(repo uis.ArtworkInterface, cfg *settings.Config) *ArtworkService {
+func NewArtworkService(repo uis.ArtworkInterface, cfg *settings.Config, ai IAIService) *ArtworkService {
 	return &ArtworkService{
 		repo:   repo,
 		config: cfg,
+		ai:     ai,
 	}
 }
 
@@ -32,6 +39,14 @@ func (s *ArtworkService) SearchSimilarArtworks(vector []float32, limit int) ([]m
 }
 
 func (s *ArtworkService) CreateArtwork(artwork *models.Artwork) error {
+	isAI, err := s.ai.IsAIGenerated(artwork.ImageURL)
+	if err != nil {
+		return errors.New("ERROR_AI_SERVICE")
+	}
+	if isAI {
+		return errors.New("AI_DETECTED")
+	}
+
 	textToEmbed := "Title: " + artwork.Title
 
 	if artwork.Description != nil && *artwork.Description != "" {

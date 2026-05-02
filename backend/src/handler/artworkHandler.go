@@ -43,6 +43,10 @@ func (h *ArtworkHandler) CreateArtwork(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.artworkService.CreateArtwork(&artwork); err != nil {
+		if err.Error() == "AI_DETECTED" {
+			http.Error(w, `{"error": "Upload rejected: AI-generated image detected."}`, http.StatusBadRequest)
+			return
+		}
 		http.Error(w, "Failed to create artwork: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
