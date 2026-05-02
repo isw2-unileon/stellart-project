@@ -117,6 +117,9 @@ jobs:
   e2e-tests:
     name: Playwright E2E Tests
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./e2e
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -124,4 +127,4 @@ jobs:
           node-version: '20'
       - run: npm ci --ignore-scripts
       - run: npx playwright install --with-deps 
-      - run: npx playwright test 
+      - run: npx playwright test
