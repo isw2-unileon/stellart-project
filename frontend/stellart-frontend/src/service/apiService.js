@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL; 
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const getLoggedUser = async () => {
@@ -691,7 +690,6 @@ export const getArtwork = async (id) => {
     }
 };
 
-<<<<<<< HEAD
 export const checkAIGenerated = async (imageUrl) => {
     const response = await fetch(`${BACKEND_URL}/check-ai`, {
         method: 'POST',
@@ -704,7 +702,8 @@ export const checkAIGenerated = async (imageUrl) => {
     }
 
     return await response.json();
-=======
+};
+
 export const getUserAddresses = async (userId) => {
     try {
         const response = await fetch(`${BACKEND_URL}/addresses/${userId}`);
@@ -762,5 +761,4 @@ export const getOrders = async (role) => {
         console.error("getOrders error:", error);
         return [];
     }
->>>>>>> 9ddd5dc3625dd8631e404d9a747f3849671f36c9
 };
