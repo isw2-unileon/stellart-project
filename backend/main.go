@@ -39,7 +39,8 @@ func main() {
 
 	// Artwork
 	artworkRepo := postgres.NewArtworkRepository(db)
-	artworkSvc := service.NewArtworkService(artworkRepo, cfg)
+	aiDetectionService := service.NewAIDetectionService()
+	artworkSvc := service.NewArtworkService(artworkRepo, cfg, aiDetectionService)
 	artworkHdl := handler.NewArtworkHandler(artworkSvc, cfg)
 
 	// Commission

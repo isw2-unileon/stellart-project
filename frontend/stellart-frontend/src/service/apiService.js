@@ -3,7 +3,6 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL; 
 const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
 export const getLoggedUser = async () => {
@@ -689,6 +688,20 @@ export const getArtwork = async (id) => {
     } catch {
         return null;
     }
+};
+
+export const checkAIGenerated = async (imageUrl) => {
+    const response = await fetch(`${BACKEND_URL}/check-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageUrl }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to check AI generation');
+    }
+
+    return await response.json();
 };
 
 export const getUserAddresses = async (userId) => {
