@@ -1,15 +1,11 @@
 {
-  "name": "e2e",
-  "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
-  "scripts": {},
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "devDependencies": {
     "@playwright/test": "^1.59.1",
-    "@types/node": "^25.6.0"
-  }
+    "@types/node": "^25.6.0",
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "sonner": "^2.0.7"
+  },
+  "scripts": {}
 }

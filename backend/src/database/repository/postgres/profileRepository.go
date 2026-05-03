@@ -225,8 +225,13 @@ func (r *postgresProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, err
 }
 
 func (r *postgresProfileRepo) UpdateOpenCommissions(id string, open bool) error {
-	query := `UPDATE public.profiles SET open_commissions = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2`
-	_, err := r.db.Exec(query, open, id)
+	query := `
+		INSERT INTO public.profiles (id, full_name, email, open_commissions, updated_at, created_at)
+		VALUES ($1, '', '', $2, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+		ON CONFLICT (id) DO UPDATE
+		SET open_commissions = EXCLUDED.open_commissions,
+			updated_at = CURRENT_TIMESTAMP`
+	_, err := r.db.Exec(query, id, open)
 	return err
 }
 

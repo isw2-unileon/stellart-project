@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "commonjs",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "types": ["node", "@playwright/test"]
+  },
+  "include": ["**/*.ts"]
+}

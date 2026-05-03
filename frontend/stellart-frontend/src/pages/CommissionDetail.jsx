@@ -28,7 +28,7 @@ export default function CommissionDetail() {
     const [paymentAction, setPaymentAction] = useState(null);
     const [finalUploadFile, setFinalUploadFile] = useState(null);
     const [showDenyDialog, setShowDenyDialog] = useState(false);
-    const chatContainerRef = useRef(null);
+    const messagesEndRef = useRef(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -78,9 +78,7 @@ export default function CommissionDetail() {
     }, [id, navigate]);
 
     useEffect(() => {
-        if (chatContainerRef.current) {
-            chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
-        }
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
 
     const handleSendMessage = async (e) => {
@@ -105,7 +103,7 @@ export default function CommissionDetail() {
     const handleFileChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            const maxSize = 100 * 1024 * 1024;
+            const maxSize = 100 * 1024 * 1024; // 100MB
             if (file.size > maxSize) {
                 toast.error("File size must be less than 100MB");
                 return;
@@ -450,6 +448,14 @@ export default function CommissionDetail() {
         );
     }
 
+    if (!commission) {
+        return (
+            <div className="flex items-center justify-center min-h-[60vh]">
+                <p className="text-slate-500">Commission not found</p>
+            </div>
+        );
+    }
+
     const isBuyer = user?.id === commission?.buyer_id;
     const isArtist = user?.id === commission?.artist_id;
     const advanceAmount = commission?.price * 0.5;
@@ -461,6 +467,7 @@ export default function CommissionDetail() {
 
     return (
         <div className="max-w-6xl mx-auto px-6 py-12">
+            {/* Full Screen Image Modal */}
             {selectedImage && (
                 <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4" onClick={() => setSelectedImage(null)}>
                     <button className="absolute top-4 right-4 text-white p-2" onClick={() => setSelectedImage(null)}>
@@ -468,6 +475,7 @@ export default function CommissionDetail() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                     </button>
+                    {/* Watermark overlay for preview images */}
                     {!isApproved && (
                         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                             <span className="text-white/20 text-9xl font-black rotate-45">PREVIEW</span>
@@ -492,7 +500,7 @@ export default function CommissionDetail() {
                                             <img src={buyer.avatar_url} alt="Buyer" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {buyer?.full_name?.charAt(0) || "?"}
+                                                {buyer?.full_name?.charAt(0) || buyer?.name?.charAt(0) || buyer?.username?.charAt(0) || "?"}
                                             </div>
                                         )}
                                     </div>
@@ -502,7 +510,7 @@ export default function CommissionDetail() {
                                             <img src={artist.avatar_url} alt="Artist" className="w-full h-full object-cover" />
                                         ) : (
                                             <div className="w-full h-full flex items-center justify-center text-xl font-black text-yellow-500">
-                                                {artist?.full_name?.charAt(0) || "?"}
+                                                {artist?.full_name?.charAt(0) || artist?.name?.charAt(0) || artist?.username?.charAt(0) || "?"}
                                             </div>
                                         )}
                                     </div>
@@ -510,7 +518,7 @@ export default function CommissionDetail() {
                                 <div>
                                     <h1 className="text-xl font-black text-slate-900">{commission.title}</h1>
                                     <p className="text-sm text-slate-500">
-                                        {isArtist ? `From: ${buyer?.full_name || 'Buyer'}` : `Artist: ${artist?.full_name || 'Artist'}`}
+                                        {isArtist ? `From: ${buyer?.full_name || buyer?.name || buyer?.username || 'Buyer'}` : `Artist: ${artist?.full_name || artist?.name || artist?.username || 'Unknown Artist'}`}
                                     </p>
                                 </div>
                             </div>
@@ -533,10 +541,12 @@ export default function CommissionDetail() {
                         </div>
 
                         <div className="mt-6 flex flex-wrap gap-3">
+                            {/* Buyer: Waiting for artist to accept */}
                             {commission.status === "pending" && isBuyer && payment && payment.status === "paid" && (
                                 <span className="text-blue-600 font-medium">Waiting for artist to accept...</span>
                             )}
                             
+                            {/* Artist: Accept when paid */}
                             {commission.status === "pending" && isArtist && payment && payment.status === "paid" && (
                                 <>
                                     <Button onClick={handleAccept}>Accept Commission</Button>
@@ -544,16 +554,19 @@ export default function CommissionDetail() {
                                 </>
                             )}
                             
+                            {/* Artist: Start when accepted */}
                             {commission.status === "accepted" && isArtist && (
                                 <Button onClick={handleStart}>Start Work</Button>
                             )}
                             
+                            {/* Artist: Submit for review */}
                             {commission.status === "in_progress" && isArtist && (
                                 <Button onClick={handleSubmitForReview} disabled={!hasUploadedWork}>
                                     Submit for Review {!hasUploadedWork && "(Upload preview first)"}
                                 </Button>
                             )}
                             
+                            {/* Buyer: Review or Revision */}
                             {(commission.status === "review" || commission.status === "revised") && isBuyer && (
                                 <>
                                     <Button onClick={handleApprove}>
@@ -571,6 +584,7 @@ export default function CommissionDetail() {
                         </div>
                     </div>
 
+                    {/* Payment Section */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Payment</h2>
                         
@@ -617,9 +631,11 @@ export default function CommissionDetail() {
                         </div>
                     </div>
 
+                    {/* Work Upload Section */}
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Work Uploads</h2>
                         
+                        {/* Revision Notes from Buyer */}
                         {(commission.status === "revised" || commission.status === "review") && lastRevision && (
                             <div className="mb-4 p-4 bg-orange-50 rounded-xl border border-orange-200">
                                 <p className="font-bold text-orange-800">Revision Requested:</p>
@@ -627,6 +643,7 @@ export default function CommissionDetail() {
                             </div>
                         )}
 
+                        {/* Upload for Artist */}
                         {isArtist && (commission.status === "accepted" || commission.status === "in_progress" || commission.status === "revised") && (
                             <div className="mb-6 p-4 bg-slate-50 rounded-xl">
                                 <p className="text-sm font-medium text-slate-700 mb-3">Upload a preview (will be watermarked)</p>
@@ -675,21 +692,25 @@ export default function CommissionDetail() {
                             </div>
                         )}
 
+                        {/* Show Uploads */}
                         {workUploads.length === 0 ? (
                             <p className="text-slate-500 text-sm">No work uploaded yet.</p>
                         ) : (
                             <div className="grid grid-cols-2 gap-4">
                                 {workUploads.map((upload) => (
                                     <div key={upload.id}>
+                                        {/* Image Card */}
                                         <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
                                             <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
                                             
+                                            {/* Show watermark on preview images only */}
                                             {!upload.is_final && !upload.watermarked && (
                                                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                                                     <span className="text-white/40 text-4xl font-black rotate-45">PREVIEW</span>
                                                 </div>
                                             )}
                                             
+                                            {/* Status badge */}
                                             <div className="absolute top-2 right-2">
                                                 {upload.is_final ? (
                                                     <span className="px-2 py-1 bg-green-500 text-white text-xs font-bold rounded-full">
@@ -702,6 +723,7 @@ export default function CommissionDetail() {
                                                 )}
                                             </div>
                                             
+                                            {/* Hover overlay */}
                                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 {upload.is_final ? (
                                                     <button 
@@ -738,14 +760,15 @@ export default function CommissionDetail() {
                                             </div>
                                         </div>
                                         
+                                        {/* Artist's Message - Separate Card */}
                                         {upload.notes && (
                                             <div className="mt-3 p-4 bg-gradient-to-r from-slate-50 to-yellow-50 rounded-xl border border-slate-200">
                                                 <div className="flex items-start gap-3">
                                                     <div className="w-8 h-8 rounded-full bg-yellow-500 flex items-center justify-center flex-shrink-0">
-                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || "A"}</span>
+                                                        <span className="text-sm font-bold text-slate-900">{artist?.full_name?.charAt(0) || artist?.name?.charAt(0) || artist?.username?.charAt(0) || "A"}</span>
                                                     </div>
                                                     <div>
-                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || "Artist"}</p>
+                                                        <p className="text-xs text-slate-500 font-medium">Message from {artist?.full_name || artist?.name || artist?.username || "Artist"}</p>
                                                         <p className="text-sm text-slate-700 mt-1">{upload.notes}</p>
                                                         <p className="text-xs text-slate-400 mt-1">
                                                             {new Date(upload.created_at).toLocaleDateString()} at {new Date(upload.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -804,6 +827,7 @@ export default function CommissionDetail() {
                         )}
                     </div>
 
+                    {/* Revision Notes Section */}
                     {isBuyer && (commission.status === "review" || commission.status === "revised") && (
                         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                             <h2 className="text-lg font-bold text-slate-900 mb-4">Request Revision</h2>
@@ -821,7 +845,7 @@ export default function CommissionDetail() {
                 <div className="space-y-6">
                     <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6">
                         <h2 className="text-lg font-bold text-slate-900 mb-4">Chat</h2>
-                        <div ref={chatContainerRef} className="h-80 overflow-y-auto space-y-3 mb-4">
+                        <div className="h-80 overflow-y-auto space-y-3 mb-4">
                             {messages.map((msg) => (
                                 <div
                                     key={msg.id || msg.message_id}
@@ -841,6 +865,7 @@ export default function CommissionDetail() {
                                     </div>
                                 </div>
                             ))}
+                            <div ref={messagesEndRef} />
                         </div>
                         <form onSubmit={handleSendMessage} className="flex gap-2">
                             <input

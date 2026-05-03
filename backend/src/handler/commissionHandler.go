@@ -37,6 +37,11 @@ func (h *CommissionHandler) CreateCommission(w http.ResponseWriter, r *http.Requ
 		Price:       req.Price,
 	}
 
+	if req.BuyerID == req.ArtistID {
+		http.Error(w, "Buyer and artist cannot be the same user", http.StatusBadRequest)
+		return
+	}
+
 	if req.Deadline != "" {
 		parsedDeadline, err := parseTime(req.Deadline)
 		if err == nil && parsedDeadline != nil {

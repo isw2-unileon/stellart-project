@@ -18,6 +18,7 @@ export default function Profile() {
     const [isLoading, setIsLoading] = useState(true);
     const [skills, setSkills] = useState([]);
     const [bio, setBio] = useState("");
+    const [openCommissions, setOpenCommissions] = useState(false);
     const navigate = useNavigate();
     const textareaRef = useRef(null);
     const maxBioLength = 150;
@@ -48,6 +49,7 @@ export default function Profile() {
                 if (profile) {
                     setAvatar(profile.avatar_url || null);
                     setBio(profile.biography || "");
+                    setOpenCommissions(profile.open_commissions || false);
                 } else {
                     setAvatar(loggedUser.user_metadata?.avatar_url || null);
                 }
@@ -123,7 +125,8 @@ export default function Profile() {
                 fullName: displayName,
                 email: user.email,
                 biography: bio,
-                avatarUrl: avatar
+                avatarUrl: avatar,
+                openCommissions: openCommissions
             };
 
             const skillsData = skills.map(s => ({
@@ -137,7 +140,7 @@ export default function Profile() {
         } catch {
             toast.error("Save failed");
         }
-    }, [user?.id, user?.email, displayName, bio, avatar, skills]);
+    }, [user?.id, user?.email, displayName, bio, avatar, openCommissions, skills]);
 
     const [initialLoadDone, setInitialLoadDone] = useState(false);
 

@@ -17,6 +17,7 @@ import Wishlist from './pages/Wishlist';
 import ShippingAddresses from "./pages/ShippingAddresses";
 import ArtworkDetails from './pages/ArtworkDetails';
 import ArtistProfile from './pages/ArtistProfile';
+import Orders from './pages/Orders';
 
 export default function App() {
     return (
@@ -45,12 +46,14 @@ export default function App() {
                 <Route path="/contact" element={<Layout> <Contact /> </Layout>} />
                 <Route path="/commissions" element={<Layout> <Commissions /> </Layout>} />
                 <Route path="/commissions/settings" element={<Layout> <OpenCommissions /> </Layout>} />
+                <Route path="/commissions/find" element={<Layout> <FindArtists /> </Layout>} />
                 <Route path="/commission/start/:artistId" element={<Layout> <StartCommission /> </Layout>} />
                 <Route path="/commissions/:id" element={<Layout> <CommissionDetail /> </Layout>} />
                 <Route path="/wishlist" element={<Layout> <Wishlist /> </Layout>} />
                 <Route path="/shipping" element={<Layout> <ShippingAddresses /> </Layout>} />
                 <Route path="/artwork-details/:id" element={<Layout> <ArtworkDetails /> </Layout>} />
                 <Route path="/find-artists" element={<Layout> <FindArtists /> </Layout>} />
+                <Route path="/orders" element={<Layout> <Orders /> </Layout>} />
             </Routes>
         </>
     )

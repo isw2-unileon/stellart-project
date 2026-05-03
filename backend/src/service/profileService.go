@@ -3,6 +3,7 @@ package service
 import (
 	"stellart/backend/src/database/models"
 	"stellart/backend/src/database/repository/uis"
+	"stellart/backend/src/dto"
 )
 
 type ProfileService struct {
@@ -17,8 +18,39 @@ func (s *ProfileService) GetProfile(id string) (*models.Profile, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *ProfileService) UpdateProfile(p *models.Profile, skills []models.ProfileSkill) error {
-	return s.repo.Update(p, skills)
+func (s *ProfileService) UpdateProfile(p *dto.UpdateProfile, skills []models.ProfileSkill) error {
+	var id string
+	if p.ID != nil {
+		id = *p.ID
+	}
+	existing, err := s.repo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	
+	profile := &models.Profile{ID: id}
+	if existing != nil {
+		profile.FullName = existing.FullName
+		profile.Email = existing.Email
+		profile.AvatarURL = existing.AvatarURL
+		profile.Biography = existing.Biography
+		profile.OpenCommissions = existing.OpenCommissions
+	}
+	
+	if p.FullName != nil {
+		profile.FullName = *p.FullName
+	}
+	if p.AvatarURL != nil {
+		profile.AvatarURL = p.AvatarURL
+	}
+	if p.Biography != nil {
+		profile.Biography = p.Biography
+	}
+	if p.OpenCommissions != nil {
+		profile.OpenCommissions = *p.OpenCommissions
+	}
+	
+	return s.repo.Update(profile, skills)
 }
 
 func (s *ProfileService) GetProfileSkills(profileID string) ([]models.ProfileSkill, error) {
