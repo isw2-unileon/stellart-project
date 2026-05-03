@@ -682,3 +682,17 @@ export const getArtwork = async (id) => {
         return null;
     }
 };
+
+export const checkAIGenerated = async (imageUrl) => {
+    const response = await fetch(`${BACKEND_URL}/check-ai`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: imageUrl }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to check AI generation');
+    }
+
+    return await response.json();
+};

@@ -4,13 +4,15 @@
 install:
 	go install github.com/air-verse/air@latest
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	cd backend && go get github.com/yalue/onnxruntime_go
 	go mod download
 	cd frontend/stellart-frontend && npm install
 	cd e2e && npm install
+	@echo "Remember to place onnxruntime.dll in the backend folder and have TDM-GCC installed."
 
 ## Run backend with hot reload
 run-backend:
-	go run backend/main.go
+	cd backend && set CGO_ENABLED=1 && go run main.go
 
 ## Run frontend dev server
 run-frontend:
