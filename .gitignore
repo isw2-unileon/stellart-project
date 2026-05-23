@@ -1,5 +1,9 @@
 .env
 
+# Go backend build artifacts
+backend/bin/
+backend/*.exe
+
 # Playwright
 node_modules/
 e2e/test-results/

@@ -10,9 +10,9 @@ install:
 	cd e2e && npm install
 	@echo "Remember to place onnxruntime.dll in the backend folder and have TDM-GCC installed."
 
-## Run backend with hot reload
+## Run backend (requires 64-bit Go, gcc, onnxruntime.dll in backend/)
 run-backend:
-	cd backend && set CGO_ENABLED=1 && go run main.go
+	cd backend && powershell -NoProfile -ExecutionPolicy Bypass -File run.ps1
 
 ## Run frontend dev server
 run-frontend:
