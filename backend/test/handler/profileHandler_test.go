@@ -28,7 +28,10 @@ type mockProfileRepo struct {
 }
 
 func (m *mockProfileRepo) GetByID(id string) (*models.Profile, error) {
-	return m.mockGetByID(id)
+	if m.mockGetByID != nil {
+		return m.mockGetByID(id)
+	}
+	return nil, nil
 }
 
 func (m *mockProfileRepo) GetOpenCommissionProfiles() ([]models.Profile, error) {

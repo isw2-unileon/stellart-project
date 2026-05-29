@@ -26,10 +26,9 @@ build-backend:
 build-frontend:
 	cd frontend/stellart-frontend && npm run build
 
-## Run all tests
+## Run all tests (backend + frontend) with coverage via the unified runner
 test:
-	go test -v ./...
-	cd frontend/stellart-frontend && npm run test
+	npm test
 
 ## Run linters
 lint:

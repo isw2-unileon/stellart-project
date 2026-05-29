@@ -1,0 +1,11 @@
+{
+  "name": "stellart-project",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Unified test and coverage runner for the Stellart backend (Go) and frontend (React/Vitest).",
+  "scripts": {
+    "test": "node scripts/run-tests.mjs",
+    "test:backend": "node scripts/run-tests.mjs backend",
+    "test:frontend": "node scripts/run-tests.mjs frontend"
+  }
+}

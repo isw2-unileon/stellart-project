@@ -283,7 +283,6 @@ func (r *postgresCommissionRepo) DeleteWorkUpload(uploadID string) error {
 	}
 	defer tx.Rollback()
 
-	// Remove dependent revisions first to satisfy the foreign key constraint.
 	if _, err := tx.Exec(`DELETE FROM public.commission_revisions WHERE work_upload_id = $1`, uploadID); err != nil {
 		return err
 	}
