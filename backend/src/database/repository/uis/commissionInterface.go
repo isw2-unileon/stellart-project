@@ -20,6 +20,7 @@ type CommissionRepository interface {
 	CreateWorkUpload(upload *models.WorkUpload) error
 	GetWorkUploadsByCommissionID(commissionID string) ([]models.WorkUpload, error)
 	UpdateWorkUpload(upload *models.WorkUpload) error
+	DeleteWorkUpload(uploadID string) error
 
 	CreateRevision(revision *models.CommissionRevision) error
 	GetRevisionsByCommissionID(commissionID string) ([]models.CommissionRevision, error)

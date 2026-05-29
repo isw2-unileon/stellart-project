@@ -190,6 +190,10 @@ func (s *CommissionService) GetWorkUploads(commissionID string) ([]models.WorkUp
 	return s.commissionRepo.GetWorkUploadsByCommissionID(commissionID)
 }
 
+func (s *CommissionService) DeleteWorkUpload(uploadID string) error {
+	return s.commissionRepo.DeleteWorkUpload(uploadID)
+}
+
 func (s *CommissionService) RequestRevision(revision *models.CommissionRevision) error {
 	revision.Status = models.RevisionStatusPending
 

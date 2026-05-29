@@ -53,6 +53,7 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Post("/payments", comh.CreateAdvancePayment)
 		r.Post("/remaining-payments", comh.CreateRemainingPayment)
 		r.Post("/work-uploads", comh.UploadWork)
+		r.Delete("/work-uploads/{uploadId}", comh.DeleteWorkUpload)
 		r.Post("/revisions", comh.RequestRevision)
 		r.Post("/refunds", comh.CreateRefund)
 		r.Post("/messages", comh.SendMessage)

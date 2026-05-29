@@ -276,6 +276,25 @@ func (r *postgresCommissionRepo) UpdateWorkUpload(upload *models.WorkUpload) err
 	return err
 }
 
+func (r *postgresCommissionRepo) DeleteWorkUpload(uploadID string) error {
+	tx, err := r.db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Remove dependent revisions first to satisfy the foreign key constraint.
+	if _, err := tx.Exec(`DELETE FROM public.commission_revisions WHERE work_upload_id = $1`, uploadID); err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM public.work_uploads WHERE id = $1`, uploadID); err != nil {
+		return err
+	}
+
+	return tx.Commit()
+}
+
 func (r *postgresCommissionRepo) CreateRevision(revision *models.CommissionRevision) error {
 	query := `
 		INSERT INTO public.commission_revisions (commission_id, work_upload_id, request_notes, response_notes, status)

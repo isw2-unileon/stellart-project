@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { toast } from "sonner";
-import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, denyCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, releasePayment, requestRevision, uploadImage, uploadWork, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
+import { getLoggedUser, getCommission, getProfile, getWorkUploads, getMessages, sendMessage, markMessagesRead, acceptCommission, denyCommission, startCommission, submitForReview, approveWork, createAdvancePayment, markPaymentPaid, requestRevision, uploadImage, uploadWork, deleteWorkUpload, getAdvancePayment, getRevisions, createRemainingPayment, getRemainingPayment, markRemainingPaymentPaid } from "../service/apiService";
 import { Button } from "../components/ui/button";
 import PaymentModal from "../components/PaymentModal";
 import ConfirmDialog from "../components/ConfirmDialog";
@@ -28,6 +28,7 @@ export default function CommissionDetail() {
     const [paymentAction, setPaymentAction] = useState(null);
     const [finalUploadFile, setFinalUploadFile] = useState(null);
     const [showDenyDialog, setShowDenyDialog] = useState(false);
+    const [uploadToDelete, setUploadToDelete] = useState(null);
     const messagesEndRef = useRef(null);
     const navigate = useNavigate();
 
@@ -77,6 +78,35 @@ export default function CommissionDetail() {
         fetchData();
     }, [id, navigate]);
 
+    // Auto-refresh the commission state so both parties see updates
+    // (e.g. when the buyer approves the work and pays the remaining balance).
+    useEffect(() => {
+        if (!commission) return;
+        const terminalStatuses = ["completed", "cancelled", "refunded"];
+        if (terminalStatuses.includes(commission.status)) return;
+
+        const interval = setInterval(async () => {
+            try {
+                const [comm, pay, remPay, uploads, revs] = await Promise.all([
+                    getCommission(id).catch(() => null),
+                    getAdvancePayment(id).catch(() => null),
+                    getRemainingPayment(id).catch(() => null),
+                    getWorkUploads(id).catch(() => []),
+                    getRevisions(id).catch(() => [])
+                ]);
+                if (comm) setCommission(comm);
+                setPayment(pay);
+                setRemainingPayment(remPay);
+                setWorkUploads(uploads || []);
+                setRevisions(revs || []);
+            } catch {
+                // Ignore transient polling errors
+            }
+        }, 5000);
+
+        return () => clearInterval(interval);
+    }, [id, commission?.status]);
+
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }, [messages]);
@@ -110,6 +140,10 @@ export default function CommissionDetail() {
             }
             setUploadFile(file);
         }
+    };
+
+    const handleRemoveFile = () => {
+        setUploadFile(null);
     };
 
     const handleUploadWork = async () => {
@@ -148,6 +182,25 @@ export default function CommissionDetail() {
             toast.error(e.message || "Failed to upload work");
         } finally {
             setIsUploading(false);
+        }
+    };
+
+    const handleConfirmDeleteUpload = async () => {
+        if (!uploadToDelete) return;
+
+        try {
+            await deleteWorkUpload(uploadToDelete.id);
+            const [uploads, revs] = await Promise.all([
+                getWorkUploads(id).catch(() => []),
+                getRevisions(id).catch(() => [])
+            ]);
+            setWorkUploads(uploads || []);
+            setRevisions(revs || []);
+            toast.success("Upload removed");
+        } catch (e) {
+            toast.error(e.message || "Failed to remove upload");
+        } finally {
+            setUploadToDelete(null);
         }
     };
 
@@ -257,6 +310,10 @@ export default function CommissionDetail() {
         }
     };
 
+    const handleRemoveFinalFile = () => {
+        setFinalUploadFile(null);
+    };
+
     const handleDownload = async (imageUrl, filename) => {
         try {
             const response = await fetch(imageUrl);
@@ -321,18 +378,6 @@ export default function CommissionDetail() {
         }
         setShowPaymentModal(false);
         setPaymentAction(null);
-    };
-
-    const handleReleasePayment = async () => {
-        try {
-            await releasePayment(id);
-            toast.success("Payment released to artist!");
-            
-            const pay = await getAdvancePayment(id).catch(() => null);
-            setPayment(pay);
-        } catch {
-            toast.error("Failed to release payment");
-        }
     };
 
     const handleRequestRevision = async () => {
@@ -565,6 +610,13 @@ export default function CommissionDetail() {
                                     Submit for Review {!hasUploadedWork && "(Upload preview first)"}
                                 </Button>
                             )}
+
+                            {/* Artist: Resend revised work for review */}
+                            {commission.status === "revised" && isArtist && (
+                                <Button onClick={handleSubmitForReview} disabled={!hasUploadedWork}>
+                                    Resend for Review {!hasUploadedWork && "(Upload preview first)"}
+                                </Button>
+                            )}
                             
                             {/* Buyer: Review or Revision */}
                             {(commission.status === "review" || commission.status === "revised") && isBuyer && (
@@ -602,10 +654,8 @@ export default function CommissionDetail() {
                                     <p className="font-bold text-slate-900">Remaining (50%)</p>
                                     <p className="text-sm text-slate-500">${advanceAmount}</p>
                                 </div>
-                                {isRemainingPaid ? (
+                                {isRemainingPaid && (
                                     <span className="text-green-600 font-bold text-sm">Paid</span>
-                                ) : (
-                                    <span className="text-slate-400 text-sm">Pending</span>
                                 )}
                             </div>
                         </div>
@@ -620,12 +670,6 @@ export default function CommissionDetail() {
                             {(commission.status === "accepted" || commission.status === "in_progress") && isBuyer && payment && payment.status !== "paid" && (
                                 <Button onClick={handlePayAdvance} size="sm">
                                     Pay Advance (${advanceAmount})
-                                </Button>
-                            )}
-                            
-                            {isArtist && payment?.status === "paid" && remainingPayment?.status === "paid" && (
-                                <Button onClick={handleReleasePayment} size="sm">
-                                    Release Payment
                                 </Button>
                             )}
                         </div>
@@ -670,10 +714,24 @@ export default function CommissionDetail() {
                                     <input
                                         type="file"
                                         accept="image/*"
+                                        onClick={(e) => { e.target.value = null; }}
                                         onChange={handleFileChange}
                                         className="hidden"
                                     />
                                 </label>
+
+                                {uploadFile && (
+                                    <button
+                                        type="button"
+                                        onClick={handleRemoveFile}
+                                        className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-red-500 hover:text-red-600"
+                                    >
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Remove image
+                                    </button>
+                                )}
 
                                 <textarea
                                     value={uploadNotes}
@@ -702,6 +760,22 @@ export default function CommissionDetail() {
                                         {/* Image Card */}
                                         <div className="relative aspect-square bg-slate-100 rounded-xl overflow-hidden group cursor-pointer" onClick={() => setSelectedImage(upload.image_url)}>
                                             <img src={upload.image_url} alt="Work" className="w-full h-full object-cover" />
+
+                                            {/* Delete button for artist (before completion) */}
+                                            {isArtist && !isApproved && (
+                                                <button
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        setUploadToDelete(upload);
+                                                    }}
+                                                    title="Remove this upload"
+                                                    className="absolute top-2 left-2 z-10 p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-sm"
+                                                >
+                                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                    </svg>
+                                                </button>
+                                            )}
                                             
                                             {/* Show watermark on preview images only */}
                                             {!upload.is_final && !upload.watermarked && (
@@ -810,10 +884,23 @@ export default function CommissionDetail() {
                                             <input
                                                 type="file"
                                                 accept="image/*"
+                                                onClick={(e) => { e.target.value = null; }}
                                                 onChange={handleFinalFileChange}
                                                 className="hidden"
                                             />
                                         </label>
+                                        {finalUploadFile && (
+                                            <button
+                                                type="button"
+                                                onClick={handleRemoveFinalFile}
+                                                className="mt-2 inline-flex items-center gap-1 text-sm font-medium text-red-500 hover:text-red-600"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                                Remove image
+                                            </button>
+                                        )}
                                         <Button 
                                             onClick={handleFinalUpload} 
                                             disabled={!finalUploadFile || isUploading}
@@ -901,6 +988,16 @@ export default function CommissionDetail() {
                 confirmText="Deny & Refund"
                 cancelText="Cancel"
                 onConfirm={handleConfirmDeny}
+            />
+
+            <ConfirmDialog
+                open={!!uploadToDelete}
+                onOpenChange={(open) => { if (!open) setUploadToDelete(null); }}
+                title="Remove Upload"
+                description="Are you sure you want to remove this uploaded image? This cannot be undone."
+                confirmText="Remove"
+                cancelText="Cancel"
+                onConfirm={handleConfirmDeleteUpload}
             />
         </div>
     );
