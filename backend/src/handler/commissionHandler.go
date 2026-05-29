@@ -320,6 +320,16 @@ func (h *CommissionHandler) GetWorkUploads(w http.ResponseWriter, r *http.Reques
 	json.NewEncoder(w).Encode(uploads)
 }
 
+func (h *CommissionHandler) DeleteWorkUpload(w http.ResponseWriter, r *http.Request) {
+	uploadID := chi.URLParam(r, "uploadId")
+	if err := h.commissionService.DeleteWorkUpload(uploadID); err != nil {
+		log.Printf("[ERROR] DeleteWorkUpload - Service error: %v", err)
+		http.Error(w, "Failed to delete work upload", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
+}
+
 func (h *CommissionHandler) RequestRevision(w http.ResponseWriter, r *http.Request) {
 	var req dto.RequestRevision
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {

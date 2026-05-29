@@ -380,6 +380,14 @@ export const getWorkUploads = async (commissionId) => {
     return response.json();
 };
 
+export const deleteWorkUpload = async (uploadId) => {
+    const response = await fetch(`${BACKEND_URL}/commissions/work-uploads/${uploadId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+    });
+    if (!response.ok) throw new Error('Failed to delete work upload');
+};
+
 export const requestRevision = async (revisionData) => {
     const response = await fetch(`${BACKEND_URL}/commissions/revisions`, {
         method: 'POST',

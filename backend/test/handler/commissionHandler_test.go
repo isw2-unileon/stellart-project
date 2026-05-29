@@ -31,6 +31,7 @@ type mockCommissionRepo struct {
 	mockCreateWorkUpload         func(u *models.WorkUpload) error
 	mockGetWorkUploadsByCID      func(cid string) ([]models.WorkUpload, error)
 	mockUpdateWorkUpload         func(u *models.WorkUpload) error
+	mockDeleteWorkUpload         func(uploadID string) error
 	mockCreateRevision           func(r *models.CommissionRevision) error
 	mockGetRevisionsByCID        func(cid string) ([]models.CommissionRevision, error)
 	mockUpdateRevision           func(r *models.CommissionRevision) error
@@ -122,6 +123,13 @@ func (m *mockCommissionRepo) GetWorkUploadsByCommissionID(cid string) ([]models.
 func (m *mockCommissionRepo) UpdateWorkUpload(u *models.WorkUpload) error {
 	if m.mockUpdateWorkUpload != nil {
 		return m.mockUpdateWorkUpload(u)
+	}
+	return nil
+}
+
+func (m *mockCommissionRepo) DeleteWorkUpload(uploadID string) error {
+	if m.mockDeleteWorkUpload != nil {
+		return m.mockDeleteWorkUpload(uploadID)
 	}
 	return nil
 }
