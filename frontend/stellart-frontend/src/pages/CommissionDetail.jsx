@@ -78,8 +78,6 @@ export default function CommissionDetail() {
         fetchData();
     }, [id, navigate]);
 
-    // Auto-refresh the commission state so both parties see updates
-    // (e.g. when the buyer approves the work and pays the remaining balance).
     useEffect(() => {
         if (!commission) return;
         const terminalStatuses = ["completed", "cancelled", "refunded"];

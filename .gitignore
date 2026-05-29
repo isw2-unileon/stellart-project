@@ -4,6 +4,10 @@
 backend/bin/
 backend/*.exe
 
+# Test coverage reports
+coverage/
+frontend/stellart-frontend/coverage/
+
 # Playwright
 node_modules/
 e2e/test-results/
