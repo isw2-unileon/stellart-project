@@ -244,13 +244,16 @@ func TestCommissionHandler_CreateCommission(t *testing.T) {
 		},
 	}
 
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockCommissionRepo{
 				mockCreate: tt.mockBehavior,
 			}
 
-			commissionService := service.NewCommissionService(mockRepo)
+			commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 			h := handler.NewCommissionHandler(commissionService)
 
 			r := chi.NewRouter()
@@ -317,13 +320,16 @@ func TestCommissionHandler_UploadWork(t *testing.T) {
 		},
 	}
 
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockCommissionRepo{
 				mockCreateWorkUpload: tt.mockBehavior,
 			}
 
-			commissionService := service.NewCommissionService(mockRepo)
+			commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 			h := handler.NewCommissionHandler(commissionService)
 
 			r := chi.NewRouter()
@@ -395,13 +401,16 @@ func TestCommissionHandler_GetWorkUploads(t *testing.T) {
 		},
 	}
 
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockCommissionRepo{
 				mockGetWorkUploadsByCID: tt.mockBehavior,
 			}
 
-			commissionService := service.NewCommissionService(mockRepo)
+			commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 			h := handler.NewCommissionHandler(commissionService)
 
 			r := chi.NewRouter()
@@ -499,6 +508,9 @@ func TestCommissionHandler_ApproveWork(t *testing.T) {
 		},
 	}
 
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockCommissionRepo{
@@ -508,7 +520,7 @@ func TestCommissionHandler_ApproveWork(t *testing.T) {
 				mockUpdateWorkUpload:    tt.updateUpload,
 			}
 
-			commissionService := service.NewCommissionService(mockRepo)
+			commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 			h := handler.NewCommissionHandler(commissionService)
 
 			r := chi.NewRouter()
@@ -603,6 +615,9 @@ func TestCommissionHandler_DenyCommission(t *testing.T) {
 		},
 	}
 
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			mockRepo := &mockCommissionRepo{
@@ -613,7 +628,7 @@ func TestCommissionHandler_DenyCommission(t *testing.T) {
 				mockUpdateRefund:           tt.updateRefund,
 			}
 
-			commissionService := service.NewCommissionService(mockRepo)
+			commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 			h := handler.NewCommissionHandler(commissionService)
 
 			r := chi.NewRouter()
@@ -638,7 +653,10 @@ func BenchmarkCommissionHandler_CreateCommission(b *testing.B) {
 		},
 	}
 
-	commissionService := service.NewCommissionService(mockRepo)
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
+	commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 	h := handler.NewCommissionHandler(commissionService)
 
 	r := chi.NewRouter()
@@ -661,7 +679,10 @@ func BenchmarkCommissionHandler_UploadWork(b *testing.B) {
 		},
 	}
 
-	commissionService := service.NewCommissionService(mockRepo)
+	// Create false Stripe service with false key.
+	dummyStripeSvc := service.NewStripeService("sk_test_dummy_key")
+
+	commissionService := service.NewCommissionService(mockRepo, dummyStripeSvc)
 	h := handler.NewCommissionHandler(commissionService)
 
 	r := chi.NewRouter()

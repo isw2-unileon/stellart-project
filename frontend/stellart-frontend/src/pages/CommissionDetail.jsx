@@ -103,7 +103,7 @@ export default function CommissionDetail() {
         }, 5000);
 
         return () => clearInterval(interval);
-    }, [id, commission?.status]);
+    }, [id, commission?.status, commission]);
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

@@ -71,6 +71,17 @@ export const logoutUser = async () => {
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
 
+// Stripe
+export const createPaymentIntent = async (amount, currency = 'eur', metadata = {}) => {
+    const response = await fetch(`${BACKEND_URL}/payments/create-intent`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, currency, metadata }),
+    });
+    if (!response.ok) throw new Error('Failed to create payment intent');
+    return response.json();
+};
+
 export const submitContact = async ({ name, email, subject, message }) => {
     const response = await fetch(`${BACKEND_URL}/contact`, {
         method: 'POST',

@@ -15,7 +15,8 @@ import (
 )
 
 func newCommissionHandler(repo *mockCommissionRepo) handler.CommissionHandler {
-	return handler.NewCommissionHandler(service.NewCommissionService(repo))
+	dummyStripeService := service.NewStripeService("sk_test_dummy_key")
+	return handler.NewCommissionHandler(service.NewCommissionService(repo, dummyStripeService))
 }
 
 // serve wires a single route to a handler func and performs the request.

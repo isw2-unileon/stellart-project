@@ -7,7 +7,7 @@ import (
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler, oh *handler.OrderHandler) *chi.Mux {
+func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler, oh *handler.OrderHandler, payh *handler.PaymentHandler) *chi.Mux {
 	r := chi.NewRouter()
 
 	r.Use(cors.Handler(cors.Options{
@@ -99,6 +99,10 @@ func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler
 		r.Put("/{id}/ship", oh.ShipOrder)
 		r.Put("/{id}/deliver", oh.DeliverOrder)
 	})
+
+	// Payments (Stripe)
+	r.Post("/payments/create-intent", payh.CreateIntent)
+	r.Post("/webhooks/stripe", payh.HandleWebhook)
 
 	return r
 }

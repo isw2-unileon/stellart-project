@@ -10,6 +10,7 @@ type Order struct {
 	ShippingAddressID *string   `json:"shipping_address_id" db:"shipping_address_id"`
 	Amount            float64   `json:"amount" db:"amount"`
 	Status            string    `json:"status" db:"status"`
+	PaymentIntent     *string   `json:"payment_intent" db:"payment_intent"`
 	CreatedAt         time.Time `json:"created_at" db:"created_at"`
 	TrackingCode      *string   `json:"tracking_code" db:"tracking_code"`
 	Carrier           *string   `json:"carrier" db:"carrier"`
