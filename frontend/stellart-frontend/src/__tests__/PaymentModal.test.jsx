@@ -11,9 +11,9 @@ vi.mock('@stripe/stripe-js', () => ({
 
 vi.mock('@stripe/react-stripe-js', () => ({
     Elements: ({ children }) => <div>{children}</div>,
-    CardNumberElement: (props) => <div data-testid="card-number-element" />,
-    CardExpiryElement: (props) => <div data-testid="card-expiry-element" />,
-    CardCvcElement: (props) => <div data-testid="card-cvc-element" />,
+    CardNumberElement: () => <div data-testid="card-number-element" />,
+    CardExpiryElement: () => <div data-testid="card-expiry-element" />,
+    CardCvcElement: () => <div data-testid="card-cvc-element" />,
     useStripe: () => ({ confirmCardPayment: mockConfirmCardPayment }),
     useElements: () => ({ getElement: mockGetElement }),
 }));

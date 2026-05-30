@@ -61,7 +61,7 @@ export default function Wishlist() {
             if (updated) setArtistNames(newNames);
         };
         fetchArtistNames();
-    }, [artworks]);
+    }, [artworks, artistNames]);
 
     const handleRemove = async (e, artworkId) => {
         e.preventDefault();
