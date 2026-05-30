@@ -114,17 +114,54 @@ jobs:
           cache: false
       - run: go build -o stellart-server .
 
-  ##e2e-tests:
-    ##name: Playwright E2E Tests
-    ##runs-on: ubuntu-latest
-    ##defaults:
-    ##  run:
-    ##    working-directory: ./e2e
-    ##steps:
-    ##  - uses: actions/checkout@v4
-    ##  - uses: actions/setup-node@v4
-    ##    with:
-    ##      node-version: '20'
-    ##  - run: npm ci --ignore-scripts
-    ##  - run: npx playwright install --with-deps 
-    ##  - run: npx playwright test
+  e2e-tests:
+    name: Playwright E2E Tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        # Mantenemos tu directorio base para los comandos generales
+        working-directory: ./e2e 
+    steps:
+      - uses: actions/checkout@v4
+
+      # 1. Preparar el terreno: Node y Go
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22.x' # Ajusta a la versión exacta que uses
+
+      # 2. Instalar todas las dependencias
+      - name: Instalar dependencias del Frontend
+        working-directory: ./frontend
+        run: npm install
+
+      - name: Instalar dependencias de Playwright
+        run: |
+          npm install
+          npx playwright install --with-deps
+
+      # 3. Arrancar los motores (Backend y Frontend)
+      - name: Levantar el Backend (Go)
+        working-directory: ./backend
+        # El símbolo '&' al final es VITAL. Le dice a Ubuntu que deje el servidor 
+        # corriendo en segundo plano y pase al siguiente paso.
+        run: go run . & 
+
+      - name: Levantar el Frontend (React/Vite)
+        working-directory: ./frontend
+        run: npm run dev &
+
+      # Opcional pero recomendado: Darle 3 segundos a los servidores para arrancar bien
+      - name: Esperar a que los servidores estén listos
+        run: sleep 3
+
+      # 4. El momento de la verdad: Ejecutar los tests con credenciales secretas
+      - name: Ejecutar tests de Playwright
+        env:
+          # Aquí conectamos el entorno virtual de Ubuntu con la caja fuerte de GitHub
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: npx playwright test
