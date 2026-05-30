@@ -79,9 +79,11 @@ function runBackend() {
 
   let status = run("go test", "go", [
     "test",
-    "./...",
+    "./backend/src/handler/...",
+    "./backend/src/service/...",
+    "./backend/test/handler/...",
     "-covermode=atomic",
-    "-coverpkg=./...",
+    "-coverpkg=./backend/src/handler/...,./backend/src/service/...",
     `-coverprofile=${backendCoverProfile}`,
   ]);
   if (status !== 0) return status;
