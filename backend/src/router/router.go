@@ -1,21 +1,33 @@
 package router
 
 import (
+	"net/http"
 	"stellart/backend/src/handler"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/cors"
 )
 
-func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler, oh *handler.OrderHandler, payh *handler.PaymentHandler) *chi.Mux {
+func InitRouter(ph handler.ProfileHandler, ch handler.ContactHandler, ah handler.ArtworkHandler, comh handler.CommissionHandler, addrh handler.AddressHandler, oh *handler.OrderHandler, payh *handler.PaymentHandler, chatHdl *handler.ChatHandler, allowedOrigins []string) *chi.Mux {
 	r := chi.NewRouter()
 
+	if len(allowedOrigins) == 0 {
+		allowedOrigins = []string{"http://localhost:5173"}
+	}
+
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:5173"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
 		AllowCredentials: true,
 	}))
+
+	r.Get("/healthz", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte("ok"))
+	})
+
+	r.Get("/ws/chat", chatHdl.HandleWebSocket)
 
 	r.Route("/profiles", func(r chi.Router) {
 		r.Get("/ranking", ph.GetArtistRanking)

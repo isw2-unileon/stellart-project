@@ -1,0 +1,13 @@
+.git
+.github
+.cursor
+node_modules
+coverage
+e2e/node_modules
+frontend/stellart-frontend/node_modules
+frontend/stellart-frontend/dist
+backend/bin
+backend/*.exe
+.env
+.env.*
+!.env.example
