@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"path/filepath"
+	"runtime"
 
 	"github.com/yalue/onnxruntime_go"
 )
@@ -18,9 +19,19 @@ type AIDetectionService struct {
 }
 
 func NewAIDetectionService() *AIDetectionService {
-	// Forzamos a Windows a coger nuestra DLL local calculando su ruta absoluta
-	dllPath, _ := filepath.Abs("./onnxruntime.dll")
-	onnxruntime_go.SetSharedLibraryPath(dllPath)
+	// Select the correct shared library based on the OS
+	var libName string
+	switch runtime.GOOS {
+	case "windows":
+		libName = "onnxruntime.dll"
+	case "darwin":
+		libName = "libonnxruntime.dylib"
+	default: // linux
+		libName = "libonnxruntime.so"
+	}
+
+	libPath, _ := filepath.Abs("./" + libName)
+	onnxruntime_go.SetSharedLibraryPath(libPath)
 
 	err := onnxruntime_go.InitializeEnvironment()
 	if err != nil {
