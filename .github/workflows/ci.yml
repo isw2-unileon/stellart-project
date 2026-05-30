@@ -149,7 +149,7 @@ jobs:
         run: npm run dev &
 
       - name: Esperar a que los servidores estén listos
-        run: sleep 3
+        run: sleep 15
 
       - name: Ejecutar tests de Playwright
         env:
