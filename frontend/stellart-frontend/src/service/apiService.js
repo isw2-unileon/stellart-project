@@ -69,7 +69,11 @@ export const logoutUser = async () => {
     if (error) throw error;
 };
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = (
+    import.meta.env.DEV
+        ? (import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+        : (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+).replace(/\/$/, '');
 
 // Stripe
 export const createPaymentIntent = async (amount, currency = 'eur', metadata = {}) => {
@@ -521,7 +525,7 @@ export const updateOpenCommissions = async (userId, openCommissions) => {
 
 export const reportArtwork = async (artworkId, reporterId, reason) => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/report`, {
+        const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}/report`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -542,7 +546,7 @@ export const reportArtwork = async (artworkId, reporterId, reason) => {
 
 export const likeArtwork = async (artworkId, profileId) => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/like`, {
+        const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}/like`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -559,7 +563,7 @@ export const likeArtwork = async (artworkId, profileId) => {
 
 export const unlikeArtwork = async (artworkId, profileId) => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/${artworkId}/unlike`, {
+        const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}/unlike`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -576,7 +580,7 @@ export const unlikeArtwork = async (artworkId, profileId) => {
 
 export const getTrendingArtworks = async () => {
     try {
-        const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/artworks/trending`);
+        const response = await fetch(`${BACKEND_URL}/artworks/trending`);
         if (!response.ok) throw new Error('Failed to fetch trending');
         return await response.json();
     } catch (error) {
@@ -678,7 +682,6 @@ export const deleteAddress = async (addressId) => {
 
 export const getArtistRanking = async () => {
     try {
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
         const response = await fetch(`${BACKEND_URL}/profiles/ranking`);
         if (!response.ok) throw new Error('Failed to fetch ranking');
         return await response.json();
@@ -689,7 +692,6 @@ export const getArtistRanking = async () => {
 
 export const getProfileSkillsAPI = async (id) => {
     try {
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
         const response = await fetch(`${BACKEND_URL}/profiles/${id}/skills`);
         if (!response.ok) throw new Error('Failed to fetch skills');
         return await response.json();
@@ -700,7 +702,6 @@ export const getProfileSkillsAPI = async (id) => {
 
 export const getArtwork = async (id) => {
     try {
-        const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
         const response = await fetch(`${BACKEND_URL}/artworks/${id}`);
         if (!response.ok) throw new Error('Failed to fetch artwork');
         return await response.json();
@@ -746,7 +747,7 @@ export const createOrder = async (orderData) => {
 
 export const shipOrder = async (orderId, trackingCode, carrier) => {
     const user = await getLoggedUser();
-    const response = await fetch(`${import.meta.env.VITE_BACKEND_URL}/orders/${orderId}/ship`, {
+    const response = await fetch(`${BACKEND_URL}/orders/${orderId}/ship`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
