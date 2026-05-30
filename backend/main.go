@@ -43,9 +43,12 @@ func main() {
 	artworkSvc := service.NewArtworkService(artworkRepo, cfg, aiDetectionService)
 	artworkHdl := handler.NewArtworkHandler(artworkSvc, cfg)
 
+	// Stripe
+	stripeSvc := service.NewStripeService(cfg.StripeSecretKey)
+
 	// Commission
 	commissionRepo := postgres.NewCommissionRepository(db)
-	commissionSvc := service.NewCommissionService(commissionRepo)
+	commissionSvc := service.NewCommissionService(commissionRepo, stripeSvc)
 	commissionHdl := handler.NewCommissionHandler(commissionSvc)
 
 	// Address
@@ -60,10 +63,14 @@ func main() {
 
 	// Orders
 	orderRepo := postgres.NewOrderRepository(db)
-	orderSvc := service.NewOrderService(orderRepo)
+	orderSvc := service.NewOrderService(orderRepo, stripeSvc)
 	orderHdl := handler.NewOrderHandler(orderSvc)
 
-	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl, orderHdl)
+	// Payment (Stripe endpoints)
+	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
+	paymentHdl := handler.NewPaymentHandler(stripeSvc, commissionSvc, orderSvc, webhookSecret)
+
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl, orderHdl, paymentHdl)
 
 	http.HandleFunc("/ws/chat", chatHdl.HandleWebSocket)
 

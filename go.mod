@@ -14,4 +14,7 @@ require (
 	github.com/gorilla/websocket v1.5.3
 )
 
-require github.com/yalue/onnxruntime_go v1.30.0 // indirect
+require (
+	github.com/stripe/stripe-go/v82 v82.5.1 // indirect
+	github.com/yalue/onnxruntime_go v1.30.0 // indirect
+)

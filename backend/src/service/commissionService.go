@@ -2,7 +2,9 @@ package service
 
 import (
 	"errors"
+	"fmt"
 	"log"
+	"math"
 	"time"
 
 	"stellart/backend/src/database/models"
@@ -11,11 +13,13 @@ import (
 
 type CommissionService struct {
 	commissionRepo uis.CommissionRepository
+	stripeSvc      *StripeService
 }
 
-func NewCommissionService(repo uis.CommissionRepository) *CommissionService {
+func NewCommissionService(repo uis.CommissionRepository, stripeSvc *StripeService) *CommissionService {
 	return &CommissionService{
 		commissionRepo: repo,
+		stripeSvc:      stripeSvc,
 	}
 }
 
@@ -100,13 +104,27 @@ func (s *CommissionService) ApproveWork(commissionID string) error {
 
 func (s *CommissionService) CreateAdvancePayment(payment *models.AdvancePayment) error {
 	log.Printf("[DEBUG] CommissionService.CreateAdvancePayment - Payment: %+v", payment)
-	payment.Status = models.PaymentStatusPending
-	err := s.commissionRepo.CreateAdvancePayment(payment)
+
+	// Create a real Stripe PaymentIntent
+	amountCents := int64(math.Round(payment.Amount * 100))
+	metadata := map[string]string{
+		"commission_id": payment.CommissionID,
+		"type":          "advance",
+	}
+
+	piID, _, err := s.stripeSvc.CreatePaymentIntent(amountCents, "eur", metadata)
 	if err != nil {
-		log.Printf("[ERROR] CommissionService.CreateAdvancePayment - Repo error: %v", err)
+		log.Printf("[ERROR] CreateAdvancePayment - Stripe error: %v", err)
+		return fmt.Errorf("stripe: %w", err)
+	}
+
+	payment.PaymentIntent = piID
+	payment.Status = models.PaymentStatusPending
+	if err := s.commissionRepo.CreateAdvancePayment(payment); err != nil {
+		log.Printf("[ERROR] CreateAdvancePayment - Repo error: %v", err)
 		return err
 	}
-	log.Printf("[DEBUG] CommissionService.CreateAdvancePayment - Success")
+	log.Printf("[DEBUG] CreateAdvancePayment - Success (Stripe PI: %s)", piID)
 	return nil
 }
 
@@ -123,6 +141,17 @@ func (s *CommissionService) MarkPaymentPaid(commissionID string) error {
 		return errors.New("payment not found")
 	}
 
+	// Validate against Stripe that the payment actually succeeded
+	if payment.PaymentIntent != "" {
+		pi, err := s.stripeSvc.GetPaymentIntent(payment.PaymentIntent)
+		if err != nil {
+			return fmt.Errorf("stripe verification failed: %w", err)
+		}
+		if pi.Status != "succeeded" {
+			return fmt.Errorf("payment intent status is '%s', not 'succeeded'", pi.Status)
+		}
+	}
+
 	now := time.Now()
 	payment.Status = models.PaymentStatusPaid
 	payment.PaidAt = &now
@@ -130,6 +159,20 @@ func (s *CommissionService) MarkPaymentPaid(commissionID string) error {
 }
 
 func (s *CommissionService) CreateRemainingPayment(payment *models.RemainingPayment) error {
+	// Create a real Stripe PaymentIntent
+	amountCents := int64(math.Round(payment.Amount * 100))
+	metadata := map[string]string{
+		"commission_id": payment.CommissionID,
+		"type":          "remaining",
+	}
+
+	piID, _, err := s.stripeSvc.CreatePaymentIntent(amountCents, "eur", metadata)
+	if err != nil {
+		log.Printf("[ERROR] CreateRemainingPayment - Stripe error: %v", err)
+		return fmt.Errorf("stripe: %w", err)
+	}
+
+	payment.PaymentIntent = piID
 	payment.Status = models.PaymentStatusPending
 	return s.commissionRepo.CreateRemainingPayment(payment)
 }
@@ -147,6 +190,17 @@ func (s *CommissionService) MarkRemainingPaymentPaid(commissionID string) error 
 		return errors.New("payment not found")
 	}
 
+	// Validate against Stripe
+	if payment.PaymentIntent != "" {
+		pi, err := s.stripeSvc.GetPaymentIntent(payment.PaymentIntent)
+		if err != nil {
+			return fmt.Errorf("stripe verification failed: %w", err)
+		}
+		if pi.Status != "succeeded" {
+			return fmt.Errorf("payment intent status is '%s', not 'succeeded'", pi.Status)
+		}
+	}
+
 	now := time.Now()
 	payment.Status = models.PaymentStatusPaid
 	payment.PaidAt = &now
@@ -160,6 +214,17 @@ func (s *CommissionService) ReleasePayment(commissionID string) error {
 	}
 	if advancePayment == nil {
 		return errors.New("advance payment not found")
+	}
+
+	// Validate advance payment is actually paid in Stripe before releasing
+	if advancePayment.PaymentIntent != "" && advancePayment.Status == models.PaymentStatusPaid {
+		pi, err := s.stripeSvc.GetPaymentIntent(advancePayment.PaymentIntent)
+		if err != nil {
+			return fmt.Errorf("stripe verification failed: %w", err)
+		}
+		if pi.Status != "succeeded" {
+			return fmt.Errorf("cannot release: advance payment intent status is '%s'", pi.Status)
+		}
 	}
 
 	now := time.Now()
@@ -316,7 +381,25 @@ func (s *CommissionService) ProcessRefund(commissionID string) error {
 		return errors.New("refund not found")
 	}
 
+	// Find the advance payment to get its Stripe PaymentIntent ID
+	payment, err := s.commissionRepo.GetAdvancePaymentByCommissionID(commissionID)
+	if err != nil {
+		return err
+	}
+
+	// Issue real Stripe refund if we have a payment intent
+	if payment != nil && payment.PaymentIntent != "" {
+		amountCents := int64(math.Round(refund.Amount * 100))
+		_, err := s.stripeSvc.CreateRefund(payment.PaymentIntent, amountCents)
+		if err != nil {
+			log.Printf("[ERROR] ProcessRefund - Stripe refund failed: %v", err)
+			return fmt.Errorf("stripe refund failed: %w", err)
+		}
+	}
+
+	now := time.Now()
 	refund.Status = models.PaymentStatusRefunded
+	refund.ProcessedAt = &now
 	return s.commissionRepo.UpdateRefund(refund)
 }
 

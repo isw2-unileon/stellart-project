@@ -19,13 +19,17 @@ func NewOrderHandler(service *service.OrderService) *OrderHandler {
 
 func (h *OrderHandler) CreateOrder(w http.ResponseWriter, r *http.Request) {
 	var req dto.CreateOrderDTO
-	json.NewDecoder(r.Body).Decode(&req)
-	order, err := h.Service.CreateOrder(req.BuyerID, req)
-	if err != nil {
-		http.Error(w, err.Error(), 500)
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "Invalid payload", http.StatusBadRequest)
 		return
 	}
-	json.NewEncoder(w).Encode(order)
+	result, err := h.Service.CreateOrder(req.BuyerID, req)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(result)
 }
 
 func (h *OrderHandler) ShipOrder(w http.ResponseWriter, r *http.Request) {

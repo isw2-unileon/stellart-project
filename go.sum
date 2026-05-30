@@ -16,6 +16,8 @@ github.com/resend/resend-go/v3 v3.2.0 h1:jChLDFSLxKewNf6JEkxUyp/sJbaHBqd/NQfxCdX
 github.com/resend/resend-go/v3 v3.2.0/go.mod h1:iI7VA0NoGjWvsNii5iNC5Dy0llsI3HncXPejhniYzwE=
 github.com/stretchr/testify v1.8.2 h1:+h33VjcLVPDHtOdpUCuF+7gSuG3yGIftsP1YvFihtJ8=
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
+github.com/stripe/stripe-go/v82 v82.5.1 h1:05q6ZDKoe8PLMpQV072obF74HCgP4XJeJYoNuRSX2+8=
+github.com/stripe/stripe-go/v82 v82.5.1/go.mod h1:majCQX6AfObAvJiHraPi/5udwHi4ojRvJnnxckvHrX8=
 github.com/yalue/onnxruntime_go v1.30.0 h1:VAZyXhTu0mUkq+hXwVp/flc7sndhSxz9787lZvBUVm0=
 github.com/yalue/onnxruntime_go v1.30.0/go.mod h1:b4X26A8pekNb1ACJ58wAXgNKeUCGEAQ9dmACut9Sm/4=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

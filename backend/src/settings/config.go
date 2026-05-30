@@ -12,6 +12,7 @@ type Config struct {
 	ResendAPIKey    string
 	ContactEmail    string
 	CohereAPIKey    string
+	StripeSecretKey string
 	Port            string
 }
 
@@ -30,6 +31,7 @@ func LoadConfig() *Config {
 		ResendAPIKey:    os.Getenv("RESEND_API_KEY"),
 		ContactEmail:    os.Getenv("CONTACT_EMAIL"),
 		CohereAPIKey:    os.Getenv("COHERE_API_KEY"),
+		StripeSecretKey: os.Getenv("STRIPE_SECRET_KEY"),
 		Port:            port,
 	}
 }
