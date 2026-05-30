@@ -8,6 +8,7 @@ import (
 	_ "image/png"
 	"log"
 	"net/http"
+	"os"
 	"path/filepath"
 	"runtime"
 
@@ -30,7 +31,11 @@ func NewAIDetectionService() *AIDetectionService {
 		libName = "libonnxruntime.so"
 	}
 
-	libPath, _ := filepath.Abs("./" + libName)
+	libPath := os.Getenv("AI_RUNTIME_LIB_PATH")
+	if libPath == "" {
+		libPath = "./" + libName
+	}
+	libPath, _ = filepath.Abs(libPath)
 	onnxruntime_go.SetSharedLibraryPath(libPath)
 
 	err := onnxruntime_go.InitializeEnvironment()
@@ -38,8 +43,13 @@ func NewAIDetectionService() *AIDetectionService {
 		log.Fatalf("Failed to initialize ONNX runtime: %v", err)
 	}
 
+	modelPath := os.Getenv("AI_MODEL_PATH")
+	if modelPath == "" {
+		modelPath = "ai_detector.onnx"
+	}
+
 	return &AIDetectionService{
-		modelPath: "ai_detector.onnx",
+		modelPath: modelPath,
 	}
 }
 

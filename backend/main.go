@@ -22,8 +22,6 @@ func main() {
 
 	cfg := settings.LoadConfig()
 
-	port := os.Getenv("PORT")
-
 	db := connection.InitDB(cfg.DatabaseURL)
 	defer db.Close()
 
@@ -70,12 +68,10 @@ func main() {
 	webhookSecret := os.Getenv("STRIPE_WEBHOOK_SECRET")
 	paymentHdl := handler.NewPaymentHandler(stripeSvc, commissionSvc, orderSvc, webhookSecret)
 
-	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl, orderHdl, paymentHdl)
+	r := router.InitRouter(profileHdl, contactHdl, artworkHdl, commissionHdl, addressHdl, orderHdl, paymentHdl, chatHdl, cfg.AllowedOrigins)
 
-	http.HandleFunc("/ws/chat", chatHdl.HandleWebSocket)
-
-	log.Printf("Server listening on: http://localhost:%s", port)
-	if err := http.ListenAndServe(":"+port, r); err != nil {
+	log.Printf("Server listening on: http://localhost:%s", cfg.Port)
+	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		log.Fatalf("Fatal: %v", err)
 	}
 }
