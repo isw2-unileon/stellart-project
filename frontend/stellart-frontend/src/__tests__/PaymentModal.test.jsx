@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import PaymentModal from '../components/PaymentModal';
+
+vi.mock('../service/apiService', () => ({
+    createPaymentIntent: vi.fn(),
+    supabase: null,
+}));
 
 vi.mock('sonner', () => ({
     toast: {
@@ -9,6 +13,8 @@ vi.mock('sonner', () => ({
         success: vi.fn(),
     },
 }));
+
+import PaymentModal from '../components/PaymentModal';
 
 describe('PaymentModal', () => {
     const mockOnClose = vi.fn();
