@@ -145,7 +145,7 @@ jobs:
         run: go run . & 
 
       - name: Levantar el Frontend (React/Vite)
-        working-directory: ./frontend
+        working-directory: ./frontend/stellart-frontend
         run: npm run dev &
 
       - name: Esperar a que los servidores estén listos
@@ -154,5 +154,5 @@ jobs:
       - name: Ejecutar tests de Playwright
         env:
           VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
-          SUPABASE_SERVICE_SECRET_KEY: ${{ secrets.SUPABASE_SERVICE_SECRET_KEY }}
+          VITE_SUPABASE_SECRET_KEY: ${{ secrets.VITE_SUPABASE_SECRET_KEY }}
         run: npx playwright test
