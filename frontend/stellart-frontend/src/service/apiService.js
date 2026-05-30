@@ -69,7 +69,11 @@ export const logoutUser = async () => {
     if (error) throw error;
 };
 
-const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:3001';
+const BACKEND_URL = (
+    import.meta.env.DEV
+        ? (import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+        : (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+).replace(/\/$/, '');
 
 // Stripe
 export const createPaymentIntent = async (amount, currency = 'eur', metadata = {}) => {

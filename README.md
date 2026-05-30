@@ -23,13 +23,29 @@ Required values:
 - `RESEND_API_KEY`, `CONTACT_EMAIL`
 - `COHERE_API_KEY`
 - `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
-- `VITE_BACKEND_URL`, `VITE_STRIPE_PUBLIC_KEY`
+- `VITE_BACKEND_URL_DEV`, `VITE_BACKEND_URL`, `VITE_STRIPE_PUBLIC_KEY`
 
 Optional but recommended:
 
 - `PORT` (defaults to `3001`)
 - `ALLOWED_ORIGINS` (comma-separated CORS origins)
 - `AI_RUNTIME_LIB_PATH`, `AI_MODEL_PATH` (for ONNX runtime/model paths)
+
+### Local vs Production backend URLs
+
+To avoid local frontend calls going to production by mistake:
+
+- Use `VITE_BACKEND_URL_DEV` for local development (`npm run dev`).
+- Use `VITE_BACKEND_URL` for production build/deploy.
+
+Example:
+
+```env
+VITE_BACKEND_URL_DEV=http://localhost:3001
+VITE_BACKEND_URL=https://<your-fly-app>.fly.dev
+```
+
+For backend CORS, keep `ALLOWED_ORIGINS` as a comma-separated list that includes both your local frontend and your deployed frontend.
 
 ## Running the Backend
 
