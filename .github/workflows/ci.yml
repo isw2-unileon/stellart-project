@@ -132,7 +132,7 @@ jobs:
           go-version: '1.22.x' 
 
       - name: Instalar dependencias del Frontend
-        working-directory: ./frontend
+        working-directory: ./frontend/stellart-frontend
         run: npm install
 
       - name: Instalar dependencias de Playwright
@@ -146,7 +146,13 @@ jobs:
 
       - name: Levantar el Frontend (React/Vite)
         working-directory: ./frontend/stellart-frontend
-        run: npm run dev &
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+        run: npm run dev -- --host &
+
+      - name: Esperar a que la web esté lista
+        run: npx wait-on tcp:5173
 
       - name: Esperar a que los servidores estén listos
         run: sleep 15
