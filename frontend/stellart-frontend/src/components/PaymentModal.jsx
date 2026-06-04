@@ -64,7 +64,6 @@ function CheckoutForm({ amount, paymentType, metadata, onSuccess, onFailure, onC
             const { client_secret } = await createPaymentIntent(displayAmount, 'eur', metadata || {});
 
             // 2. Confirm card payment with Stripe
-            // IMPORTANTE: Ahora le pasamos el CardNumberElement en lugar del CardElement general
             const { error, paymentIntent } = await stripe.confirmCardPayment(client_secret, {
                 payment_method: { card: elements.getElement(CardNumberElement) },
             });
@@ -127,7 +126,6 @@ function CheckoutForm({ amount, paymentType, metadata, onSuccess, onFailure, onC
 
             <form onSubmit={handleSubmit} className="space-y-5">
                 
-                {/* CAMPO: NÚMERO DE TARJETA */}
                 <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Card Number</label>
                     <div className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-transparent transition-all">
@@ -142,7 +140,6 @@ function CheckoutForm({ amount, paymentType, metadata, onSuccess, onFailure, onC
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                    {/* CAMPO: FECHA DE CADUCIDAD */}
                     <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Expiration</label>
                         <div className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-transparent transition-all">
@@ -222,7 +219,7 @@ export default function PaymentModal({
                 onClick={onClose}
             />
             <div className="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 animate-in fade-in zoom-in duration-300">
-                <Elements stripe={stripePromise}>
+                <Elements stripe={stripePromise} options={{ locale: 'en' }}>
                     <CheckoutForm
                         amount={amount}
                         paymentType={paymentType}
