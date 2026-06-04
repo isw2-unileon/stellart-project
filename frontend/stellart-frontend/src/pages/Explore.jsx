@@ -50,7 +50,6 @@ export default function Explore() {
 
             setArtworks(finalArtworks);
             
-            // Activamos el modo "Resultados"
             setHasSearched(true);
             setCurrentSearchTerm(searchQuery);
             
@@ -66,21 +65,11 @@ export default function Explore() {
         }
     };
 
-    const handleTagClick = (tag) => {
-        setSearchQuery(tag);
-        // Hacemos que busque automáticamente al hacer clic en un tag
-        setTimeout(() => {
-            const form = document.getElementById('search-form');
-            if (form) form.requestSubmit();
-        }, 100);
-    };
-
     return (
         <div className="bg-white min-h-screen">
-            {/* HERO SECTION DINÁMICO */}
+            {/* HERO SECTION */}
             <div className={`relative overflow-hidden bg-slate-50 border-b border-slate-200 transition-all duration-700 ease-in-out ${hasSearched ? 'pt-10 pb-12' : 'pt-16 pb-20'}`}>
                 
-                {/* Halos de luz de fondo (Efecto cristal) */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-7xl h-full pointer-events-none transition-opacity duration-700">
                     <div className={`absolute top-[-20%] left-[10%] w-96 h-96 rounded-full mix-blend-multiply blur-3xl transition-colors duration-700 ${hasSearched ? 'bg-blue-200/20 opacity-40' : 'bg-yellow-300/20 opacity-70'}`}></div>
                     <div className="absolute top-[20%] right-[10%] w-96 h-96 bg-blue-300/20 rounded-full mix-blend-multiply blur-3xl opacity-70"></div>
@@ -89,10 +78,8 @@ export default function Explore() {
                 <div className="max-w-[1400px] mx-auto px-6 relative z-10">
                     <div className="flex flex-col lg:flex-row items-center justify-between gap-12 lg:gap-8">
                         
-                        {/* Texto principal y Buscador */}
                         <div className={`w-full transition-all duration-700 ease-in-out text-center lg:text-left ${hasSearched ? 'max-w-4xl mx-auto lg:mx-0' : 'flex-1 lg:max-w-xl'}`}>
                             
-                            {/* Cabecera Condicional */}
                             {!hasSearched ? (
                                 <div className="transform transition-all duration-500 opacity-100 translate-y-0">
                                     <h1 className="text-5xl lg:text-6xl font-black tracking-tighter text-slate-900 mb-6 leading-[1.1]">
@@ -155,26 +142,23 @@ export default function Explore() {
                                 </button>
                             </form>
 
-                            {/* Tags sugeridos (Se ocultan al buscar) */}
+                            {/* Suggested tags */}
                             <div className={`mt-6 flex flex-wrap justify-center lg:justify-start items-center gap-2 transition-all duration-500 ${hasSearched ? 'opacity-0 h-0 overflow-hidden mt-0' : 'opacity-100 h-auto'}`}>
                                 <span className="text-xs font-bold text-slate-400 uppercase tracking-wider py-1.5 mr-1">Featuring:</span>
                                 {suggestedTags.map(tag => (
-                                    <button 
+                                    <span 
                                         key={tag}
-                                        type="button"
-                                        onClick={() => handleTagClick(tag)}
-                                        className="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full hover:border-yellow-400 hover:bg-yellow-50 hover:text-yellow-700 transition-all shadow-sm"
+                                        className="px-3.5 py-1.5 bg-white border border-slate-200 text-slate-500 text-xs font-bold rounded-full shadow-sm cursor-default"
                                     >
                                         {tag}
-                                    </button>
+                                    </span>
                                 ))}
                             </div>
                         </div>
 
-                        {/* Collage de Imágenes Decorativas usando TUS imágenes locales */}
                         <div className={`hidden lg:flex flex-1 relative items-center justify-center transition-all duration-700 ease-in-out ${hasSearched ? 'w-0 h-0 opacity-0 overflow-hidden' : 'w-full h-[450px] opacity-100'}`}>
                             <div className="relative w-full max-w-lg h-full">
-                                {/* Cuadro Principal (Centro) */}
+                                {/* Middle artwork */}
                                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-80 z-20 hover:scale-105 transition-transform duration-500">
                                     <img 
                                         src={artworkEx2} 
@@ -194,14 +178,14 @@ export default function Explore() {
                                     </div>
                                 </div>
                                 
-                                {/* Cuadro Secundario (Izquierda rotado) */}
+                                {/* Third artwork seen (covered) */}
                                 <img 
                                     src={artworkEx1} 
                                     alt="Featured Artwork 2" 
                                     className="absolute top-[10%] left-[5%] w-48 h-56 object-cover rounded-3xl shadow-xl z-10 border-4 border-white -rotate-6 opacity-90 hover:opacity-100 hover:z-30 transition-all duration-500 hover:scale-105 hover:-rotate-3"
                                 />
                                 
-                                {/* Cuadro Terciario (Derecha rotado) */}
+                                {/* First artwork seen */}
                                 <img 
                                     src={artworkEx3} 
                                     alt="Featured Artwork 3" 
@@ -214,7 +198,7 @@ export default function Explore() {
                 </div>
             </div>
 
-            {/* SECCIÓN DE LA GALERÍA */}
+            {/* GALERY SECTION */}
             <div className="-mt-12 transition-transform duration-700 ease-in-out">
                 <ExploreGallery artworks={artworks} />
             </div>
