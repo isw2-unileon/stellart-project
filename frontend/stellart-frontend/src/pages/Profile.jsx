@@ -142,21 +142,6 @@ export default function Profile() {
         }
     }, [user?.id, user?.email, displayName, bio, avatar, openCommissions, skills]);
 
-    const [initialLoadDone, setInitialLoadDone] = useState(false);
-
-    useEffect(() => {
-        if (!isLoading && user?.id && skills.length > 0) {
-            if (!initialLoadDone) {
-                setInitialLoadDone(true);
-                return;
-            }
-            const timeoutId = setTimeout(() => {
-                handleSaveProfile();
-            }, 2000);
-            return () => clearTimeout(timeoutId);
-        }
-    }, [handleSaveProfile, isLoading, user?.id, skills.length, initialLoadDone]);
-
     const handleBioChange = (e) => {
         setBio(e.target.value);
         e.target.style.height = "auto"; 
@@ -234,7 +219,7 @@ export default function Profile() {
                             maxLength={maxBioLength}
                             rows={3}
                             className="peer w-full resize-none overflow-y-hidden bg-transparent p-2 -ml-2 text-slate-500 text-center md:text-left text-base leading-relaxed outline-none focus:bg-slate-50 focus:ring-2 focus:ring-yellow-400 rounded-lg transition-colors"
-                            placeholder="Escribe algo sobre ti..."
+                            placeholder="Write something about you..."
                         />
                         <div className="absolute bottom-2 right-2 text-xs text-slate-400 opacity-0 peer-focus:opacity-100 transition-opacity pointer-events-none">
                             {bio.length} / {maxBioLength}
@@ -248,17 +233,6 @@ export default function Profile() {
                     >
                         Save bio
                     </Button>
-                    <div className="flex gap-3 mt-4">
-                        <span className="px-4 py-1.5 rounded-full bg-yellow-50 text-yellow-600 text-xs font-bold border border-yellow-200">
-                            Ilustration
-                        </span>
-                        <span className="px-4 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200">
-                            Concept Art
-                        </span>
-                        <span className="px-4 py-1.5 rounded-full bg-slate-50 text-slate-600 text-xs font-bold border border-slate-200">
-                            Design
-                        </span>
-                    </div>
                 </div>
             </section>
 

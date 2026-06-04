@@ -23,7 +23,7 @@ export default function Landing() {
                     />
 
                     <div className="relative z-10 max-w-2xl">
-                        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 text-slate-900">
+                        <h1 className="text-6xl md:text-8xl font-black tracking-tighter leading-[1.1] mb-8 text-slate-900">
                             Bring out the <br />
                             <span className="text-yellow-500 underline decoration-8 underline-offset-8">star</span> <br />
                             inside of you
