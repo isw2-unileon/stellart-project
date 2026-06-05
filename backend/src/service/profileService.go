@@ -36,9 +36,12 @@ func (s *ProfileService) UpdateProfile(p *dto.UpdateProfile, skills []models.Pro
 		profile.Biography = existing.Biography
 		profile.OpenCommissions = existing.OpenCommissions
 	}
-	
+
 	if p.FullName != nil {
 		profile.FullName = *p.FullName
+	}
+	if p.Email != nil && *p.Email != "" {
+		profile.Email = *p.Email
 	}
 	if p.AvatarURL != nil {
 		profile.AvatarURL = p.AvatarURL
@@ -49,7 +52,11 @@ func (s *ProfileService) UpdateProfile(p *dto.UpdateProfile, skills []models.Pro
 	if p.OpenCommissions != nil {
 		profile.OpenCommissions = *p.OpenCommissions
 	}
-	
+
+	if existing == nil && profile.Email == "" && id != "" {
+		profile.Email = id + "@stellart.local"
+	}
+
 	return s.repo.Update(profile, skills)
 }
 
