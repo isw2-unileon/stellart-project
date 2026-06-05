@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
-import { getLoggedUser, getProfile, logoutUser } from "@/service/apiService"
+import { getLoggedUser, getProfile, logoutUser, ensureProfileSynced } from "@/service/apiService"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { User, MapPin, Bookmark, LogOut } from "lucide-react";
@@ -23,6 +23,11 @@ export default function AvatarDropdown() {
         async function checkUser() {
             const loggedUser = await getLoggedUser();
             if (loggedUser) {
+                try {
+                    await ensureProfileSynced(loggedUser);
+                } catch (e) {
+                    console.error("Profile sync error:", e);
+                }
                 const profile = await getProfile(loggedUser.id);
                 if (profile?.avatar_url) {
                     loggedUser.user_metadata = {

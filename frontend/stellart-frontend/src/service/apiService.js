@@ -5,10 +5,42 @@ const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
+const BACKEND_URL = (
+    import.meta.env.DEV
+        ? (import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+        : (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
+).replace(/\/$/, '');
+
 export const getLoggedUser = async () => {
     const { data: { user }, error } = await supabase.auth.getUser();
     if (error || !user) return null;
     return user;
+};
+
+export const ensureProfileSynced = async (user) => {
+    if (!user?.id) return;
+
+    const existing = await getProfile(user.id);
+    if (existing) return;
+
+    const fullName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'User';
+    const response = await fetch(`${BACKEND_URL}/profiles/${user.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+            profile: {
+                id: user.id,
+                full_name: fullName,
+                email: user.email || "",
+                avatar_url: user.user_metadata?.avatar_url || null
+            },
+            skills: []
+        }),
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to sync profile');
+    }
 };
 
 export const registerUser = async (email, password, fullName, addressObj, bankObj) => {
@@ -25,6 +57,15 @@ export const registerUser = async (email, password, fullName, addressObj, bankOb
     });
 
     if (error) throw error;
+
+    if (data?.user) {
+        try {
+            await ensureProfileSynced(data.user);
+        } catch (e) {
+            console.error("Profile sync error:", e);
+        }
+    }
+
     return data;
 };
 
@@ -34,33 +75,15 @@ export const loginUser = async (email, password) => {
         password,
     });
     if (error) throw error;
-    
+
     if (data?.user) {
-        const fullName = data.user.user_metadata?.full_name;
-        if (fullName) {
-            try {
-                const existing = await getProfile(data.user.id);
-                if (!existing) {
-                    await fetch(`${BACKEND_URL}/profiles/${data.user.id}`, {
-                        method: 'PUT',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            profile: {
-                                id: data.user.id,
-                                full_name: fullName,
-                                email: data.user.email || "",
-                                avatar_url: data.user.user_metadata?.avatar_url || null
-                            },
-                            skills: []
-                        }),
-                    });
-                }
-            } catch (e) {
-                console.error("Profile sync error:", e);
-            }
+        try {
+            await ensureProfileSynced(data.user);
+        } catch (e) {
+            console.error("Profile sync error:", e);
         }
     }
-    
+
     return data;
 };
 
@@ -68,12 +91,6 @@ export const logoutUser = async () => {
     const { error } = await supabase.auth.signOut();
     if (error) throw error;
 };
-
-const BACKEND_URL = (
-    import.meta.env.DEV
-        ? (import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
-        : (import.meta.env.VITE_BACKEND_URL || import.meta.env.VITE_BACKEND_URL_DEV || 'http://localhost:3001')
-).replace(/\/$/, '');
 
 // Stripe
 export const createPaymentIntent = async (amount, currency = 'eur', metadata = {}) => {
@@ -203,6 +220,9 @@ export const getWishlist = async (userId) => {
 };
 
 export const addToWishlist = async (userId, artworkId) => {
+    const user = await getLoggedUser();
+    if (user) await ensureProfileSynced(user);
+
     const response = await fetch(`${BACKEND_URL}/profiles/${userId}/wishlist`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -546,6 +566,9 @@ export const reportArtwork = async (artworkId, reporterId, reason) => {
 
 export const likeArtwork = async (artworkId, profileId) => {
     try {
+        const user = await getLoggedUser();
+        if (user) await ensureProfileSynced(user);
+
         const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}/like`, {
             method: 'POST',
             headers: {
@@ -563,6 +586,9 @@ export const likeArtwork = async (artworkId, profileId) => {
 
 export const unlikeArtwork = async (artworkId, profileId) => {
     try {
+        const user = await getLoggedUser();
+        if (user) await ensureProfileSynced(user);
+
         const response = await fetch(`${BACKEND_URL}/artworks/${artworkId}/unlike`, {
             method: 'POST',
             headers: {
