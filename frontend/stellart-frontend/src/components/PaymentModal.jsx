@@ -13,7 +13,6 @@ import { createPaymentIntent } from '../service/apiService';
 
 const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
 
-// Opciones base compartidas para todos los inputs de Stripe
 const BASE_ELEMENT_OPTIONS = {
     style: {
         base: {
@@ -152,7 +151,6 @@ function CheckoutForm({ amount, paymentType, metadata, onSuccess, onFailure, onC
                         </div>
                     </div>
 
-                    {/* CAMPO: CÓDIGO DE SEGURIDAD (CVC) */}
                     <div>
                         <label className="block text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">CVC</label>
                         <div className="px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl focus-within:ring-2 focus-within:ring-yellow-400 focus-within:border-transparent transition-all">

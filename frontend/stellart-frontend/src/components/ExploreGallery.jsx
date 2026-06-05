@@ -303,7 +303,6 @@ export default function ExploreGallery({ artworks = [] }) {
                                     )}
                                 </div>
 
-                                {/* BOTÓN DE NAVEGACIÓN PRINCIPAL */}
                                 {isRealData && (
                                     <Link 
                                         to={`/artwork-details/${selectedArtwork.id}`}

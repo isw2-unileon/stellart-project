@@ -198,7 +198,7 @@ export default function Explore() {
                 </div>
             </div>
 
-            {/* GALERY SECTION */}
+            {/* GALLERY SECTION */}
             <div className="-mt-12 transition-transform duration-700 ease-in-out">
                 <ExploreGallery artworks={artworks} />
             </div>
